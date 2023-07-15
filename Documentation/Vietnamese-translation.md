@@ -121,7 +121,9 @@ Hình minh họa ba loại mối quan hệ ánh xạ có thể có từ Nfr đ�
 Kết luận rằng: chính sách triển khai tài nguyên đánh lừa hợp lý phải tuân theo các quy tắc ánh xạ một-một. 
 
 Phần này cũng mô tả các điều kiện chấm dứt của ADS, đó là: 
+
 (1) khi kẻ tấn công xâm nhập nút tài nguyên bí mật và lấy được dữ liệu hoặc tệp thực, điều đó có nghĩa là người bảo vệ đã thất bại;
+
 (2) khi kẻ tấn công xâm nhập nút tài nguyên lừa đảo và lấy được dữ liệu hoặc tệp giả mạo, điều đó có nghĩa là người bảo vệ đã thành công.
 
 ## B - UNCERTAINTY
