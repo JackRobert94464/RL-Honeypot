@@ -97,3 +97,19 @@ Lưu ý rằng kẻ tấn công không biết nơi cài đặt tài nguyên bí 
 
 Phần này định nghĩa Aa(ni) là một hành động tấn công, có nghĩa là kẻ tấn công xâm chiếm node ni.
 
+Hành động triển khai tài nguyên đánh lừa Ad, đây là kỹ thuật chính của người phòng thủ trong ADS. 
+
+Các tài nguyên đánh lừa là các hệ thống hoặc thiết bị giả mạo mà kẻ tấn công tạo ra và triển khai trong mạng mục tiêu để thu hút và đánh lừa kẻ tấn công. Các tài nguyên đánh lừa giống như nút tài nguyên bí mật, ngoại trừ việc chúng chứa dữ liệu hoặc tệp giả thay vì tệp thực. 
+
+Việc tạo và duy trì các tài nguyên đánh lừa rất tốn kém, vì vậy số lượng tài nguyên đánh lừa thường nhỏ. 
+
+Kẻ tấn công không thể biết sự khác biệt giữa tài nguyên bí mật và tài nguyên giả mạo. 
+
+Hành động triển khai tài nguyên đánh lừa Ad dưới dạng ánh xạ từ tập hợp các nút tài nguyên đánh lừa Nfr sang tập hợp các nút bình thường N. Đối với mỗi nút tài nguyên đánh lừa nifr trong Nfr, có một nút bình thường tương ứng nj trong N thỏa mãn Ad(nifr) = nj, nghĩa là người phòng thủ tạo kết nối từ nj đến nifr. 
+
+Khi Ad(nifr) = nj, điều đó có nghĩa là người phòng thủ triển khai nifr phía sau nj hoặc vị trí triển khai của nifr là nj. Trong trường hợp này, kẻ tấn công có thể truy cập nifr từ nj, và do đó, nếu kẻ tấn công xâm nhập và kiểm soát nj, anh ta/cô ta có thể tấn công nifr trong bước tiếp theo. 
+
+Hình minh họa ba loại mối quan hệ ánh xạ có thể có từ Nfr đến N: một-một, một-nhiều và nhiều-một.
+
+![Alt text](image-1.png)
+
