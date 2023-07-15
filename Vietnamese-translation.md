@@ -62,3 +62,38 @@ Phần này cũng giải thích chiến lược của kẻ tấn công, chiến 
 
 Phần này cũng xác định một số ký hiệu và công thức để hình thức hóa vấn đề về mặt toán học.
 
+## A - ATTACKER-DEFENDER SCENARIO
+Phần này giới thiệu kịch bản kẻ tấn công-người bảo vệ (ADS), dựa trên ý tưởng về DCD và bao gồm ba thành phần: mạng đích, kẻ tấn công và người bảo vệ. 
+
+Hình minh họa các thành phần của ADS. 
+
+![Alt text](image.png)
+
+Phần này xác định mạng mục tiêu là một bộ tuple bốn thành phần (N, E, ncr, Nfr) bao gồm: 
+- các node thông thường N = {n1, n2, ..., nk}, 
+- các cạnh E c N * N (E tập con của N*N), 
+- node chứa tài nguyên bí mật duy nhất ncr (ncr thuộc N),
+- các node tài nguyên lừa dối Nfr (Nifr | i = 1, 2, ..., m).
+
+Phần này giải thích rằng: 
+- các node thông thường là các hệ thống hoặc thiết bị thực trong mạng, 
+- các cạnh là kết nối giữa các node, 
+- node tài nguyên bí mật là node duy nhất chứa dữ liệu hoặc tệp thực mà kẻ tấn công muốn lấy 
+- các node tài nguyên lừa đảo là hệ thống hoặc thiết bị giả mạo chứa dữ liệu hoặc tệp giả mạo mà kẻ bảo vệ muốn dụ kẻ tấn công vào. 
+
+Phần này cũng giải thích rằng nếu có một cạnh từ node này sang node khác (tồn tại một cạnh eij thuộc E nối node ni với node nj bất kì), điều đó có nghĩa là người dùng có thể truy cập node thứ hai từ node đầu tiên (dạng nó có thể SSH qua ấy). 
+
+Phần giả định rằng mục tiêu của kẻ tấn công là tìm và truy cập node tài nguyên bí mật ncr trong mạng đích.
+
+Phần này giải thích rằng có một số node trong mạng mục tiêu được gọi là “đối diện bên ngoài” (external facing), có nghĩa là kẻ tấn công ngoài internet có thể truy cập chúng. Trong sơ đồ minh họa, node n1 là node “hướng ra bên ngoài”. 
+
+Kẻ tấn công bắt đầu cuộc tấn công bằng cách xâm nhập và kiểm soát các node “đối diện bên ngoài” bằng cách khai thác lỗ hổng trong code chạy trên mấy node này, sau đó anh ta/cô ta cố gắng xâm phạm thêm một số node khác trong mạng mục tiêu. 
+
+Một cuộc tấn công thành công vào một node ni yêu cầu hai điều kiện: 
+i) kẻ tấn công có quyền truy cập vào node đó
+ii) có một số lỗ hổng có thể khai thác trên node. 
+
+Lưu ý rằng kẻ tấn công không biết nơi cài đặt tài nguyên bí mật, vì vậy anh ta/cô ta phải tiếp tục xâm nhập cho đến khi tìm thấy node tài nguyên bí mật hoặc rơi vào node tài nguyên lừa đảo. 
+
+Phần này định nghĩa Aa(ni) là một hành động tấn công, có nghĩa là kẻ tấn công xâm chiếm node ni.
+
