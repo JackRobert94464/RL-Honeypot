@@ -63,7 +63,7 @@ Phần này cũng giải thích chiến lược của kẻ tấn công, chiến 
 Phần này cũng xác định một số ký hiệu và công thức để hình thức hóa vấn đề về mặt toán học.
 
 ## A - ATTACKER-DEFENDER SCENARIO
-Phần này giới thiệu kịch bản kẻ tấn công-người bảo vệ (ADS), dựa trên ý tưởng về DCD và bao gồm ba thành phần: mạng đích, kẻ tấn công và người bảo vệ. 
+Phần này giới thiệu kịch bản kẻ tấn công-người bảo vệ (ADS), dựa trên ý tưởng về DCD và bao gồm ba thành phần: mạng đích (target network), kẻ tấn công (attacker) và người bảo vệ (defender). 
 
 Hình minh họa các thành phần của ADS. 
 
