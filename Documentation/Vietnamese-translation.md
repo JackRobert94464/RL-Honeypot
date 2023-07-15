@@ -113,3 +113,13 @@ Hình minh họa ba loại mối quan hệ ánh xạ có thể có từ Nfr đ�
 
 ![Alt text](image-1.png)
 
+Ưu điểm và nhược điểm của ba loại mối quan hệ ánh xạ từ Nfr đến N:
+- Ánh xạ nhiều-một, nghĩa là nhiều nút tài nguyên lừa đảo được triển khai phía sau cùng một nút bình thường, là không tốt bởi vì nó có thể làm tăng sự nghi ngờ của kẻ tấn công. 
+- Ánh xạ một-nhiều, nghĩa là một nút tài nguyên lừa đảo được triển khai phía sau nhiều nút bình thường cùng một lúc, là không tốt vì nó có thể cho phép kẻ tấn công sử dụng nút tài nguyên lừa đảo làm bàn đạp để xâm nhập các nút khác. 
+- Ánh xạ một đối một, nghĩa là một nút tài nguyên đánh lừa được triển khai phía sau một nút bình thường, là tốt nhất vì nó không có những thiếu sót rõ ràng như hai ánh xạ còn lại. 
+
+Kết luận rằng: chính sách triển khai tài nguyên đánh lừa hợp lý phải tuân theo các quy tắc ánh xạ một-một. 
+
+Phần này cũng mô tả các điều kiện chấm dứt của ADS, đó là: 
+(1) khi kẻ tấn công xâm nhập nút tài nguyên bí mật và lấy được dữ liệu hoặc tệp thực, điều đó có nghĩa là người bảo vệ đã thất bại;
+(2) khi kẻ tấn công xâm nhập nút tài nguyên lừa đảo và lấy được dữ liệu hoặc tệp giả mạo, điều đó có nghĩa là người bảo vệ đã thành công.
