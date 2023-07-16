@@ -63,7 +63,7 @@ Phần này cũng giải thích chiến lược của kẻ tấn công, chiến 
 Phần này cũng xác định một số ký hiệu và công thức để hình thức hóa vấn đề về mặt toán học.
 
 ## A - ATTACKER-DEFENDER SCENARIO
-Phần này giới thiệu kịch bản kẻ tấn công-người bảo vệ (ADS), dựa trên ý tưởng về DCD và bao gồm ba thành phần: mạng đích (target network), kẻ tấn công (attacker) và người bảo vệ (defender). 
+Phần này giới thiệu kịch bản `kẻ tấn công`-`người bảo vệ` (ADS), dựa trên ý tưởng về DCD và bao gồm ba thành phần: mạng đích (target network), kẻ tấn công (attacker) và người bảo vệ (defender). 
 
 Hình minh họa các thành phần của ADS. 
 
@@ -72,8 +72,8 @@ Hình minh họa các thành phần của ADS.
 Phần này xác định mạng mục tiêu là một bộ tuple bốn thành phần (N, E, ncr, Nfr) bao gồm: 
 - các node thông thường N = {n1, n2, ..., nk}, 
 - các cạnh E c N * N (E tập con của N*N), 
-- node chứa tài nguyên bí mật duy nhất ncr (ncr thuộc N),
-- các node tài nguyên lừa dối Nfr (Nifr | i = 1, 2, ..., m).
+- node chứa tài nguyên bí mật duy nhất `ncr` (ncr thuộc N),
+- các node tài nguyên lừa dối `Nfr` (Nifr | i = 1, 2, ..., m).
 
 Phần này giải thích rằng: 
 - các node thông thường là các hệ thống hoặc thiết bị thực trong mạng, 
@@ -81,23 +81,23 @@ Phần này giải thích rằng:
 - node tài nguyên bí mật là node duy nhất chứa dữ liệu hoặc tệp thực mà kẻ tấn công muốn lấy 
 - các node tài nguyên lừa đảo là hệ thống hoặc thiết bị giả mạo chứa dữ liệu hoặc tệp giả mạo mà kẻ bảo vệ muốn dụ kẻ tấn công vào. 
 
-Phần này cũng giải thích rằng nếu có một cạnh từ node này sang node khác (tồn tại một cạnh eij thuộc E nối node ni với node nj bất kì), điều đó có nghĩa là người dùng có thể truy cập node thứ hai từ node đầu tiên (dạng nó có thể SSH qua ấy). 
+Phần này cũng giải thích rằng nếu có một cạnh từ node này sang node khác (tồn tại một cạnh `eij` thuộc `E` nối node `ni` với node `nj` bất kì), điều đó có nghĩa là người dùng có thể truy cập node thứ hai từ node đầu tiên (dạng nó có thể SSH qua ấy). 
 
-Phần giả định rằng mục tiêu của kẻ tấn công là tìm và truy cập node tài nguyên bí mật ncr trong mạng đích.
+Phần giả định rằng mục tiêu của kẻ tấn công là tìm và truy cập node tài nguyên bí mật `ncr` trong mạng đích.
 
-Phần này giải thích rằng có một số node trong mạng mục tiêu được gọi là “đối diện bên ngoài” (external facing), có nghĩa là kẻ tấn công ngoài internet có thể truy cập chúng. Trong sơ đồ minh họa, node n1 là node “hướng ra bên ngoài”. 
+Phần này giải thích rằng có một số node trong mạng mục tiêu được gọi là “hướng ra bên ngoài” (external facing), có nghĩa là kẻ tấn công ngoài internet có thể truy cập chúng. Trong sơ đồ minh họa, node `n1` là node “hướng ra bên ngoài”. 
 
-Kẻ tấn công bắt đầu cuộc tấn công bằng cách xâm nhập và kiểm soát các node “đối diện bên ngoài” bằng cách khai thác lỗ hổng trong code chạy trên mấy node này, sau đó anh ta/cô ta cố gắng xâm phạm thêm một số node khác trong mạng mục tiêu. 
+Kẻ tấn công bắt đầu cuộc tấn công bằng cách xâm nhập và kiểm soát các node “hướng ra bên ngoài” bằng cách khai thác lỗ hổng trong code chạy trên mấy node này, sau đó anh ta/cô ta cố gắng xâm phạm thêm một số node khác trong mạng mục tiêu. 
 
-Một cuộc tấn công thành công vào một node ni yêu cầu hai điều kiện: 
+Một cuộc tấn công thành công vào một node `ni` yêu cầu hai điều kiện: 
 i) kẻ tấn công có quyền truy cập vào node đó
 ii) có một số lỗ hổng có thể khai thác trên node. 
 
 Lưu ý rằng kẻ tấn công không biết nơi cài đặt tài nguyên bí mật, vì vậy anh ta/cô ta phải tiếp tục xâm nhập cho đến khi tìm thấy node tài nguyên bí mật hoặc rơi vào node tài nguyên lừa đảo. 
 
-Phần này định nghĩa Aa(ni) là một hành động tấn công, có nghĩa là kẻ tấn công xâm chiếm node ni.
+Phần này định nghĩa `Aa(ni)` là một hành động tấn công, có nghĩa là kẻ tấn công xâm chiếm node `ni`.
 
-Hành động triển khai tài nguyên đánh lừa Ad, đây là kỹ thuật chính của người phòng thủ trong ADS. 
+Hành động triển khai tài nguyên đánh lừa `Ad`, đây là kỹ thuật chính của người phòng thủ trong ADS. 
 
 Các tài nguyên đánh lừa là các hệ thống hoặc thiết bị giả mạo mà kẻ tấn công tạo ra và triển khai trong mạng mục tiêu để thu hút và đánh lừa kẻ tấn công. Các tài nguyên đánh lừa giống như nút tài nguyên bí mật, ngoại trừ việc chúng chứa dữ liệu hoặc tệp giả thay vì tệp thực. 
 
@@ -105,15 +105,15 @@ Việc tạo và duy trì các tài nguyên đánh lừa rất tốn kém, vì v
 
 Kẻ tấn công không thể biết sự khác biệt giữa tài nguyên bí mật và tài nguyên giả mạo. 
 
-Hành động triển khai tài nguyên đánh lừa Ad dưới dạng ánh xạ từ tập hợp các nút tài nguyên đánh lừa Nfr sang tập hợp các nút bình thường N. Đối với mỗi nút tài nguyên đánh lừa nifr trong Nfr, có một nút bình thường tương ứng nj trong N thỏa mãn Ad(nifr) = nj, nghĩa là người phòng thủ tạo kết nối từ nj đến nifr. 
+Hành động triển khai tài nguyên đánh lừa Ad dưới dạng ánh xạ từ tập hợp các nút tài nguyên đánh lừa `Nfr` sang tập hợp các nút bình thường `N`. Đối với mỗi nút tài nguyên đánh lừa `nifr` trong `Nfr`, có một nút bình thường tương ứng `nj` trong `N` thỏa mãn `Ad(nifr)` = `nj`, nghĩa là người phòng thủ tạo kết nối từ `nj` đến `nifr`. 
 
-Khi Ad(nifr) = nj, điều đó có nghĩa là người phòng thủ triển khai nifr phía sau nj hoặc vị trí triển khai của nifr là nj. Trong trường hợp này, kẻ tấn công có thể truy cập nifr từ nj, và do đó, nếu kẻ tấn công xâm nhập và kiểm soát nj, anh ta/cô ta có thể tấn công nifr trong bước tiếp theo. 
+Khi `Ad(nifr) = nj`, điều đó có nghĩa là người phòng thủ triển khai `nifr` phía sau `nj` hoặc vị trí triển khai của `nifr` là `nj`. Trong trường hợp này, kẻ tấn công có thể truy cập `nifr` từ `nj`, và do đó, nếu kẻ tấn công xâm nhập và kiểm soát `nj`, anh ta/cô ta có thể tấn công `nifr` trong bước tiếp theo. 
 
-Hình minh họa ba loại mối quan hệ ánh xạ có thể có từ Nfr đến N: một-một, một-nhiều và nhiều-một.
+Hình minh họa ba loại mối quan hệ ánh xạ có thể có từ `Nf`r đến `N`: một-một, một-nhiều và nhiều-một.
 
 ![Alt text](image-1.png)
 
-Ưu điểm và nhược điểm của ba loại mối quan hệ ánh xạ từ Nfr đến N:
+Ưu điểm và nhược điểm của ba loại mối quan hệ ánh xạ từ `Nfr` đến `N`:
 - Ánh xạ nhiều-một, nghĩa là nhiều nút tài nguyên lừa đảo được triển khai phía sau cùng một nút bình thường, là không tốt bởi vì nó có thể làm tăng sự nghi ngờ của kẻ tấn công. 
 - Ánh xạ một-nhiều, nghĩa là một nút tài nguyên lừa đảo được triển khai phía sau nhiều nút bình thường cùng một lúc, là không tốt vì nó có thể cho phép kẻ tấn công sử dụng nút tài nguyên lừa đảo làm bàn đạp để xâm nhập các nút khác (cả n2 và n3 đều có nguy cơ). 
 - Ánh xạ một đối một, nghĩa là một nút tài nguyên đánh lừa được triển khai phía sau một nút bình thường, là tốt nhất vì nó không có những thiếu sót rõ ràng như hai ánh xạ còn lại. 
