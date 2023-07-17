@@ -127,3 +127,30 @@ Phần này cũng mô tả các điều kiện chấm dứt của ADS, đó là:
 (2) khi kẻ tấn công xâm nhập nút tài nguyên lừa đảo và lấy được dữ liệu hoặc tệp giả mạo, điều đó có nghĩa là người bảo vệ đã thành công.
 
 ## B - UNCERTAINTY
+Phần này thảo luận về sự không chắc chắn trong chiến lược của kẻ tấn công, điều này rất quan trọng trong việc thiết kế một kế hoạch đánh lừa thành công. 
+
+Hành động tấn công tiếp theo của kẻ tấn công phụ thuộc vào hai yếu tố: 
+
+- tập hợp các nút bị xâm nhập Ncompr ⊆ N: là tập hợp các nút mà kẻ tấn công đã xâm nhập và kiểm soát trong mạng mục tiêu.
+
+- chiến lược của kẻ tấn công πa: là quy tắc mà kẻ tấn công tuân theo để chọn hành động tấn công tiếp theo của mình. 
+
+Cả hai yếu tố này người bảo vệ đều không được biết. 
+
+Người bảo vệ có thể ước tính Ncompr bằng cách sử dụng hệ thống giám sát mạng (network monitoring system - NMS), đây là hệ thống theo dõi tình trạng sức khỏe của từng nút và kích hoạt báo động khi phát hiện một cuộc tấn công. Tuy nhiên, NMS không đáng tin cậy vì nó có thể tạo ra các báo động sai và thiếu, điều đó có nghĩa là nó có thể không phát hiện được một số cuộc tấn công hoặc phát hiện một số cuộc tấn công không phải là cuộc tấn công. Những điều không chắc chắn này có thể ảnh hưởng đến độ chính xác trong dự đoán của người phòng thủ về hành động tấn công tiếp theo của kẻ tấn công.
+
+Hình minh họa sự không chắc chắn từ các báo động giả của NMS.
+
+![Alt text](image-2.png)
+
+Tập hợp các nút bị xâm phạm Ncompr là tập hợp các nút mà kẻ tấn công đã xâm nhập và kiểm soát trong mạng mục tiêu. Kẻ tấn công chỉ có thể xâm nhập vào các nút được kết nối với các nút trong Ncompr. 
+
+Chiến lược của kẻ tấn công πa là quy tắc mà kẻ tấn công tuân theo để chọn hành động tấn công tiếp theo dựa trên mức độ thú vị và phân phối xác suất thành công của anh ta/cô ta. 
+
+Phân phối mức độ thú vị I là thước đo mức độ hấp dẫn của một nút đối với kẻ tấn công, dựa trên bản chất của nút, cấu trúc liên kết mạng và sở thích của kẻ tấn công. 
+
+Phân phối xác suất thành công J là thước đo khả năng một nút bị kẻ tấn công xâm nhập thành công, dựa trên mức độ phức tạp của các lỗ hổng trong nút. 
+
+Phần này nói rằng cả hai yếu tố này đều không được người phòng thủ biết đến, và do đó, người phòng thủ không thể dự đoán chắc chắn hành động tấn công tiếp theo của kẻ tấn công. Phần này nói rằng người bảo vệ có thể ước tính Ncompr bằng cách sử dụng hệ thống giám sát mạng (NMS), đây là hệ thống theo dõi tình trạng sức khỏe của từng nút thông thường và kích hoạt báo động khi phát hiện một cuộc tấn công. Tuy nhiên, phần này nói rằng NMS không đáng tin cậy vì nó có thể tạo ra các báo động sai và thiếu, điều đó có nghĩa là nó có thể không phát hiện được một số cuộc tấn công hoặc phát hiện một số cuộc tấn công không phải là cuộc tấn công. 
+
+Phần này hiển thị một hình minh họa mức độ thiếu và báo động sai có thể ảnh hưởng đến suy luận của Ncompr. Phần này nói rằng những điều không chắc chắn này có thể ảnh hưởng đến độ chính xác của dự đoán của người phòng thủ về hành động tấn công tiếp theo của kẻ tấn công, bởi vì Ncompr xác định tập hợp các hành động tấn công có thể xảy ra mà kẻ tấn công có thể thực hiện trong bước tiếp theo. Phần này cũng nói rằng người phòng thủ không chắc chắn về sự thú vị và phân phối xác suất thành công của kẻ tấn công, bởi vì chúng có liên quan đến các yếu tố bị ẩn hoặc thay đổi theo quan điểm của người phòng thủ. Phần này hiển thị một số công thức và ví dụ để minh họa cách các bản phân phối này ảnh hưởng đến hành động tấn công tiếp theo của kẻ tấn công và cách chúng phụ thuộc vào vị trí và việc triển khai các tài nguyên đánh lừa. Phần này kết luận rằng sự không chắc chắn của hành động tấn công tiếp theo của kẻ tấn công là một thách thức lớn đối với việc thiết kế một sơ đồ đánh lừa thành công, bởi vì điều đó gây khó khăn cho người bảo vệ trong việc lựa chọn một chính sách triển khai tài nguyên đánh lừa hiệu quả có thể khiến và bẫy kẻ tấn công.
