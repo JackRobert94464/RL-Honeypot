@@ -8,8 +8,7 @@ from collections import deque
 from tensorflow import gather_nd
 from tensorflow.keras.losses import mean_squared_error 
  
- 
- 
+
 class DeepQLearning:
      
     ###########################################################################
