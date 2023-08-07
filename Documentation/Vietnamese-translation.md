@@ -159,3 +159,78 @@ Phần này cũng nói rằng người phòng thủ không chắc chắn về s�
 
 Phần này kết luận rằng sự không chắc chắn của hành động tấn công tiếp theo của kẻ tấn công là một thách thức lớn đối với việc thiết kế một sơ đồ đánh lừa thành công, bởi vì điều đó gây khó khăn cho người bảo vệ trong việc lựa chọn một chính sách triển khai tài nguyên đánh lừa hiệu quả có thể khiến và bẫy kẻ tấn công.
 
+## C - ANALYSIS OF DEPLOYMENT POLICY
+Chính sách triển khai là: từ các trạng thái bảo mật mạng của mạng đích, chúng ta suy ra các hành động triển khai sẽ được thực hiện khi ở các trạng thái đó. 
+
+Nói cách khác, đó là một cách để quyết định nơi đặt các tài nguyên đánh lừa trong mạng để đánh lừa những kẻ tấn công.
+
+![Alt text](image-3.png)
+
+Có ba loại chính sách triển khai chính:
+
+Chính sách triển khai tĩnh: Đây là loại chính sách triển khai đơn giản nhất. Người bảo vệ chỉ cần đặt các tài nguyên đánh lừa ở các vị trí cố định và chính sách không thay đổi theo thời gian.
+
+![Alt text](image-4.png)
+
+Chính sách triển khai động ngẫu nhiên: Chính sách này đặt ngẫu nhiên các tài nguyên đánh lừa ở các vị trí khác nhau theo thời gian. Điều này khiến những kẻ tấn công khó dự đoán vị trí của các tài nguyên đánh lừa hơn và nó cũng có thể giúp cải thiện hiệu quả tổng thể của hệ thống đánh lừa.
+
+![Alt text](image-5.png)
+
+Chính sách triển khai theo cảnh báo: Chính sách này đặt các tài nguyên đánh lừa đằng sau các nút đã gặp cảnh báo. Điều này dựa trên ý tưởng rằng những kẻ tấn công có nhiều khả năng nhắm mục tiêu vào các nút đã bị xâm phạm.
+
+![Alt text](image-6.png)
+
+Các tác giả của bài báo cho rằng ba chính sách triển khai được đề cập trước đó là thiếu sót vì chúng quá tĩnh hoặc quá ngẫu nhiên. 
+
+Kẻ tấn công có thể dễ dàng phát hiện và xác định chính sách triển khai tĩnh, trong khi chính sách triển khai động ngẫu nhiên lại rất 50-50 (hit-or-miss, khó có thể tin tưởng). 
+
+Chính sách triển khai theo cảnh báo hiệu quả hơn, nhưng nó vẫn không lý tưởng vì nó dựa trên giả định rằng kẻ tấn công sẽ luôn nhắm mục tiêu vào nút bị xâm phạm gần đây nhất.
+
+Để giải quyết những hạn chế này, các tác giả đề xuất một chính sách triển khai mới dựa trên học tăng cường (RL). RL là một loại máy học cho phép một tác nhân học cách hành xử trong một môi trường bằng cách thử và sai. Trong bối cảnh phòng thủ mạng dựa trên sự lừa dối, tác nhân sẽ là người bảo vệ và môi trường sẽ là mạng mục tiêu.
+
+Chính sách triển khai dựa trên RL sẽ hoạt động như sau:
+
+- Tác nhân sẽ bắt đầu bằng cách tìm hiểu trạng thái an ninh mạng. Điều này sẽ liên quan đến việc thu thập dữ liệu về lưu lượng mạng, trạng thái của các nút và các cảnh báo đã được đưa ra.
+
+- Khi tác nhân đã biết được trạng thái bảo mật mạng, nó sẽ sử dụng RL để dự đoán hành động tấn công tiếp theo của kẻ tấn công.
+
+- Dựa trên dự đoán, tác nhân sau đó sẽ quyết định vị trí đặt các nút tài nguyên đánh lừa.
+
+Các tác giả lập luận rằng chính sách triển khai dựa trên RL sẽ hiệu quả hơn các chính sách triển khai truyền thống vì nó có thể học hỏi từ hành vi của kẻ tấn công và điều chỉnh chiến lược của nó cho phù hợp.
+
+Chính sách triển khai dựa trên RL sẽ chính xác hơn khi quá trình học tập kéo dài hơn. Điều này là do tác nhân sẽ có nhiều dữ liệu hơn để tìm hiểu, điều này sẽ cho phép tác nhân đưa ra dự đoán tốt hơn về hành vi của kẻ tấn công.
+
+Các tác giả cũng đề cập rằng chính sách triển khai dựa trên RL sẽ hiệu quả hơn các chính sách triển khai truyền thống vì nó chỉ xem xét các nút có nhiều khả năng bị tấn công nhất. Điều này sẽ làm giảm không gian tìm kiếm và cho phép tổng đài viên tìm chính sách triển khai tối ưu nhanh hơn.
+
+# III. PRELIMINARY SCREENING OF EFFECTIVE DEPLOYMENT LOCATIONS FOR DECEPTION RESOURCES BASED ON THREAT PENETRATION GRAPH
+
+Văn bản đề cập đến "TN", viết tắt của mạng mục tiêu (Target Network - TN) mà những người bảo vệ đang cố gắng bảo vệ chống lại những kẻ tấn công tiềm năng. Không phải mọi nút (thiết bị hoặc hệ thống) trong mạng đều có thể bị kẻ tấn công khai thác thành công. Một số nút có thể không truy cập được do cấu trúc của mạng hoặc có thể có các biện pháp bảo mật mạnh.
+
+Triển khai tài nguyên lừa đảo:
+Mục tiêu là triển khai các tài nguyên đánh lừa một cách chiến lược để gây nhầm lẫn cho những kẻ tấn công. Những tài nguyên này có thể trông giống như các mục tiêu thực sự nhưng thực sự được thiết lập để thu thập thông tin về các phương pháp và ý định của kẻ tấn công.
+
+Biểu đồ thâm nhập mối đe dọa (Threat Penetration Graph - TPG):
+Khái niệm cốt lõi của phương pháp này là TPG. Đó là mô hình hai lớp giúp xác định các đường dẫn tấn công tiềm năng và đánh giá tính khả thi của các đường dẫn này đối với kẻ tấn công. Hai lớp là Biểu đồ thâm nhập mối đe dọa máy chủ (HTPG) và Biểu đồ thâm nhập mối đe dọa mạng (NTPG).
+
+![Alt text](image-7.png)
+
+Trên đây là một ví dụ đơn giản về GTPG (TPG hoàn chỉnh). Nó minh họa cách TPG có thể giúp xác định các nút không thể bị kẻ tấn công xâm nhập thành công, khiến chúng không phù hợp để triển khai tài nguyên đánh lừa.
+
+Biểu đồ thâm nhập mối đe dọa máy chủ (Host Threat Penetration Graph - HTPG):
+Lớp này đại diện cho các kịch bản cấp vi mô giữa mỗi cặp nút (nguồn và đích) trong mạng. Nó mô tả cách kẻ tấn công có khả năng xâm nhập vào một nút cụ thể và các đặc quyền mà chúng sẽ có được (Người dùng hoặc Gốc). Lớp này bao gồm thông tin về dịch vụ, lỗ hổng và xác suất tấn công thành công.
+
+Biểu đồ thâm nhập mối đe dọa mạng (Network Threat Penetration Graph - NTPG):
+Lớp này đại diện cho các mối quan hệ cấp độ vĩ mô giữa các cặp nút. Nó cho thấy khả năng kẻ tấn công có thể di chuyển từ nút này sang nút khác và giành được các đặc quyền (Người dùng hoặc Gốc). Lớp này tập trung vào xác suất di chuyển qua mạng.
+
+Sàng lọc vị trí triển khai:
+TPG được sử dụng để xác định những nút nào có thể bị kẻ tấn công xâm nhập thành công. Các nút không thể bị tấn công thành công được coi là vị trí triển khai không hợp lệ cho các tài nguyên đánh lừa. Mục tiêu là đặt các tài nguyên này một cách chiến lược ở những vị trí mà chúng có khả năng được nhắm mục tiêu.
+
+Ưu điểm của TPG:
+Phương pháp TPG có một vài ưu điểm so với các phương pháp truyền thống như Đồ thị tấn công (AG):
+
+- Đơn giản: Quá trình tạo TPG ít phức tạp hơn nên phù hợp với các mạng quy mô lớn.
+
+- Phân tầng: TPG sử dụng ý tưởng phân tầng (stratification), góp phần làm giảm độ phức tạp tính toán.
+
+- Hiệu ứng hình ảnh: cách trình bày của TPG rõ ràng và ngắn gọn, giúp người bảo vệ hiểu được trạng thái bảo mật của mạng dễ dàng hơn.
+
