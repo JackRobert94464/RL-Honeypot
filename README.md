@@ -28,5 +28,13 @@ This is an implementation of honeypot system using reinforcement learning. The s
 
 Clone the repository
 
-git clone 
+git clone https://github.com/JackRobert94464/RL-Honeypot
+
+Install the requirements
+
+pip install -r requirements.txt
+
+Run the program
+
+python main.py
 
