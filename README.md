@@ -22,10 +22,6 @@ This is an implementation of honeypot system using reinforcement learning. The s
 
 ## Installation
 
-- Nothing yet
-
-## Usage
-
 Clone the repository
 
 git clone https://github.com/JackRobert94464/RL-Honeypot
@@ -38,3 +34,6 @@ Run the program
 
 python main.py
 
+## Usage
+
+- Nothing yet
