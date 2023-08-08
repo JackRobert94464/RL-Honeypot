@@ -353,7 +353,7 @@ Phương trình (11) nói rằng một chính sách πd ánh xạ trạng thái 
 
 ![Alt text](image-12.png)
 
-Phương trình (12) thể hiện cách chúng ta đánh giá chính sách dựa trên phần thưởng tích lũy theo thời gian. Biến Rt đại diện cho phần thưởng nhận được tại thời điểm t và γ là hệ số chiết khấu xác định mức độ quan trọng của phần thưởng trong tương lai so với phần thưởng ngay lập tức. Bằng cách tổng hợp tất cả các phần thưởng chiết khấu từ thời điểm t trở đi (∑γiRt+i), chúng ta có được ước tính về giá trị hoặc tiện ích lâu dài của việc tuân theo chính sách cụ thể này.
+Phương trình (12) thể hiện cách chúng ta đánh giá chính sách dựa trên phần thưởng tích lũy theo thời gian. Biến Rt đại diện cho phần thưởng nhận được tại thời điểm t và γ là hệ số chiết khấu (discount factor) xác định mức độ quan trọng của phần thưởng trong tương lai so với phần thưởng ngay lập tức. Bằng cách tổng hợp tất cả các phần thưởng chiết khấu từ thời điểm t trở đi (∑γiRt+i), chúng ta có được ước tính về giá trị hoặc lợi ích lâu dài của việc tuân theo chính sách cụ thể này.
 
 ![Alt text](image-13.png)
 
