@@ -270,17 +270,22 @@ Mô hình RL trong hệ thống này có bốn yếu tố chính: trạng thái,
 
 ### 1. State
 
-Trạng thái của mô hình RL được định nghĩa trong Định nghĩa 4 là trạng thái an ninh mạng S. Trạng thái này phản ánh tình hình bảo mật của mạng mục tiêu và có thể tiết lộ dấu vết của kẻ tấn công cho người phòng thủ. Trong hệ thống ADS, Hệ thống giám sát mạng (NMS) có thể tạo báo động sau khi kẻ tấn công xâm nhập một nút bình thường. Vì lý do này, trạng thái an ninh mạng S có thể được biểu thị bằng các cảnh báo do NMS tạo ra.
+Trong bối cảnh bảo mật mạng, trạng thái bảo mật mạng (S) đề cập đến tình hình bảo mật tổng thể của mạng mục tiêu. Nó cung cấp thông tin chi tiết về các hoạt động của kẻ tấn công và giúp hiểu được mức độ an toàn hoặc dễ bị tổn thương của mạng.
 
-Công thức cho trạng thái an ninh mạng S được đưa ra trong Công thức (7). 
+Để xác định trạng thái này, các cảnh báo do Hệ thống quản lý mạng (NMS) tạo ra sẽ được sử dụng. Khi một cảnh báo được tạo cho một nút cụ thể trong mạng mục tiêu, nó chỉ ra rằng đã có một số hành vi xâm nhập hoặc hoạt động đáng ngờ trên nút đó. Trong trường hợp này, chúng tôi gán giá trị 1 cho ψti, giá trị này biểu thị liệu cảnh báo có được tạo cho nút i tại thời điểm t hay không.
+
+Mặt khác, nếu không có cảnh báo nào được tạo cho một nút cụ thể tại thời điểm t, chúng tôi sẽ gán ψti với giá trị bằng 0.
 
 ![Alt text](image-9.png)
 
-Trong công thức này, k là số nút bình thường trong TN mạng mục tiêu. 
+Phương trình (7), St = (ψt1 , ψt2 , . . . , ψtk), biểu thị cách chúng ta có thể biểu thị và nắm bắt tất cả các cảnh báo riêng lẻ này dưới dạng một biểu diễn toàn diện được gọi là "trạng thái an ninh mạng". Điều này có nghĩa là tại bất kỳ thời điểm t nào trong hệ thống của chúng tôi:
 
-Đối với mỗi nút bình thường i, nếu NMS tạo cảnh báo về nút i, thì ψi = 1. Nếu NMS không tạo cảnh báo về nút i, thì ψi = 0. Kích thước của không gian trạng thái an ninh mạng là 2k.
+- Nếu NMS phát cảnh báo về nút i: thì đặt ψti = 1.
+- Nếu NMS không phát ra bất kỳ cảnh báo nào về nút i: thì đặt ψti = 0.
 
-Trạng thái cuối cùng của trạng thái an ninh mạng S có thể là thất bại hoặc thành công. Nếu chính sách triển khai của người bảo vệ không thể bẫy kẻ tấn công, điều đó có nghĩa là kẻ tấn công đạt được mục tiêu tấn công của mình và phòng thủ không thành công, thì trạng thái an ninh mạng sẽ thay đổi thành Sfailfinal. Trong một trường hợp khác, nếu chính sách bẫy kẻ tấn công, nghĩa là phòng thủ thành công, thì trạng thái bảo mật mạng sẽ chuyển thành Ssuccessfinal.
+Tóm tắt:
+- Kích thước của không gian trạng thái an ninh mạng của chúng tôi được xác định bởi k nút bình thường có trong TN mạng mục tiêu của chúng tôi.
+- Các trạng thái cuối cùng có thể là Sfail_FINAL hoặc Ssuccess_final tùy thuộc vào việc chính sách triển khai của bên phòng thủ có bẫy/ngăn chặn nỗ lực của kẻ tấn công thành công hay không.
 
 ### 2. Action
 
