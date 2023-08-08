@@ -363,7 +363,7 @@ Phương trình (14) biểu thị quy tắc cập nhật để ước tính giá
 
 Phương trình được viết là:
 
-ˆQn(s, a) ← (1−αn) ˆQn-1(s, a)+ αn[r + γ maxa' ˆQ_n-1_(s',a')]
+![Alt text](image-15.png)
 
 Tại đây:
 
@@ -379,17 +379,17 @@ Tại đây:
 
 Hãy chia nhỏ từng thành phần:
 
-(1 - α_n) * ˆQ_n_−_1_(s,a):
+![Alt text](image-16.png)
 
 Thuật ngữ này đại diện cho việc cập nhật ước tính hiện tại của chúng ta bằng cách kết hợp nó với kiến thức trước đó. Tỷ lệ học tập α xác định mức độ quan trọng mà chúng ta dành cho thông tin mới so với các ước tính hiện có.
 
-α_n * [r + γ max_a'_ { } ]:
+![Alt text](image-17.png)
 
 Thuật ngữ này giải thích cho việc kết hợp thông tin mới vào ước tính của chúng ta. Nó bao gồm hai phần:
 
 - r: Phần thưởng ngay lập tức nhận được khi chuyển từ trạng thái s sang trạng thái next_state s'. Phần thưởng này phản ánh mức độ có lợi hoặc bất lợi của quá trình chuyển đổi cụ thể đó.
 
-- γ * max_a'_ [ ] : Phần này nắm bắt ước tính phần thưởng tiềm năng trong tương lai bằng cách xem xét giá trị Q ước tính tối đa trong số tất cả các hành động có thể xảy ra tại next_state s'. Nhân giá trị này với hệ số chiết khấu γ đảm bảo rằng chúng ta ưu tiên phần thưởng tích lũy dài hạn trong khi tính đến sự không chắc chắn.
+- ![Alt text](image-18.png) : Phần này nắm bắt ước tính phần thưởng tiềm năng trong tương lai bằng cách xem xét giá trị Q ước tính tối đa trong số tất cả các hành động có thể xảy ra tại next_state s'. Nhân giá trị này với hệ số chiết khấu γ đảm bảo rằng chúng ta ưu tiên phần thưởng tích lũy dài hạn trong khi tính đến sự không chắc chắn.
 
 Bằng cách áp dụng lặp đi lặp lại quy tắc cập nhật này trong các chu kỳ đào tạo, thuật toán dần dần tinh chỉnh các ước tính của nó dựa trên các kết quả quan sát được và điều chỉnh chúng theo hướng thể hiện chính xác hơn các phần thưởng tích lũy dự kiến cho các cặp trạng thái-hành động khác nhau.
 
@@ -399,7 +399,7 @@ Phương trình (15) biểu thị phép tính tốc độ học tập αn trong 
 
 Trong phương trình (15), αn được tính như sau:
 
-αn = 1 / (1 + visitn(s, a))
+![Alt text](image-19.png)
 
 Tại đây:
 
