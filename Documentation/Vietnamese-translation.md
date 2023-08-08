@@ -289,24 +289,23 @@ Tóm tắt:
 
 ### 2. Action
 
-Người bảo vệ có sẵn m nút tài nguyên đánh lừa để triển khai và mỗi nút có thể được triển khai đằng sau một trong k nút thông thường. Hành động của người phòng thủ được thể hiện bằng ma trận Ad có kích thước mxk. Mỗi mục của ma trận, aij, là 0 hoặc 1, trong đó:
+"Hành động triển khai tài nguyên đánh lừa" đề cập đến các hành động được thực hiện bởi người bảo vệ để triển khai các nút tài nguyên đánh lừa trong trạng thái an ninh mạng. 
 
-aij = 1 nếu người phòng thủ triển khai nút tài nguyên lừa dối n phía sau nút bình thường nj
-aij = 0 nếu người phòng thủ không triển khai nút tài nguyên lừa dối n phía sau nút bình thường nj
+Người bảo vệ có thể chọn triển khai một nút tài nguyên đánh lừa đằng sau một nút bình thường, được biểu thị bằng ξnjfr, trong đó ξ là một biến nhị phân biểu thị việc triển khai (1) hoặc không triển khai (0). Kích thước của không gian hành động của người bảo vệ được xác định bởi số nút tài nguyên đánh lừa có sẵn (m) và số nút bình thường trong mạng (k).
+
+Phương trình (8) biểu diễn ma trận hành động triển khai Quảng cáo của hậu vệ. Nó là một ma trận có kích thước m × k, trong đó m là số nút tài nguyên đánh lừa có sẵn và k là số nút bình thường trong mạng.
+
+Các phần tử ξnjfri trong ma trận này biểu thị nút tài nguyên đánh lừa njfr đã được triển khai phía sau một nút bình thường cụ thể ni hay chưa. Nếu ξnjfri = 1, có nghĩa là có triển khai; nếu ξnjfri = 0, có nghĩa là không có triển khai.
 
 ![Alt text](image-10.png)
 
-Kích thước của không gian hành động là 2m^k. Điều này là do có 2 lựa chọn cho mỗi nút trong số m nút tài nguyên đánh lừa, do đó, có tổng cộng 2^m lựa chọn cho toàn bộ vectơ hành động.
-
-Hoạt động của mô hình RL như sau:
-
-- Nếu người phòng thủ triển khai nút tài nguyên đánh lừa phía sau nút bình thường ni, thì hành động đó là ξnj​fr​,i=1.
-
-- Nếu người phòng thủ triển khai không có nút tài nguyên lừa dối phía sau nút bình thường ni, thì hành động là ξnj​fr​,i=0.
-
-Kích thước của không gian hành động của người bảo vệ là m×k, trong đó m là số nút tài nguyên lừa dối và k là số nút bình thường. Điều này có nghĩa là người bảo vệ có thể chọn triển khai nút tài nguyên đánh lừa đằng sau bất kỳ nút nào trong số m nút tài nguyên đánh lừa hoặc họ có thể chọn triển khai không có nút tài nguyên đánh lừa nào đằng sau bất kỳ nút nào trong số k nút bình thường.
+Trong phương trình (9), đối với bất kỳ giá trị j đã cho nào trong khoảng từ 1 đến m đại diện cho một nút tài nguyên đánh lừa cụ thể nj:
 
 ![Alt text](image-11.png)
+
+Phương trình này nói rằng khi chúng ta tính tổng tất cả các giá trị cho i từ 1 đến k đại diện cho tất cả các vị trí có thể có để triển khai nút đánh lừa cụ thể này nj trong phạm vi các vị trí có thể có của nó giữa các nút bình thường ni, thì tổng sẽ bằng một. 
+
+Phương trình có nghĩa là đối với mỗi nút tài nguyên đánh lừa, tổng xác suất triển khai của nó tại tất cả các nút thông thường phải bằng một. Điều này đảm bảo rằng mỗi nút tài nguyên đánh lừa được triển khai tại chính xác một nút bình thường.
 
 Các ký hiệu trong phương trình là:
 
@@ -315,8 +314,6 @@ k: số nút bình thường trong mạng.
 nj​fr​: nút tài nguyên đánh lừa thứ j, là nút giả bắt chước hành vi của nút thật để đánh lừa kẻ tấn công.
 ni​: nút bình thường thứ i, là nút thực thực hiện một số chức năng trong mạng.
 (mxk​): kích thước của không gian hành động của người phòng thủ, là số cách để chọn k nút thông thường từ tổng số m nút trong mạng.
-
-Phương trình có nghĩa là đối với mỗi nút tài nguyên đánh lừa, tổng xác suất triển khai của nó tại tất cả các nút thông thường phải bằng một. Điều này đảm bảo rằng mỗi nút tài nguyên đánh lừa được triển khai tại chính xác một nút bình thường.
 
 ### 3. Reward
 
