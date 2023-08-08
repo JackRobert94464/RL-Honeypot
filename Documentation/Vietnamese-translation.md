@@ -462,3 +462,38 @@ Dựa trên các yếu tố này:
 
 Có thể suy ra rằng Thuật toán 1 thể hiện tốc độ hội tụ nhanh và độ ổn định tốt.
 
+# V. EXPERIMENTS AND ANALYSIS
+
+Mạng thử nghiệm được chia thành các vùng khác nhau, bao gồm DMZ, Mạng con 1, Mạng con 2 và Mạng con 3, mỗi vùng chứa nhiều máy chủ và máy chủ khác nhau. Thử nghiệm nhằm mục đích xác minh việc triển khai các tài nguyên đánh lừa dựa trên học tăng cường và thông tin về máy chủ và lỗ hổng được cung cấp trong Bảng 2.
+
+Hãy đi sâu vào chi tiết hơn về cấu trúc liên kết của mạng thử nghiệm và thông tin được cung cấp trong Bảng 1 và 2.
+
+Mạng thử nghiệm được chia thành bốn vùng: DMZ, Mạng con 1, Mạng con 2 và Mạng con 3. Dưới đây là bảng phân tích của từng vùng:
+
+![Alt text](image-20.png)
+
+- DMZ (Demilitarized Zone): Đây là một đoạn mạng riêng đóng vai trò là vùng đệm giữa mạng tin cậy nội bộ (Subnet) và mạng không tin cậy bên ngoài (internet). Trong thử nghiệm này, có một máy chủ web nằm trong DMZ.
+
+- Subnet 1: Subnet này gồm 2 thành phần là pad và host. Bàn phím đề cập đến một số loại thiết bị hoặc hệ thống được sử dụng cho mục đích xác thực hoặc bảo mật. Máy chủ là máy tính trong mạng con này.
+
+- Mạng con 2: Mạng con này bao gồm ba máy chủ/máy tính.
+
+- Mạng con 3: Mạng con này chứa ba máy chủ - cụ thể là có một máy chủ in, một máy chủ tệp và một máy chủ cơ sở dữ liệu.
+
+
+Bây giờ hãy chuyển sang Bảng:
+
+Bảng 1 cung cấp thông tin về các quy tắc truy cập dịch vụ trong mạng mục tiêu. Nó phác thảo cách các máy chủ khác nhau có thể truy cập các dịch vụ trong các mạng con cụ thể.
+
+![Alt text](image-21.png)
+
+Ví dụ:
+    - Các máy chủ bên ngoài mạng mục tiêu không thể truy cập trực tiếp vào Pad hoặc Máy chủ
+    - Tuy nhiên, chúng có thể được truy cập từ hai máy chủ này thông qua thiết bị USB hoặc các thiết bị truyền dẫn khác do thao tác của người dùng không đúng cách.
+    - Ngoài ra, nó đề cập rằng Host4 có mức bảo mật cao hơn là thực thể bị cô lập về mặt vật lý.
+
+
+Bảng 2 cung cấp thông tin chi tiết về các máy chủ/máy tính khác nhau có trong các mạng con khác nhau cùng với các lỗ hổng liên quan được xác định bằng cách sử dụng hệ thống chấm điểm CVSS kết hợp với công cụ quét Nessus.
+
+![Alt text](image-22.png)
+
