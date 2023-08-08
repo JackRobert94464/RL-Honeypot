@@ -289,7 +289,7 @@ Tóm tắt:
 
 ### 2. Action
 
-Người bảo vệ có sẵn m nút tài nguyên đánh lừa để triển khai và mỗi nút có thể được triển khai đằng sau một trong k nút thông thường. Hành động của người phòng thủ được thể hiện bằng ma trận Quảng cáo có kích thước mxk. Mỗi mục của ma trận, aij, là 0 hoặc 1, trong đó:
+Người bảo vệ có sẵn m nút tài nguyên đánh lừa để triển khai và mỗi nút có thể được triển khai đằng sau một trong k nút thông thường. Hành động của người phòng thủ được thể hiện bằng ma trận Ad có kích thước mxk. Mỗi mục của ma trận, aij, là 0 hoặc 1, trong đó:
 
 aij = 1 nếu người phòng thủ triển khai nút tài nguyên lừa dối n phía sau nút bình thường nj
 aij = 0 nếu người phòng thủ không triển khai nút tài nguyên lừa dối n phía sau nút bình thường nj
