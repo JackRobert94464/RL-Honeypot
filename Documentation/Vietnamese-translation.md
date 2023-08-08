@@ -250,11 +250,11 @@ Hình minh họa mô hình để chọn chính sách triển khai tài nguyên �
 
 Trong mô hình:
 
-- Người bảo vệ tương đương với agent. 
+- Người bảo vệ (Defender) tương đương với agent. 
 
-- Mạng đích và kẻ tấn công cùng nhau tạo nên môi trường (environment). 
+- Mạng đích (target network) và kẻ tấn công (attacker) cùng nhau tạo nên môi trường (environment). 
 
-- Hệ thống giám sát mạng tương đương với cảm biến (sensor) của môi trường. 
+- Hệ thống giám sát mạng (NMS) tương đương với cảm biến (sensor) của môi trường. 
 
 Tại mỗi thời điểm bước t, hệ thống giám sát mạng sẽ tích hợp một số cảnh báo, đại diện cho trạng thái an ninh mạng St. Trạng thái an ninh mạng là thước đo mức độ an toàn hoặc dễ bị tấn công của mạng mục tiêu, dựa trên các yếu tố như số và vị trí của các nút bị xâm nhập, số lượng và vị trí của các tài nguyên đánh lừa, số lượng và loại cảnh báo. 
 
