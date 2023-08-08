@@ -272,19 +272,19 @@ Mô hình RL trong hệ thống này có bốn yếu tố chính: trạng thái,
 
 Trong bối cảnh bảo mật mạng, trạng thái bảo mật mạng (S) đề cập đến tình hình bảo mật tổng thể của mạng mục tiêu. Nó cung cấp thông tin chi tiết về các hoạt động của kẻ tấn công và giúp hiểu được mức độ an toàn hoặc dễ bị tổn thương của mạng.
 
-Để xác định trạng thái này, các cảnh báo do Hệ thống quản lý mạng (NMS) tạo ra sẽ được sử dụng. Khi một cảnh báo được tạo cho một nút cụ thể trong mạng mục tiêu, nó chỉ ra rằng đã có một số hành vi xâm nhập hoặc hoạt động đáng ngờ trên nút đó. Trong trường hợp này, chúng tôi gán giá trị 1 cho ψti, giá trị này biểu thị liệu cảnh báo có được tạo cho nút i tại thời điểm t hay không.
+Để xác định trạng thái này, các cảnh báo do Hệ thống quản lý mạng (NMS) tạo ra sẽ được sử dụng. Khi một cảnh báo được tạo cho một nút cụ thể trong mạng mục tiêu, nó chỉ ra rằng đã có một số hành vi xâm nhập hoặc hoạt động đáng ngờ trên nút đó. Trong trường hợp này, chúng ta gán giá trị 1 cho ψti, giá trị này biểu thị liệu cảnh báo có được tạo cho nút i tại thời điểm t hay không.
 
-Mặt khác, nếu không có cảnh báo nào được tạo cho một nút cụ thể tại thời điểm t, chúng tôi sẽ gán ψti với giá trị bằng 0.
+Mặt khác, nếu không có cảnh báo nào được tạo cho một nút cụ thể tại thời điểm t, chúng ta sẽ gán ψti với giá trị bằng 0.
 
 ![Alt text](image-9.png)
 
-Phương trình (7), St = (ψt1 , ψt2 , . . . , ψtk), biểu thị cách chúng ta có thể biểu thị và nắm bắt tất cả các cảnh báo riêng lẻ này dưới dạng một biểu diễn toàn diện được gọi là "trạng thái an ninh mạng". Điều này có nghĩa là tại bất kỳ thời điểm t nào trong hệ thống của chúng tôi:
+Phương trình (7), St = (ψt1 , ψt2 , . . . , ψtk), biểu thị cách chúng ta có thể biểu thị và nắm bắt tất cả các cảnh báo riêng lẻ này dưới dạng một biểu diễn toàn diện được gọi là "trạng thái an ninh mạng". Điều này có nghĩa là tại bất kỳ thời điểm t nào trong hệ thống của chúng ta:
 
 - Nếu NMS phát cảnh báo về nút i: thì đặt ψti = 1.
 - Nếu NMS không phát ra bất kỳ cảnh báo nào về nút i: thì đặt ψti = 0.
 
 Tóm tắt:
-- Kích thước của không gian trạng thái an ninh mạng của chúng tôi được xác định bởi k nút bình thường có trong TN mạng mục tiêu của chúng tôi.
+- Kích thước của không gian trạng thái an ninh mạng của chúng ta được xác định bởi k nút bình thường có trong TN mạng mục tiêu của chúng ta.
 - Các trạng thái cuối cùng có thể là Sfail_FINAL hoặc Ssuccess_final tùy thuộc vào việc chính sách triển khai của bên phòng thủ có bẫy/ngăn chặn nỗ lực của kẻ tấn công thành công hay không.
 
 ### 2. Action
@@ -450,7 +450,7 @@ Thuật toán 1 là thuật toán đào tạo dựa trên Q-Learning. Dưới đ
 
 11: Chính sách trả về πd : Sau khi hoàn thành tất cả các lần lặp lại, hãy trả về chính sách tối ưu bằng cách chọn hành động có giá trị cao nhất ở mỗi trạng thái nhất định theo các giá trị đã học được từ các bước trước đó.
 
-Theo định lý hội tụ của thuật toán Q-learning, khi mỗi cặp trạng thái-hành động được truy cập vô hạn, sự khác biệt giữa giá trị Q thực (Q(s,a)) và giá trị ước tính của chúng ta (ˆQn(s) ,a)) sẽ tiến về 0. Điều này có nghĩa là khi chúng tôi tiếp tục đào tạo và truy cập tất cả các cặp hành động trạng thái có thể có nhiều lần, các ước tính của chúng tôi ngày càng trở thành đại diện chính xác cho các giá trị thực của chúng.
+Theo định lý hội tụ của thuật toán Q-learning, khi mỗi cặp trạng thái-hành động được truy cập vô hạn, sự khác biệt giữa giá trị Q thực (Q(s,a)) và giá trị ước tính của chúng ta (ˆQn(s) ,a)) sẽ tiến về 0. Điều này có nghĩa là khi chúng ta tiếp tục đào tạo và truy cập tất cả các cặp hành động trạng thái có thể có nhiều lần, các ước tính của chúng ta ngày càng trở thành đại diện chính xác cho các giá trị thực của chúng.
 
 Ngoài ra, Thuật toán 1 có độ phức tạp tính toán là O(n), trong đó n đại diện cho số bước đào tạo hoặc số lần lặp lại. Điều này chỉ ra rằng khi chúng ta tăng số bước huấn luyện, thì các yêu cầu tính toán để cập nhật giá trị Q cũng tăng theo tuyến tính.
 
@@ -497,3 +497,96 @@ Bảng 2 cung cấp thông tin chi tiết về các máy chủ/máy tính khác 
 
 ![Alt text](image-22.png)
 
+Threat penetration graphs (TPG) are used to analyze the target network and identify suitable deployment locations for deception resources. 
+
+Figure 7 shows a specific TPG called the Host Threat Penetration Graph (HTPG). This graph represents the path that an attacker can take from their initial position to reach a specific target node, in this case, the web server. The nodes in this graph represent different hosts or devices in the network.
+
+![Alt text](image-23.png)
+
+Biểu đồ thâm nhập mối đe dọa mạng (NTPG), được hiển thị trong Hình 8, là biểu diễn toàn diện hơn về tất cả các hành động tấn công có thể xảy ra mà kẻ tấn công có thể thực hiện trong toàn bộ mạng mục tiêu. Nó bao gồm tất cả các nút dễ bị tổn thương và các đường tấn công tiềm ẩn. Có bảy vị trí triển khai hiệu quả cho các nút tài nguyên đánh lừa, như trong Hình 8.
+
+![Alt text](image-24.png)
+
+Các tác giả giả định rằng có hai nút tài nguyên đánh lừa có sẵn để triển khai (Nfr = {ni fr |i = 1, 2}). Điều này có nghĩa là họ xem xét có hai điểm cụ thể nơi họ có thể đặt tài nguyên đánh lừa của mình trong mạng mục tiêu.
+
+Để đánh giá chính sách và thuật toán của họ, các tác giả mô phỏng cuộc tấn công thâm nhập của kẻ tấn công vào mạng mục tiêu từ một nguồn bên ngoài. Kẻ tấn công thực hiện một số cuộc tấn công một bước cho đến khi chúng xâm nhập thành công mục tiêu mong muốn (trong trường hợp này là máy chủ cơ sở dữ liệu). Khi sự xâm nhập thành công xảy ra tại bất kỳ nút nào thuộc Nfr (các nút tài nguyên đánh lừa được triển khai), nó được coi là quá trình chuyển đổi trạng thái thành công (Success final). Tuy nhiên, nếu kẻ tấn công quản lý để xâm nhập trực tiếp vào máy chủ cơ sở dữ liệu mà không gặp phải bất kỳ tài nguyên lừa đảo nào được triển khai trên đường đi của nó, thì đó được coi là quá trình chuyển trạng thái thất bại (Sfail final ).
+
+Các thí nghiệm mô phỏng được thực hiện bởi các tác giả sử dụng dữ liệu về chuyển đổi trạng thái an ninh mạng hoặc báo động để đào tạo thuật toán của họ. Điều quan trọng cần lưu ý là các điều kiện mô phỏng này không chỉ phù hợp với các mạng trong thế giới thực mà còn giúp việc triển khai dễ dàng hơn.
+
+Bằng cách phân tích các TPG này, chúng ta có thể xác định nút nào phù hợp để triển khai tài nguyên đánh lừa và nút nào không. Ví dụ: nếu không có lỗ hổng nào trên một số nút máy chủ hoặc thiết bị như Host 4 và máy chủ in như được chỉ ra bởi sự vắng mặt của chúng trong NTPG, thì việc triển khai các tài nguyên đánh lừa trên chúng là vô nghĩa vì chúng sẽ không bao giờ bị kẻ tấn công xâm nhập.
+
+Mặt khác, nếu một số nút nhất định như Pad, Máy chủ web, Host 1-3, Máy chủ tệp và Máy chủ dữ liệu thuộc về NTPG, điều đó có nghĩa là chúng có thể bị xâm nhập vào một thời điểm nào đó. Các nút dễ bị tổn thương được xác định này trở thành vị trí triển khai phù hợp để đánh lừa tài nguyên.
+
+Sàng lọc sơ bộ dựa trên TPG này giúp giảm các hành động triển khai không cần thiết bằng cách thu hẹp trọng tâm của chúng ta chỉ vào các khu vực có liên quan nơi các cuộc tấn công có thể xảy ra. Điều này cuối cùng sẽ cải thiện hiệu quả khi thiết kế chính sách triển khai bằng các kỹ thuật học tăng cường.
+
+Các tác giả đề xuất một chỉ số đánh giá có tên là Xác suất thành công phòng thủ (Defense Success Probability - dsp) để đánh giá định lượng chất lượng chính sách của họ đối với việc triển khai các tài nguyên đánh lừa trong an ninh mạng. Dsp được định nghĩa là tỷ lệ của các thí nghiệm phòng vệ thành công trên tổng số các thí nghiệm, được biểu thị bằng phần trăm.
+
+Xác suất thành công phòng thủ (dsp) là một chỉ số đánh giá được giới thiệu trong bài báo để đo lường hiệu quả của chính sách triển khai các tài nguyên đánh lừa. Nó đánh giá một cách định lượng mức độ thành công của các thí nghiệm phòng thủ trong việc bảo vệ chống lại các cuộc tấn công. Định nghĩa nói rằng nếu một người bảo vệ thực hiện một chính sách triển khai cụ thể πd, thì dsp(πd) được tính như sau:
+
+![Alt text](image-25.png)
+
+- num đại diện cho số thí nghiệm phòng thủ thành công.
+
+- sum biểu thị tổng số thí nghiệm được tiến hành.
+
+dsp(πd) bằng num chia cho sum, nhân với 100%. Bằng cách biểu thị nó dưới dạng phần trăm, việc so sánh và giải thích kết quả trở nên dễ dàng hơn.
+
+Bảng 3: Bảng này trình bày các thông số khác nhau được sử dụng trong thiết lập thử nghiệm của họ. Các tham số này bao gồm các yếu tố như tỷ lệ âm tính giả (FNR), tỷ lệ dương tính giả (FPR) và các biến số khác liên quan đến việc đánh giá các cài đặt hoặc tình huống khác nhau liên quan đến bảo mật mạng.
+
+![Alt text](image-26.png)
+
+Hình 10 mô tả kết quả của một thí nghiệm mô phỏng về chính sách triển khai tĩnh đối với các tài nguyên đánh lừa. 
+
+Thử nghiệm cho thấy rằng trong số 21 chính sách triển khai tĩnh có thể, chính sách triển khai hai nút tài nguyên đánh lừa ở vị trí thứ nhất và thứ hai đạt được hiệu quả phòng thủ tốt nhất, với xác suất phòng thủ thành công (dsp) gần 75,6%. 
+
+Tuy nhiên, điều quan trọng cần lưu ý là hiệu quả của chính sách này có thể bị ảnh hưởng lớn bởi chiến lược của kẻ tấn công và việc tìm ra chính sách triển khai tĩnh tối ưu là một nhiệm vụ đầy thách thức. Ngoài ra, chính sách triển khai tĩnh dễ bị kẻ tấn công phát hiện và nhận dạng.
+
+![Alt text](image-27.png)
+
+Kết quả của chính sách triển khai động-ngẫu nhiên đối với các tài nguyên đánh lừa như thể hiện trong Hình 11. 
+
+![Alt text](image-28.png)
+
+Chính sách này, do tính ngẫu nhiên của nó, thể hiện các xác suất thành công phòng thủ (dsp) khác nhau trong các thử nghiệm khác nhau, từ mức tối đa xấp xỉ 75% đến mức tối thiểu là 15,8%. Mặc dù nó có thể cải thiện phần nào khó khăn của kẻ tấn công trong việc xác định các vị trí tài nguyên đánh lừa, nhưng hiệu quả tổng thể của nó được coi là kém.
+
+Hiệu quả của hai chính sách triển khai là chính sách theo dấu báo động (following-alarm policy) và phương pháp do nhóm tác giả đề xuất. 
+
+Hình 12 cho thấy hiệu quả của chính sách cảnh báo sau vẫn ổn định trong các cài đặt cụ thể của FNR và FPR, nhưng giảm khi FNR và FPR tăng. 
+
+![Alt text](image-29.png)
+
+Ngược lại, Hình 13 chứng minh rằng phương pháp của các tác giả đạt được xác suất phòng thủ thành công cao và cải thiện đều đặn, đạt gần 80% khi tăng các bước huấn luyện, bất kể cài đặt FNR và FPR.
+
+![Alt text](image-30.png)
+
+Hình 14 cho thấy thời gian đào tạo phương pháp của các tác giả. Nó tiết lộ rằng thời gian đào tạo tăng tuyến tính khi tăng số bước đào tạo mà không bị ảnh hưởng bởi cài đặt FNR và FPR. Nói cách khác, bất kể các cài đặt này thay đổi như thế nào, thời gian đào tạo vẫn nhất quán miễn là có nhiều bước hơn được thêm vào để đào tạo thuật toán hơn nữa.
+
+![Alt text](image-31.png)
+
+Các tác giả thảo luận về so sánh mà họ đã thực hiện giữa các phương pháp khác nhau để triển khai các tài nguyên đánh lừa. Họ nhấn mạnh một số yếu tố chính góp phần vào hiệu quả của các phương pháp này.
+
+Đầu tiên, họ đề cập rằng việc có một kịch bản chi tiết là rất quan trọng. Điều này có nghĩa là việc xem xét các khía cạnh khác nhau của tình huống kẻ tấn công-người bảo vệ và hiểu cách những kẻ tấn công có thể hành xử trong các tình huống khác nhau có thể giúp thông báo chiến lược triển khai.
+
+Thứ hai, các giả định lỏng lẻo về chiến lược của kẻ tấn công được coi là có lợi. Bằng cách không đưa ra các giả định hoặc ràng buộc nghiêm ngặt về cách những kẻ tấn công sẽ hành động, nó cho phép các chiến lược triển khai thực tế và thiết thực hơn.
+
+Các tác giả cũng nhấn mạnh tầm quan trọng của việc triển khai động so với các chính sách triển khai tĩnh. Triển khai tĩnh liên quan đến các vị trí cố định cho tài nguyên đánh lừa mà kẻ tấn công có thể dễ dàng phát hiện. Triển khai động điều chỉnh các vị trí tài nguyên dựa trên những thay đổi về trạng thái bảo mật mạng, khiến chúng khó xác định và bỏ qua hơn.
+
+Ngoài ra, lừa dối tích cực được đề cập như một cách để cải thiện khả năng mắc bẫy đối với những kẻ tấn công. Lừa dối tích cực liên quan đến việc tích cực tương tác với các mối đe dọa tiềm ẩn thay vì chỉ thụ động chờ đợi chúng tương tác với tài nguyên mồi nhử.
+
+Cuối cùng, tính dễ triển khai được nhấn mạnh như một yếu tố quan trọng vì nó quyết định liệu các phương pháp này có thể được sử dụng rộng rãi hay không.
+
+Dựa trên sự so sánh của họ với các phương pháp hiện có sử dụng các tiêu chí này (xem xét kịch bản chi tiết; giả định lỏng lẻo; triển khai năng động; khả năng đánh lừa chủ động; dễ triển khai), họ kết luận rằng phương pháp của họ nổi bật vì nó không có các giả định hoặc ràng buộc chặt chẽ về một chiến lược của kẻ tấn công trong khi vẫn đạt được các đặc tính thỏa đáng về xác suất thành công của phòng thủ.
+
+# VI. CONCLUSION
+
+Các tác giả thảo luận về kết luận của bài nghiên cứu của họ. Đầu tiên, họ chỉ ra rằng hệ thống phòng thủ mạng dựa trên sự lừa dối (DCD) đã trở thành một phần quan trọng của an ninh mạng. Tuy nhiên, họ cũng lưu ý rằng các nghiên cứu hiện tại về DCD chưa quan tâm đầy đủ đến việc triển khai tối ưu các tài nguyên đánh lừa. Điều này có thể hạn chế hiệu quả của DCD.
+
+Để giải quyết vấn đề này, các tác giả đề xuất một chính sách triển khai thông minh cho các tài nguyên đánh lừa dựa trên học tăng cường (RL). RL là một loại máy học cho phép các tác nhân tìm hiểu các chính sách tối ưu bằng cách thử và sai. Trong ngữ cảnh của DCD, tác nhân sẽ là người bảo vệ và mục tiêu sẽ là tìm hiểu chính sách tối ưu để triển khai các tài nguyên đánh lừa để đánh lừa những kẻ tấn công.
+
+Phương pháp của các tác giả hoạt động bằng cách phân tích kịch bản kẻ tấn công-người bảo vệ đầu tiên và chiến lược của kẻ tấn công. Sau đó, họ sử dụng các phương pháp chính thức để phân tích những điều không chắc chắn và một số chính sách triển khai. Tiếp theo, họ đề xuất một phương pháp sàng lọc sơ bộ có thể xác định được các vị trí triển khai hiệu quả cho các tài nguyên đánh lừa dựa trên biểu đồ thâm nhập mối đe dọa (TPG). Cuối cùng, họ thiết kế một thuật toán đào tạo Q-learning để tìm chính sách triển khai tối ưu cho các tài nguyên đánh lừa.
+
+Kết quả thực nghiệm cho thấy phương pháp của nhóm tác giả nâng cao hiệu quả triển khai tài nguyên lừa đảo. Họ cũng so sánh phương pháp của họ với các công việc tương tự khác và kết luận rằng đó là phương pháp duy nhất không đưa ra các giả định và ràng buộc nghiêm ngặt về chiến lược của kẻ tấn công.
+
+Trong tương lai, các tác giả có kế hoạch mở rộng công việc của họ để hỗ trợ các mạng quy mô lớn và nghiên cứu mối quan hệ giữa số lượng nút tài nguyên đánh lừa và hiệu quả của DCD.
+
+Tóm lại, các tác giả của bài báo này đề xuất một phương pháp mới để triển khai các tài nguyên đánh lừa trong các hệ thống DCD. Phương pháp của họ dựa trên RL và không đưa ra các giả định nghiêm ngặt về chiến lược của kẻ tấn công. Kết quả thử nghiệm cho thấy phương pháp của họ cải thiện hiệu quả của việc triển khai tài nguyên lừa đảo.
