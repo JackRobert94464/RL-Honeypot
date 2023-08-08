@@ -45,7 +45,7 @@ Bài báo tiếp tục bằng cách nêu vấn đề nghiên cứu về cách tr
 
 Bài báo lập luận rằng hầu hết các phương pháp triển khai hiện có là tĩnh - static, nghĩa là chúng không coi trạng thái của kẻ tấn công (ý định, khả năng và chiến lược) là một biến số có thể thay đổi theo thời gian. Bài viết xem xét một số phương pháp triển khai tĩnh sử dụng lý thuyết đồ thị, lý thuyết trò chơi hoặc công nghệ mạng được xác định bằng phần mềm (SDN) để mô hình hóa hành vi của kẻ tấn công, thiết kế chuỗi hoặc cụm mồi nhử hoặc thay đổi địa chỉ IP của tài nguyên lừa đảo. Tuy nhiên, bài báo chỉ trích những phương pháp này là quá lý tưởng hoặc không hiệu quả, bởi vì chúng cố gắng ngăn chặn những kẻ tấn công khám phá ra các tài nguyên lừa đảo hơn là chủ động dụ dỗ kẻ tấn công, hoặc chúng đưa ra nhiều giả định và ràng buộc nghiêm ngặt về chiến lược của kẻ tấn công mà không thể thỏa mãn trong thực tế. 
 
-Sau đó, bài báo giới thiệu học tăng cường (RL) như một kỹ thuật trí tuệ nhân tạo (AI) đầy hứa hẹn có thể tự động điều chỉnh vị trí của các tài nguyên đánh lừa theo trạng thái an ninh mạng và bẫy kẻ tấn công với xác suất cao. RL là một kỹ thuật cho phép một tác nhân học hỏi từ các hành động và phần thưởng của chính nó trong một môi trường không chắc chắn và đã được áp dụng thành công cho nhiều lĩnh vực, chẳng hạn như rô-bốt, lái xe tự động và trò chơi trên bàn cờ. 
+Sau đó, bài báo giới thiệu học tăng cường (RL) như một kỹ thuật trí tuệ nhân tạo (AI) đầy hứa hẹn có thể tự động điều chỉnh vị trí của các tài nguyên đánh lừa theo trạng thái an ninh mạng và bẫy kẻ tấn công với xác suất cao. RL là một kỹ thuật cho phép một agent học hỏi từ các hành động và phần thưởng của chính nó trong một môi trường không chắc chắn và đã được áp dụng thành công cho nhiều lĩnh vực, chẳng hạn như rô-bốt, lái xe tự động và trò chơi trên bàn cờ. 
 
 Bài báo tuyên bố rằng phương pháp của họ là phương pháp đầu tiên không dựa trên các giả định và ràng buộc nghiêm ngặt về chiến lược của kẻ tấn công và đạt được các thuộc tính thỏa đáng. Bài viết cũng so sánh phương pháp của họ với các phương pháp dựa trên RL khác để bảo mật mạng và nêu bật những ưu điểm và đóng góp của họ.
 
@@ -186,19 +186,19 @@ Kẻ tấn công có thể dễ dàng phát hiện và xác định chính sách
 
 Chính sách triển khai theo cảnh báo hiệu quả hơn, nhưng nó vẫn không lý tưởng vì nó dựa trên giả định rằng kẻ tấn công sẽ luôn nhắm mục tiêu vào nút bị xâm phạm gần đây nhất.
 
-Để giải quyết những hạn chế này, các tác giả đề xuất một chính sách triển khai mới dựa trên học tăng cường (RL). RL là một loại máy học cho phép một tác nhân học cách hành xử trong một môi trường bằng cách thử và sai. Trong bối cảnh phòng thủ mạng dựa trên sự lừa dối, tác nhân sẽ là người bảo vệ và môi trường sẽ là mạng mục tiêu.
+Để giải quyết những hạn chế này, các tác giả đề xuất một chính sách triển khai mới dựa trên học tăng cường (RL). RL là một loại máy học cho phép một agent học cách hành xử trong một môi trường bằng cách thử và sai. Trong bối cảnh phòng thủ mạng dựa trên sự lừa dối, agent sẽ là người bảo vệ và môi trường sẽ là mạng mục tiêu.
 
 Chính sách triển khai dựa trên RL sẽ hoạt động như sau:
 
-- Tác nhân sẽ bắt đầu bằng cách tìm hiểu trạng thái an ninh mạng. Điều này sẽ liên quan đến việc thu thập dữ liệu về lưu lượng mạng, trạng thái của các nút và các cảnh báo đã được đưa ra.
+- agent sẽ bắt đầu bằng cách tìm hiểu trạng thái an ninh mạng. Điều này sẽ liên quan đến việc thu thập dữ liệu về lưu lượng mạng, trạng thái của các nút và các cảnh báo đã được đưa ra.
 
-- Khi tác nhân đã biết được trạng thái bảo mật mạng, nó sẽ sử dụng RL để dự đoán hành động tấn công tiếp theo của kẻ tấn công.
+- Khi agent đã biết được trạng thái bảo mật mạng, nó sẽ sử dụng RL để dự đoán hành động tấn công tiếp theo của kẻ tấn công.
 
-- Dựa trên dự đoán, tác nhân sau đó sẽ quyết định vị trí đặt các nút tài nguyên đánh lừa.
+- Dựa trên dự đoán, agent sau đó sẽ quyết định vị trí đặt các nút tài nguyên đánh lừa.
 
 Các tác giả lập luận rằng chính sách triển khai dựa trên RL sẽ hiệu quả hơn các chính sách triển khai truyền thống vì nó có thể học hỏi từ hành vi của kẻ tấn công và điều chỉnh chiến lược của nó cho phù hợp.
 
-Chính sách triển khai dựa trên RL sẽ chính xác hơn khi quá trình học tập kéo dài hơn. Điều này là do tác nhân sẽ có nhiều dữ liệu hơn để tìm hiểu, điều này sẽ cho phép tác nhân đưa ra dự đoán tốt hơn về hành vi của kẻ tấn công.
+Chính sách triển khai dựa trên RL sẽ chính xác hơn khi quá trình học tập kéo dài hơn. Điều này là do agent sẽ có nhiều dữ liệu hơn để tìm hiểu, điều này sẽ cho phép agent đưa ra dự đoán tốt hơn về hành vi của kẻ tấn công.
 
 Các tác giả cũng đề cập rằng chính sách triển khai dựa trên RL sẽ hiệu quả hơn các chính sách triển khai truyền thống vì nó chỉ xem xét các nút có nhiều khả năng bị tấn công nhất. Điều này sẽ làm giảm không gian tìm kiếm và cho phép tổng đài viên tìm chính sách triển khai tối ưu nhanh hơn.
 
@@ -233,4 +233,227 @@ Phương pháp TPG có một vài ưu điểm so với các phương pháp truy�
 - Phân tầng: TPG sử dụng ý tưởng phân tầng (stratification), góp phần làm giảm độ phức tạp tính toán.
 
 - Hiệu ứng hình ảnh: cách trình bày của TPG rõ ràng và ngắn gọn, giúp người bảo vệ hiểu được trạng thái bảo mật của mạng dễ dàng hơn.
+
+# IV. INTELLIGENT DEPLOYMENT POLICY FOR DECEPTION RESOURCES BASED ON REINFORCEMENT LEARNING
+
+Phần này trình bày mô hình lựa chọn chính sách triển khai tài nguyên đánh lừa tối ưu dựa trên học tăng cường. 
+
+Chính sách triển khai tài nguyên đánh lừa là quy tắc ra quyết định mà người bảo vệ tuân theo để triển khai tài nguyên đánh lừa trong mạng mục tiêu để thu hút và đánh lừa kẻ tấn công. 
+
+Học tăng cường là một kỹ thuật cho phép người phòng vệ học hỏi từ hành động và phần thưởng của chính mình trong một môi trường không chắc chắn. 
+
+## A. MODEL OVERVIEW
+
+Hình minh họa mô hình để chọn chính sách triển khai tài nguyên đánh lừa tối ưu dựa trên học tăng cường. 
+
+![Alt text](image-8.png)
+
+Trong mô hình:
+
+- Người bảo vệ tương đương với agent. 
+
+- Mạng đích và kẻ tấn công cùng nhau tạo nên môi trường (environment). 
+
+- Hệ thống giám sát mạng tương đương với cảm biến (sensor) của môi trường. 
+
+Tại mỗi thời điểm bước t, hệ thống giám sát mạng sẽ tích hợp một số cảnh báo, đại diện cho trạng thái an ninh mạng St. Trạng thái an ninh mạng là thước đo mức độ an toàn hoặc dễ bị tấn công của mạng mục tiêu, dựa trên các yếu tố như số và vị trí của các nút bị xâm nhập, số lượng và vị trí của các tài nguyên đánh lừa, số lượng và loại cảnh báo. 
+
+Dựa trên trạng thái bảo mật mạng St, người bảo vệ chọn một hành động triển khai tài nguyên lừa dối Atd, đó là ánh xạ từ các nút tài nguyên lừa dối sang các nút bình thường. 
+
+Do hành động chung của kẻ tấn công, người bảo vệ và mạng mục tiêu, trạng thái bảo mật mạng sẽ thay đổi. Phần giải thích rằng đồng thời, người phòng thủ sẽ nhận được phần thưởng từ phản hồi môi trường Rt. Phần thưởng là thước đo mức độ thành công hay không thành công của hành động của người bảo vệ, dựa trên các yếu tố như liệu kẻ tấn công có bị bẫy vào các tài nguyên lừa đảo hay không. 
+
+Trong quá trình này, bộ bảo vệ tương tác liên tục với môi trường và cố gắng chọn một chính sách tối ưu, đây là hướng dẫn để bộ bảo vệ thực hiện các hành động triển khai tài nguyên đánh lừa trong bất kỳ trạng thái bảo mật mạng nào. Bằng cách thực hiện chính sách tối ưu, người phòng thủ có thể đạt được mục đích bẫy kẻ tấn công với xác suất cao.
+
+## B. MODEL REPRESENTATION
+
+Mô hình RL trong hệ thống này có bốn yếu tố chính: trạng thái, hành động, phần thưởng và chính sách (state, action, reward, and policy).
+
+### 1. State
+
+Trạng thái của mô hình RL được định nghĩa trong Định nghĩa 4 là trạng thái an ninh mạng S. Trạng thái này phản ánh tình hình bảo mật của mạng mục tiêu và có thể tiết lộ dấu vết của kẻ tấn công cho người phòng thủ. Trong hệ thống ADS, Hệ thống giám sát mạng (NMS) có thể tạo báo động sau khi kẻ tấn công xâm nhập một nút bình thường. Vì lý do này, trạng thái an ninh mạng S có thể được biểu thị bằng các cảnh báo do NMS tạo ra.
+
+Công thức cho trạng thái an ninh mạng S được đưa ra trong Công thức (7). 
+
+![Alt text](image-9.png)
+
+Trong công thức này, k là số nút bình thường trong TN mạng mục tiêu. 
+
+Đối với mỗi nút bình thường i, nếu NMS tạo cảnh báo về nút i, thì ψi = 1. Nếu NMS không tạo cảnh báo về nút i, thì ψi = 0. Kích thước của không gian trạng thái an ninh mạng là 2k.
+
+Trạng thái cuối cùng của trạng thái an ninh mạng S có thể là thất bại hoặc thành công. Nếu chính sách triển khai của người bảo vệ không thể bẫy kẻ tấn công, điều đó có nghĩa là kẻ tấn công đạt được mục tiêu tấn công của mình và phòng thủ không thành công, thì trạng thái an ninh mạng sẽ thay đổi thành Sfailfinal. Trong một trường hợp khác, nếu chính sách bẫy kẻ tấn công, nghĩa là phòng thủ thành công, thì trạng thái bảo mật mạng sẽ chuyển thành Ssuccessfinal.
+
+### 2. Action
+
+Người bảo vệ có sẵn m nút tài nguyên đánh lừa để triển khai và mỗi nút có thể được triển khai đằng sau một trong k nút thông thường. Hành động của người phòng thủ được thể hiện bằng ma trận Quảng cáo có kích thước mxk. Mỗi mục của ma trận, aij, là 0 hoặc 1, trong đó:
+
+aij = 1 nếu người phòng thủ triển khai nút tài nguyên lừa dối n phía sau nút bình thường nj
+aij = 0 nếu người phòng thủ không triển khai nút tài nguyên lừa dối n phía sau nút bình thường nj
+
+![Alt text](image-10.png)
+
+Kích thước của không gian hành động là 2m^k. Điều này là do có 2 lựa chọn cho mỗi nút trong số m nút tài nguyên đánh lừa, do đó, có tổng cộng 2^m lựa chọn cho toàn bộ vectơ hành động.
+
+Hoạt động của mô hình RL như sau:
+
+- Nếu người phòng thủ triển khai nút tài nguyên đánh lừa phía sau nút bình thường ni, thì hành động đó là ξnj​fr​,i=1.
+
+- Nếu người phòng thủ triển khai không có nút tài nguyên lừa dối phía sau nút bình thường ni, thì hành động là ξnj​fr​,i=0.
+
+Kích thước của không gian hành động của người bảo vệ là m×k, trong đó m là số nút tài nguyên lừa dối và k là số nút bình thường. Điều này có nghĩa là người bảo vệ có thể chọn triển khai nút tài nguyên đánh lừa đằng sau bất kỳ nút nào trong số m nút tài nguyên đánh lừa hoặc họ có thể chọn triển khai không có nút tài nguyên đánh lừa nào đằng sau bất kỳ nút nào trong số k nút bình thường.
+
+![Alt text](image-11.png)
+
+Các ký hiệu trong phương trình là:
+
+ξnj​fr​,i​: xác suất triển khai nút tài nguyên đánh lừa nj​fr​ tại một nút thông thường ni​.
+k: số nút bình thường trong mạng.
+nj​fr​: nút tài nguyên đánh lừa thứ j, là nút giả bắt chước hành vi của nút thật để đánh lừa kẻ tấn công.
+ni​: nút bình thường thứ i, là nút thực thực hiện một số chức năng trong mạng.
+(mxk​): kích thước của không gian hành động của người phòng thủ, là số cách để chọn k nút thông thường từ tổng số m nút trong mạng.
+
+Phương trình có nghĩa là đối với mỗi nút tài nguyên đánh lừa, tổng xác suất triển khai của nó tại tất cả các nút thông thường phải bằng một. Điều này đảm bảo rằng mỗi nút tài nguyên đánh lừa được triển khai tại chính xác một nút bình thường.
+
+### 3. Reward
+
+Phần thưởng được xác định như sau:
+
+* Nếu hành động của người phòng thủ dẫn đến việc kẻ tấn công thất bại, thì phần thưởng là $R_t = 1$.
+
+* Nếu hành động của người phòng thủ dẫn đến thành công của kẻ tấn công, thì phần thưởng là $R_t = -1$.
+
+* Nếu hành động của người phòng thủ không dẫn đến việc kẻ tấn công thành công hay thất bại, thì phần thưởng là $R_t = 0$.
+
+Công thức trong hình (Công thức 10) cho biết cách tính phần thưởng. Phần thưởng dựa trên trạng thái của mạng sau khi người bảo vệ thực hiện một hành động. Nếu trạng thái của mạng là $S_t$, thì phần thưởng là:
+
+$$R_t = \begin{cases}
+1 & \text{if } S_{t+1} = S_{\text{fail}} \\
+-1 & \text{if } S_{t+1} = S_{\text{success}} \\
+0 & \text{otherwise}
+\end{cases}$$
+
+trong đó $S_{\text{fail}}$ và $S_{\text{success}}$ lần lượt là các trạng thái của mạng cho biết kẻ tấn công đã thất bại và thành công.
+
+### 4. Policy
+
+Định nghĩa 7 giới thiệu khái niệm về chính sách (πd) trong ngữ cảnh an ninh mạng. 
+
+Một chính sách thể hiện hành vi của người bảo vệ bằng cách ánh xạ các trạng thái an ninh mạng tới các hành động cụ thể sẽ được thực hiện. 
+
+Kích thước của không gian chính sách được xác định bởi kích thước của không gian hành động của người bảo vệ và không gian trạng thái an ninh mạng. 
+
+Chính sách được đánh giá dựa trên phần thưởng tích lũy mà nó nhận được theo thời gian và chính sách tối ưu là chính sách tối đa hóa phần thưởng tích lũy.
+
+Phương trình (11) nói rằng một chính sách πd ánh xạ trạng thái an ninh mạng St tới một hành động At được thực hiện bởi người bảo vệ. Nói cách khác, với một trạng thái bảo mật mạng cụ thể, chính sách sẽ xác định hành động nào sẽ được thực hiện bởi người bảo vệ.
+
+![Alt text](image-12.png)
+
+Phương trình (12) thể hiện cách chúng ta đánh giá chính sách dựa trên phần thưởng tích lũy theo thời gian. Biến Rt đại diện cho phần thưởng nhận được tại thời điểm t và γ là hệ số chiết khấu xác định mức độ quan trọng của phần thưởng trong tương lai so với phần thưởng ngay lập tức. Bằng cách tổng hợp tất cả các phần thưởng chiết khấu từ thời điểm t trở đi (∑γiRt+i), chúng ta có được ước tính về giá trị hoặc tiện ích lâu dài của việc tuân theo chính sách cụ thể này.
+
+![Alt text](image-13.png)
+
+Cuối cùng, phương trình (13) định nghĩa π∗ là arg max Vπ(S), có nghĩa là π∗ được chọn làm chính sách tối ưu nếu nó tối đa hóa Vπ(S) cho mọi trạng thái an ninh mạng có thể xảy ra S. Nói một cách đơn giản hơn, trong số tất cả các chính sách có thể được đánh giá bằng phương trình (12), chúng ta chỉ chọn và coi là tối ưu những chính sách mang lại phần thưởng tích lũy tối đa trên các trạng thái bảo mật mạng khác nhau.
+
+## C. MODEL LEARNING
+
+Trong các bài toán học tăng cường (RL) truyền thống, nhiệm vụ thường được mô tả bằng quy trình quyết định Markov (MDP), trong đó xác suất chuyển đổi trạng thái đã biết. Tuy nhiên, trong vấn đề triển khai các tài nguyên đánh lừa dựa trên RL cho an ninh mạng, có những điều không chắc chắn do thiếu và cảnh báo sai do NMS (Hệ thống quản lý mạng) tạo ra và sự không chắc chắn về chiến lược của kẻ tấn công. Kết quả là họ (các tác giả) không thể xác định chính xác xác suất chuyển đổi trạng thái.
+
+Để vượt qua thách thức này và tìm hiểu một chính sách tối ưu bất chấp những điều không chắc chắn này, họ sử dụng thuật toán Q-learning với một mô hình chưa biết. Quy tắc đào tạo được biểu diễn một cách tượng trưng như sau:
+
+Phương trình (14) biểu thị quy tắc cập nhật để ước tính giá trị Q trong thuật toán Q-learning. Nó được sử dụng để cập nhật lặp đi lặp lại và cải thiện các ước tính của chúng ta về phần thưởng tích lũy dự kiến khi thực hiện một hành động cụ thể 'a' trong một 's' trạng thái nhất định.
+
+Phương trình được viết là:
+
+ˆQn(s, a) ← (1−αn) ˆQn-1(s, a)+ αn[r + γ maxa' ˆQ_n-1_(s',a')]
+
+Tại đây:
+
+- ˆQn(s, a): Giá trị ước tính của việc thực hiện hành động 'a' ở trạng thái 's'.
+
+- α: Tốc độ học giảm dần theo thời gian.
+
+- r: Phần thưởng nhận được sau khi thực hiện hành động 'a' ở trạng thái 's'.
+
+- γ: Hệ số chiết khấu thể hiện phần thưởng trong tương lai.
+
+- s': Trạng thái tiếp theo sau khi thực hiện hành động 'a'.
+
+Hãy chia nhỏ từng thành phần:
+
+(1 - α_n) * ˆQ_n_−_1_(s,a):
+
+Thuật ngữ này đại diện cho việc cập nhật ước tính hiện tại của chúng ta bằng cách kết hợp nó với kiến thức trước đó. Tỷ lệ học tập α xác định mức độ quan trọng mà chúng ta dành cho thông tin mới so với các ước tính hiện có.
+
+α_n * [r + γ max_a'_ { } ]:
+
+Thuật ngữ này giải thích cho việc kết hợp thông tin mới vào ước tính của chúng ta. Nó bao gồm hai phần:
+
+- r: Phần thưởng ngay lập tức nhận được khi chuyển từ trạng thái s sang trạng thái next_state s'. Phần thưởng này phản ánh mức độ có lợi hoặc bất lợi của quá trình chuyển đổi cụ thể đó.
+
+- γ * max_a'_ [ ] : Phần này nắm bắt ước tính phần thưởng tiềm năng trong tương lai bằng cách xem xét giá trị Q ước tính tối đa trong số tất cả các hành động có thể xảy ra tại next_state s'. Nhân giá trị này với hệ số chiết khấu γ đảm bảo rằng chúng ta ưu tiên phần thưởng tích lũy dài hạn trong khi tính đến sự không chắc chắn.
+
+Bằng cách áp dụng lặp đi lặp lại quy tắc cập nhật này trong các chu kỳ đào tạo, thuật toán dần dần tinh chỉnh các ước tính của nó dựa trên các kết quả quan sát được và điều chỉnh chúng theo hướng thể hiện chính xác hơn các phần thưởng tích lũy dự kiến cho các cặp trạng thái-hành động khác nhau.
+
+Theo thời gian, khi tốc độ học α giảm và nhiều lần lặp hơn được thực hiện, thuật toán hội tụ hướng tới việc tìm kiếm một chính sách tối ưu bằng cách cập nhật các giá trị Q để phản ánh các hành động tốt nhất cần thực hiện ở mỗi trạng thái.
+
+Phương trình (15) biểu thị phép tính tốc độ học tập αn trong thuật toán Q-learning. Tỷ lệ học tập xác định mức độ quan trọng của thông tin mới so với kiến thức hiện có khi cập nhật các giá trị Q ước tính.
+
+Trong phương trình (15), αn được tính như sau:
+
+αn = 1 / (1 + visitn(s, a))
+
+Tại đây:
+
+- αn: Tốc độ học ở lần lặp thứ n.
+
+- visitn(s, a): Số lần (s, a) cặp trạng thái-hành động được truy cập trong các chu kỳ huấn luyện.
+
+Mục đích của việc sử dụng công thức này để tính toán αn là giảm dần giá trị của nó khi thực hiện nhiều lần lặp hơn. Khi chúng ta tích lũy được nhiều kinh nghiệm và dữ liệu hơn thông qua các chu kỳ đào tạo, sẽ có lợi hơn khi ít dựa vào thông tin mới hơn và đặt trọng số cao hơn cho các giá trị đã học trước đó.
+
+Bằng cách giảm α theo thời gian cùng với việc tăng số lượt truy cập cho từng cặp trạng thái-hành động, thuật toán chú trọng nhiều hơn vào việc khai thác kiến thức đã thu được trong khi vẫn cho phép một số khám phá để không bị mắc kẹt trong các giải pháp dưới mức tối ưu hoặc cực đại/cực tiểu cục bộ trong giai đoạn đầu của quá trình đào tạo khi có thể có dữ liệu hạn chế.
+
+Cách tiếp cận này giúp đạt được sự cân bằng giữa việc khám phá các hành động khác nhau và khai thác các hành động tốt đã biết dựa trên kinh nghiệm trong quá khứ trong suốt quá trình lặp đi lặp lại.
+
+Khi n tăng qua các lần lặp/chu kỳ cập nhật thuật toán đào tạo, tốc độ học tập α giảm dần, và do đó chênh lệch giữa giá trị Q Q(s,a) và giá trị ước lượng ˆQ_n_(s_,_a_) cũng giảm.
+
+Những thông tin chi tiết này cung cấp thông tin chi tiết về cách họ điều chỉnh các kỹ thuật RL như Q-Learning để xử lý các môi trường không chắc chắn với các mô hình hoặc xác suất chuyển đổi chưa biết trong khi vẫn hội tụ để tìm ra các chính sách tối ưu thông qua các bản cập nhật lặp lại dựa trên phần thưởng quan sát được từ dữ liệu tấn công mạng trong thế giới thực.
+
+Chi tiết thuật toán huấn luyện (Thuật toán 1) sẽ được trình bày dưới đây.
+
+![Alt text](image-14.png)
+
+Thuật toán 1 là thuật toán đào tạo dựa trên Q-Learning. Dưới đây là giải thích từng bước của từng phần:
+
+1. Tạo biểu đồ thâm nhập mối đe dọa (TPG) của mạng mục tiêu (TN): Bước này liên quan đến việc tạo một biểu đồ biểu thị các đường dẫn tấn công tiềm ẩn trong mạng mục tiêu.
+
+2. Tạo không gian hành động triển khai (AD) dựa trên TPG: AD là một tập hợp các hành động khả thi có thể được thực hiện để triển khai các tài nguyên đánh lừa nhằm đối phó với các kịch bản tấn công khác nhau.
+
+3. Khởi tạo Q(s, a) và visit(s, a): Trong bước này, chúng ta khởi tạo hai biến - Q(s,a), đại diện cho giá trị ước tính để thực hiện hành động 'a' ở trạng thái 's', và visit(s,a), theo dõi số lần chúng ta đã truy cập vào cặp trạng thái-hành động (s,a).
+
+4. Khởi tạo s0: Thiết lập trạng thái ban đầu để huấn luyện.
+
+5-10: Lặp lại các bước 6-9 cho đến khi đáp ứng tiêu chí hội tụ hoặc hoàn thành:
+
+- Chọn hành động theo πε(s): Chọn chiến lược khai thác hoặc khám phá.
+
+- Nhận phần thưởng r và trạng thái mới s' sau khi thực hiện hành động đã chọn.
+
+- Cập nhật giá trị Q bằng phương trình Bellman với tốc độ học α và hệ số chiết khấu γ.
+
+- Số lượt truy cập tăng cho cặp trạng thái-hành động hiện tại.
+
+- Cập nhật trạng thái hiện tại thành new_state
+
+11: Chính sách trả về πd : Sau khi hoàn thành tất cả các lần lặp lại, hãy trả về chính sách tối ưu bằng cách chọn hành động có giá trị cao nhất ở mỗi trạng thái nhất định theo các giá trị đã học được từ các bước trước đó.
+
+Theo định lý hội tụ của thuật toán Q-learning, khi mỗi cặp trạng thái-hành động được truy cập vô hạn, sự khác biệt giữa giá trị Q thực (Q(s,a)) và giá trị ước tính của chúng ta (ˆQn(s) ,a)) sẽ tiến về 0. Điều này có nghĩa là khi chúng tôi tiếp tục đào tạo và truy cập tất cả các cặp hành động trạng thái có thể có nhiều lần, các ước tính của chúng tôi ngày càng trở thành đại diện chính xác cho các giá trị thực của chúng.
+
+Ngoài ra, Thuật toán 1 có độ phức tạp tính toán là O(n), trong đó n đại diện cho số bước đào tạo hoặc số lần lặp lại. Điều này chỉ ra rằng khi chúng ta tăng số bước huấn luyện, thì các yêu cầu tính toán để cập nhật giá trị Q cũng tăng theo tuyến tính.
+
+Dựa trên các yếu tố này: 
+
+- Đạt được sự hội tụ hướng tới các ước tính chính xác với số lượt truy cập vô hạn trên mỗi cặp trạng thái-hành động 
+
+- Có một thuật toán hiệu quả về mặt tính toán với độ phức tạp tuyến tính 
+
+Có thể suy ra rằng Thuật toán 1 thể hiện tốc độ hội tụ nhanh và độ ổn định tốt.
 
