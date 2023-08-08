@@ -310,9 +310,13 @@ Phương trình có nghĩa là đối với mỗi nút tài nguyên đánh lừa
 Các ký hiệu trong phương trình là:
 
 ξnj​fr​,i​: xác suất triển khai nút tài nguyên đánh lừa nj​fr​ tại một nút thông thường ni​.
+
 k: số nút bình thường trong mạng.
+
 nj​fr​: nút tài nguyên đánh lừa thứ j, là nút giả bắt chước hành vi của nút thật để đánh lừa kẻ tấn công.
+
 ni​: nút bình thường thứ i, là nút thực thực hiện một số chức năng trong mạng.
+
 (mxk​): kích thước của không gian hành động của người phòng thủ, là số cách để chọn k nút thông thường từ tổng số m nút trong mạng.
 
 ### 3. Reward
