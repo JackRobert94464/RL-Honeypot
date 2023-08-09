@@ -1,5 +1,5 @@
 # import the class
-import dqn
+import ddqn
 # classical gym 
 import gym
 # instead of gym, import gymnasium 
