@@ -1,185 +1,241 @@
-import random
-from collections import deque
+# import the necessary libraries
 import numpy as np
+import random
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import RMSprop
+from collections import deque 
+from tensorflow import gather_nd
+from tensorflow.keras.losses import mean_squared_error 
+ 
 
-class DQN:
-    def __init__(self, model, env,
-                 epsilon=0.5, epsilon_decay=0.995, epsilon_min=0.1,
-                 gamma=0.995,
-                 history_size=10000, epochs=10, train_size=10000, batch_size=256,
-                 max_steps=5000,
-                 log_every_n_steps=50,
-                 evalutation_size=10,
-                 target_score=500,
-                 reward_func=None):
-        """
-        DQN - Reinforcement learning agent
-        Parameters:
-            model: model with fit() and predict() methods
-            env: gym environment
-            epsilon: probability of random actions
-            epsilon_decay: decay of epsilon on the next training episode
-            epsilon_min: minimum value of epsilon
-            gamma: discount for the next state
-            history_size: total number of stored observations among all episodes
-            epochs: number of training epochs per episode
-            train_size: number of obervations to train on after each episode
-            batch_size: batch size for fit() method of the model
-            max_steps: maximum number of steps in episode
-            log_every_n_steps: output metrics every n steps
-            evalutation_size: number of episodes in evaluations
-            target_score: target score to finish when reached
-            reward_func: function that transforms observations to rewards; use None for model-free RL
-        """
+class DeepQLearning:
+     
+    ###########################################################################
+    #   START - __init__ function
+    ###########################################################################
+    # INPUTS: 
+    # env - Cart Pole environment
+    # gamma - discount rate
+    # epsilon - parameter for epsilon-greedy approach
+    # numberEpisodes - total number of simulation episodes
+     
+             
+    def __init__(self,env,gamma,epsilon,numberEpisodes):
+         
+         
+        self.env=env
+        self.gamma=gamma
+        self.epsilon=epsilon
+        self.numberEpisodes=numberEpisodes
+         
+        # state dimension
+        self.stateDimension=4
+        # action dimension
+        self.actionDimension=2
+        # this is the maximum size of the replay buffer
+        self.replayBufferSize=300
+        # this is the size of the training batch that is randomly sampled from the replay buffer
+        self.batchReplayBufferSize=100
+         
+        # number of training episodes it takes to update the target network parameters
+        # that is, every updateTargetNetworkPeriod we update the target network parameters
+        # self.updateTargetNetworkPeriod=100
+         
+        # this is the counter for updating the target network 
+        # if this counter exceeds (updateTargetNetworkPeriod-1) we update the network 
+        # parameters and reset the counter to zero, this process is repeated until the end of the training process
+        # self.counterUpdateTargetNetwork=0
+         
+        # this sum is used to store the sum of rewards obtained during each training episode
+        self.sumRewardsEpisode=[]
+         
+        # replay buffer
+        self.replayBuffer=deque(maxlen=self.replayBufferSize)
+         
+        # this is the main network
+        # create network
+        self.mainNetwork=self.createNetwork()
+         
+        # this is the target network
+        # create network
+        # self.targetNetwork=self.createNetwork()
+         
+        # copy the initial weights to targetNetwork
+        # self.targetNetwork.set_weights(self.mainNetwork.get_weights())
+         
+        # this list is used in the cost function to select certain entries of the 
+        # predicted and true sample matrices in order to form the loss
+        self.actionsAppend=[]
+     
+    ###########################################################################
+    #   END - __init__ function
+    ###########################################################################
+     
+    ###########################################################################
+    # START - function for defining the loss (cost) function
+    # INPUTS: 
+    #
+    # y_true - matrix of dimension (self.batchReplayBufferSize,2) - this is the target 
+    # y_pred - matrix of dimension (self.batchReplayBufferSize,2) - this is predicted by the network
+    # 
+    # - this function will select certain row entries from y_true and y_pred to form the output 
+    # the selection is performed on the basis of the action indices in the list  self.actionsAppend
+    # - this function is used in createNetwork(self) to create the network
+    #
+    # OUTPUT: 
+    #    
+    # - loss - watch out here, this is a vector of (self.batchReplayBufferSize,1), 
+    # with each entry being the squared error between the entries of y_true and y_pred
+    # later on, the tensor flow will compute the scalar out of this vector (mean squared error)
+    ###########################################################################    
+     
+    def my_loss_fn(self,y_true, y_pred):
+         
+        s1,s2=y_true.shape
+        #print(s1,s2)
+         
+        # this matrix defines indices of a set of entries that we want to 
+        # extract from y_true and y_pred
+        # s2=2
+        # s1=self.batchReplayBufferSize
+        indices=np.zeros(shape=(s1,s2))
+        indices[:,0]=np.arange(s1)
+        indices[:,1]=self.actionsAppend
+         
+        # gather_nd and mean_squared_error are TensorFlow functions
+        loss = mean_squared_error(gather_nd(y_true,indices=indices.astype(int)), gather_nd(y_pred,indices=indices.astype(int)))
+        #print(loss)
+        return loss    
+    ###########################################################################
+    #   END - of function my_loss_fn
+    ###########################################################################
+     
+     
+    ###########################################################################
+    #   START - function createNetwork()
+    # this function creates the network
+    ###########################################################################
+     
+    # create a neural network
+    def createNetwork(self):
+        model=Sequential()
+        model.add(Dense(128,input_dim=self.stateDimension,activation='relu'))
+        model.add(Dense(56,activation='relu'))
+        model.add(Dense(self.actionDimension,activation='linear'))
+        # compile the network with the custom loss defined in my_loss_fn
+        model.compile(optimizer = RMSprop(), loss = self.my_loss_fn, metrics = ['accuracy'])
+        return model
+    ###########################################################################
+    #   END - function createNetwork()
+    ###########################################################################
+             
+    ###########################################################################
+    #   START - function trainingEpisodes()
+    #   - this function simulates the episodes and calls the training function 
+    #   - trainNetwork()
+    ###########################################################################
 
-        self.model = model
-        self.env = env
-        self.epsilon = epsilon
-        self.epsilon_decay = epsilon_decay
-        self.epsilon_min = epsilon_min
-        self.gamma = gamma
-        self.history_size = history_size
-        self.epochs = epochs
-        self.train_size = train_size
-        self.batch_size = batch_size
-        self.max_steps = max_steps
-        self.log_every_n_steps = log_every_n_steps
-        self.evalutation_size = evalutation_size
-        self.target_score = target_score
-        self.reward_func = reward_func
+    def trainingEpisodes(self):
+        for indexEpisode in range(self.numberEpisodes):
+            rewardsEpisode = []
+            print("Simulating episode {}".format(indexEpisode))
+            (currentState, _) = self.env.reset()
+            terminalState = False
+            while not terminalState:
+                action = self.selectAction(currentState, indexEpisode)
+                (nextState, reward, terminalState, _, _) = self.env.step(action)
+                rewardsEpisode.append(reward)
+                self.replayBuffer.append((currentState, action, reward, nextState, terminalState))
+                self.trainNetwork()
+                currentState = nextState
+            print("Sum of rewards {}".format(np.sum(rewardsEpisode)))
+            self.sumRewardsEpisode.append(np.sum(rewardsEpisode))
 
-        self._epsilon = self.epsilon  # current epsilon
-        self.history = deque(maxlen=self.history_size)
-        self.scores = list()  # list of scores for each played episode
+    ###########################################################################
+    #   END - function trainingEpisodes()
+    ###########################################################################
+             
+        
+    ###########################################################################
+    #    START - function for selecting an action: epsilon-greedy approach
+    ###########################################################################
+    # this function selects an action on the basis of the current state 
+    # INPUTS: 
+    # state - state for which to compute the action
+    # index - index of the current episode
+    def selectAction(self,state,index):
+        import numpy as np
+         
+        # first index episodes we select completely random actions to have enough exploration
+        # change this
+        if index<1:
+            return np.random.choice(self.actionDimension)   
+             
+        # Returns a random real number in the half-open interval [0.0, 1.0)
+        # this number is used for the epsilon greedy approach
+        randomNumber=np.random.random()
+         
+        # after index episodes, we slowly start to decrease the epsilon parameter
+        if index>200:
+            self.epsilon=0.999*self.epsilon
+         
+        # if this condition is satisfied, we are exploring, that is, we select random actions
+        if randomNumber < self.epsilon:
+            # returns a random action selected from: 0,1,...,actionNumber-1
+            return np.random.choice(self.actionDimension)            
+         
+        # otherwise, we are selecting greedy actions
+        else:
+            # we return the index where Qvalues[state,:] has the max value
+            # that is, since the index denotes an action, we select greedy actions
+                        
+            Qvalues=self.mainNetwork.predict(state.reshape(1,4))
+           
+            return np.random.choice(np.where(Qvalues[0,:]==np.max(Qvalues[0,:]))[0])
+            # here we need to return the minimum index since it can happen
+            # that there are several identical maximal entries, for example 
+            # import numpy as np
+            # a=[0,1,1,0]
+            # np.where(a==np.max(a))
+            # this will return [1,2], but we only need a single index
+            # that is why we need to have np.random.choice(np.where(a==np.max(a))[0])
+            # note that zero has to be added here since np.where() returns a tuple
+    ###########################################################################
+    #    END - function selecting an action: epsilon-greedy approach
+    ###########################################################################
+     
+    ###########################################################################
+    #    START - function trainNetwork() - this function trains the network
+    ###########################################################################
 
-        assert self.model, "Model is not provided"
-        model_methods = ("fit", "predict")
-        for method_name in model_methods:
-            assert callable(getattr(self.model, method_name, None)), "Invalid model: no %s() method" % method_name
+    def trainNetwork(self):
+        if len(self.replayBuffer) > self.batchReplayBufferSize:
+            randomSampleBatch = random.sample(self.replayBuffer, self.batchReplayBufferSize)
+            currentStateBatch = np.zeros(shape=(self.batchReplayBufferSize, 4))
+            nextStateBatch = np.zeros(shape=(self.batchReplayBufferSize, 4))
+            for index, tupleS in enumerate(randomSampleBatch):
+                currentStateBatch[index, :] = tupleS[0]
+                nextStateBatch[index, :] = tupleS[3]
 
-        assert self.env, "Gym environment is not provided"
-        model_methods = ("reset", "step", "render")
-        for method_name in model_methods:
-            assert callable(getattr(self.env, method_name, None)), "Invalid env: no %s() method" % method_name
+            QcurrentStateMainNetwork = self.mainNetwork.predict(currentStateBatch)
+            QnextStateMainNetwork = self.mainNetwork.predict(nextStateBatch)
 
-        self.n_inputs = self.env.observation_space.shape[0]
-        self.n_actions = self.env.action_space.n
+            inputNetwork = currentStateBatch
+            outputNetwork = np.zeros(shape=(self.batchReplayBufferSize, self.actionDimension))
 
-        # columns offsets in a numpy row (see fit_one())
-        self.STATE_idx = 0  # observation
-        self.NEXT_STATE_idx = self.n_inputs  # next observation
-        self.ACTION_idx = 2 * self.n_inputs
-        self.DONE_idx = 2 * self.n_inputs + 1
-        self.R_idx = 2 * self.n_inputs + 2
-        self.MAXQ_idx = 2 * self.n_inputs + 3
+            for index, (currentState, action, reward, nextState, terminated) in enumerate(randomSampleBatch):
+                self.actionsAppend.append(action)  # Append the action to the list
+                target = reward
 
-    def get_action(self, observation):
-        """
-        Policy function: returns action for the given observation
-        """
+                if not terminated:
+                    target += self.gamma * np.max(QnextStateMainNetwork[index])
 
-        return np.argmax(self.model.predict(observation.reshape(1,-1))[0])
+                outputNetwork[index] = QcurrentStateMainNetwork[index]
+                outputNetwork[index, action] = target
 
+            self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size=self.batchReplayBufferSize, verbose=0, epochs=1)
 
-    def fit_one(self):
-        """
-        Train the model on a single episode
-        """
-
-        score = 0
-        observation = self.env.reset()
-        done = False
-
-        for _ in range(self.max_steps):
-            if random.random() < self._epsilon:
-                # explore - take random action
-                action = self.env.action_space.sample()
-            else:
-                # exploit - take predicted action
-                action = self.get_action(observation)
-
-            next_observation, reward, done, info = self.env.step(action)
-
-            if self.reward_func:  # redefine reward if reward_func is set
-                reward_ = self.reward_func(next_observation)
-            else:
-                reward_ = reward
-
-            # append row for further training
-            self.history.append(list(observation) + list(next_observation) + \
-                [action, done, reward_, 0] + [0] * self.n_actions)
-
-            score += reward
-            if done:
-                break
-            observation = next_observation
-
-        # append last episode score to list of scores
-        self.scores.append(score)
-
-        # prepare training data:
-        data = np.array(random.sample(self.history, min(self.train_size, len(self.history))))
-
-        # predict max(Q'):
-        data[:, self.MAXQ_idx] = np.max(self.model.predict(data[:, self.NEXT_STATE_idx:self.NEXT_STATE_idx+self.n_inputs]), axis=1)
-
-        # predict Q:
-        data[:, -self.n_actions:] = self.model.predict(data[:, :self.n_inputs])
-
-        for i in range(self.n_actions):
-            # Q(s,a) = r + gamma * max(Q(s',a'))
-            data[data[:, self.ACTION_idx] == i, -self.n_actions+i] = \
-                data[data[:, self.ACTION_idx] == i, self.R_idx] + \
-                self.gamma * data[data[:, self.ACTION_idx] == i, self.MAXQ_idx]
-
-            # set Q(s,a) to 1 if done:
-            data[(data[:, self.DONE_idx] == 1) & (data[:, self.ACTION_idx] == i), -self.n_actions + i] = 1
-
-        self.model.fit(
-            data[:, :self.n_inputs],
-            data[:, -self.n_actions:],
-            batch_size=self.batch_size,
-            epochs=10,
-            verbose=0)
-        self._epsilon = max(self.epsilon_min, self._epsilon*self.epsilon_decay)
-
-    def fit(self, episodes=2000):
-        """
-        Fit the model
-        """
-
-        for i in range(1, episodes + 1):
-            self.fit_one()
-            
-            if i % self.log_every_n_steps==0:
-                score = self.evaluate()
-                print("Episode %i/%i: avg. score=%.1f, epsilon=%.2f, history_size=%i, train_size=%i" % (
-                    i, episodes, score, self._epsilon, len(self.history), min(self.train_size, len(self.history))))
-                if score >= self.target_score:
-                    print("Target score achieved: target=%.1f, actual=%.1f" % (self.target_score, score))
-                    return
-
-        print("Target score is not reached")
-
-    def evaluate(self, render_games=1):
-        """
-        Evaluate the model's performance without random actions
-
-        render_games: number of games withing evaluation_size to render on screen
-        """
-
-        scores = list()
-        for _ in range(self.evalutation_size):
-            score = 0
-            observation = self.env.reset()
-
-            for j in range(self.max_steps):
-                if _ < render_games:  # render only `render_games` episodes
-                    self.env.render()
-                action = self.get_action(observation)
-                next_observation, reward, done, info = self.env.step(action)
-                score += reward
-                if done: break
-                observation = next_observation
-            scores.append(score)
-        return np.mean(scores)
+    ###########################################################################
+    #    END - function trainNetwork() 
+    ########################################################################### 
