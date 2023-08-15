@@ -38,15 +38,6 @@ class DeepQLearning:
         # this is the size of the training batch that is randomly sampled from the replay buffer
         self.batchReplayBufferSize=100
          
-        # number of training episodes it takes to update the target network parameters
-        # that is, every updateTargetNetworkPeriod we update the target network parameters
-        # self.updateTargetNetworkPeriod=100
-         
-        # this is the counter for updating the target network 
-        # if this counter exceeds (updateTargetNetworkPeriod-1) we update the network 
-        # parameters and reset the counter to zero, this process is repeated until the end of the training process
-        # self.counterUpdateTargetNetwork=0
-         
         # this sum is used to store the sum of rewards obtained during each training episode
         self.sumRewardsEpisode=[]
          
@@ -56,13 +47,6 @@ class DeepQLearning:
         # this is the main network
         # create network
         self.mainNetwork=self.createNetwork()
-         
-        # this is the target network
-        # create network
-        # self.targetNetwork=self.createNetwork()
-         
-        # copy the initial weights to targetNetwork
-        # self.targetNetwork.set_weights(self.mainNetwork.get_weights())
          
         # this list is used in the cost function to select certain entries of the 
         # predicted and true sample matrices in order to form the loss
@@ -212,8 +196,10 @@ class DeepQLearning:
     def trainNetwork(self):
         if len(self.replayBuffer) > self.batchReplayBufferSize:
             randomSampleBatch = random.sample(self.replayBuffer, self.batchReplayBufferSize)
+            
             currentStateBatch = np.zeros(shape=(self.batchReplayBufferSize, 4))
             nextStateBatch = np.zeros(shape=(self.batchReplayBufferSize, 4))
+
             for index, tupleS in enumerate(randomSampleBatch):
                 currentStateBatch[index, :] = tupleS[0]
                 nextStateBatch[index, :] = tupleS[3]
