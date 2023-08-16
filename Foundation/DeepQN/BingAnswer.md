@@ -1,3 +1,5 @@
+# Remember to gitignore
+
 ## Bing
 
 To change from a double deep Q network (DDQN) to a deep Q network (DQN) solution, you need to modify the way you calculate the target Q-values for the update step. 
