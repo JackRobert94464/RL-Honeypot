@@ -15,10 +15,10 @@ class DeepQLearning:
     #   START - __init__ function
     ###########################################################################
     # INPUTS: 
-    # env - Cart Pole environment
-    # gamma - discount rate
-    # epsilon - parameter for epsilon-greedy approach
-    # numberEpisodes - total number of simulation episodes
+    # env - Môi trường huấn luyện, ở đây là CartPolev1
+    # gamma - discount factor
+    # epsilon - thông số cho chiến lược epsilon-greedy 
+    # numberEpisodes - tổng số các episodes được huấn luyện
      
              
     def __init__(self,env,gamma,epsilon,numberEpisodes):
@@ -29,13 +29,13 @@ class DeepQLearning:
         self.epsilon=epsilon
         self.numberEpisodes=numberEpisodes
          
-        # state dimension
+        # ma trận trạng thái (state) có kích thước 4 (x, x_dot, theta, theta_dot)
         self.stateDimension=4
-        # action dimension
+        # số lượng hành động có thể thực hiện (trái, phải)
         self.actionDimension=2
-        # this is the maximum size of the replay buffer
+        # kích thước của bộ nhớ lưu trữ trạng thái (để lấy mẫu huấn luyện)
         self.replayBufferSize=300
-        # this is the size of the training batch that is randomly sampled from the replay buffer
+        # kích thước mẫu huấn luyện được lấy ngẫu nhiên từ buffer trên
         self.batchReplayBufferSize=100
          
         # number of training episodes it takes to update the target network parameters

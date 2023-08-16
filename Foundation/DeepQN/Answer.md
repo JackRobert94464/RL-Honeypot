@@ -22,6 +22,17 @@ $Q(s', a; \theta)$ is the main network with parameters $\theta$,
 
 and $Q(s', a; \theta^-)$ is the target network with parameters $\theta^-$. 
 
+$r$ là phần thưởng,
+
+$\gamma$ là hệ số chiết khấu,
+
+$s'$ là trạng thái tiếp theo,
+
+$Q(s', a; \theta)$ là mạng chính với các tham số $\theta$,
+
+và $Q(s', a; \theta^-)$ là mạng mục tiêu với các tham số $\theta^-$.
+
+
 In DQN, the target Q-value is given by:
 
 $$r + \gamma \text{max}_a Q(s', a; \theta^-)$$
