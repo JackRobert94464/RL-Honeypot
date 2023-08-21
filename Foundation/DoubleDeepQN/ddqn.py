@@ -35,7 +35,7 @@ class DeepQLearning:
         # kích thước mẫu huấn luyện được lấy ngẫu nhiên từ buffer trên
         self.batchReplayBufferSize = 100
          
-        # số lượng tập huấn luyện cần để cập nhật tham số mạng mục tiêu
+        # số lượng episode cần để cập nhật tham số mạng mục tiêu
         # nghĩa là, mỗi lần cập nhật theo chu kỳ updateTargetNetworkPeriod, ta cập nhật tham số mạng mục tiêu
         self.updateTargetNetworkPeriod = 100
          
@@ -44,7 +44,7 @@ class DeepQLearning:
         # và đặt bộ đếm về 0, quá trình này được lặp lại cho đến cuối quá trình huấn luyện
         self.counterUpdateTargetNetwork = 0
          
-        # biến này được sử dụng để lưu tổng thưởng thu được trong mỗi tập huấn luyện
+        # biến này được sử dụng để lưu tổng thưởng thu được trong mỗi episode
         self.sumRewardsEpisode = []
          
         # bộ đệm lưu trữ các trạng thái
@@ -130,21 +130,21 @@ class DeepQLearning:
              
     ###########################################################################
     #   BẮT ĐẦU - hàm trainingEpisodes()
-    #   - hàm này mô phỏng các tập huấn luyện và gọi hàm huấn luyện 
+    #   - hàm này mô phỏng các episode và gọi hàm huấn luyện 
     #   - trainNetwork()
     ###########################################################################
  
     def trainingEpisodes(self):
     
-        # ở đây chúng ta lặp qua các tập huấn luyện
+        # ở đây chúng ta lặp qua các episode
         for indexEpisode in range(self.numberEpisodes):
              
-            # danh sách lưu trữ thưởng của từng tập - điều này cần thiết để theo dõi sự hội tụ
+            # danh sách lưu trữ thưởng của từng episode - điều này cần thiết để theo dõi sự hội tụ
             rewardsEpisode = []
                         
-            print("Đang mô phỏng tập huấn luyện {}".format(indexEpisode))
+            print("Đang mô phỏng episode {}".format(indexEpisode))
              
-            # đặt lại môi trường ở đầu mỗi tập
+            # đặt lại môi trường ở đầu mỗi episode
             (currentState, _) = self.env.reset()
                        
             # ở đây chúng ta thực hiện từ một trạng thái đến trạng thái khác
@@ -183,11 +183,11 @@ class DeepQLearning:
     # hàm này chọn một hành động dựa trên trạng thái hiện tại
     # INPUTS: 
     # state - trạng thái để tính toán hành động
-    # index - index của tập huấn luyện hiện tại
+    # index - index của episode hiện tại
     def selectAction(self, state, index):
         import numpy as np
          
-        # trong index đầu tiên của các tập huấn luyện, chúng ta chọn hoàn toàn ngẫu nhiên các hành động để đảm bảo có đủ sự khám phá
+        # trong index đầu tiên của các episode, chúng ta chọn hoàn toàn ngẫu nhiên các hành động để đảm bảo có đủ sự khám phá
         if index < 1:
             return np.random.choice(self.actionDimension)   
              
@@ -195,7 +195,7 @@ class DeepQLearning:
         # số này được sử dụng cho phương pháp epsilon-greedy
         randomNumber = np.random.random()
          
-        # sau index tập huấn luyện, chúng ta bắt đầu từ từ giảm tham số epsilon
+        # sau index episode, chúng ta bắt đầu từ từ giảm tham số epsilon
         if index > 200:
             self.epsilon = 0.999 * self.epsilon
          

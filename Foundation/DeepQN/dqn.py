@@ -171,19 +171,19 @@ class DeepQLearning:
         # nếu không, chúng ta đang chọn các hành động tham lam
         else:
             # chúng ta trả về index trong đó Qvalues[state,:] có giá trị lớn nhất
-            # tức là, vì index đại diện cho một hành động, chúng ta chọn các hành động tham lam
+            # tức là, vì index đại diện cho một hành động, chúng ta chọn các hành động một cách tham lam (lấy cái lớn nhất)
                         
             Qvalues = self.mainNetwork.predict(state.reshape(1, 4))
            
             return np.random.choice(np.where(Qvalues[0, :] == np.max(Qvalues[0, :]))[0])
-            # ở đây chúng ta cần trả về index tối thiểu vì có thể xảy ra
-            # rằng có một số mục cực đại giống nhau, ví dụ 
+            # ở đây chúng ta cần trả về ít số lượng index nhất có thể vì 
+            # một số kết quả trả về của hàm max có thể giống nhau, ví dụ 
             # import numpy as np
             # a = [0, 1, 1, 0]
             # np.where(a == np.max(a))
-            # điều này sẽ trả về [1, 2], nhưng chúng ta chỉ cần một index duy nhất
+            # sẽ trả về [1, 2], nhưng chúng ta chỉ cần một index duy nhất
             # đó là lý do tại sao chúng ta cần có np.random.choice(np.where(a == np.max(a))[0])
-            # lưu ý rằng phải thêm số không ở đây vì np.where() trả về một tuple
+            # lưu ý rằng phải thêm số 0 ở đây vì np.where() trả về một tuple và ta lấy kết quả đầu tiên
     ###########################################################################
     #    KẾT THÚC - hàm chọn hành động: phương pháp epsilon-greedy
     ###########################################################################
