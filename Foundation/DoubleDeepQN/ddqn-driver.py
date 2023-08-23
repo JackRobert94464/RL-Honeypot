@@ -19,7 +19,7 @@ epsilon=0.1
 numberEpisodes=20
  
 # create an object
-LearningQDeep=ddqn.DeepQLearning(env,gamma,epsilon,numberEpisodes)
+LearningQDeep=ddqn.DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes)
 # run the learning process
 LearningQDeep.trainingEpisodes()
 # get the obtained rewards in every episode
