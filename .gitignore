@@ -1,1 +1,5 @@
 RL-Honeypot/*
+lib/*
+lib64/*
+include/*
+bin/*

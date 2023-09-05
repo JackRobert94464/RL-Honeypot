@@ -1,4 +1,4 @@
-# Nhập các thư viện cần thiết
+# import the necessary libraries
 import numpy as np
 import random
 from tensorflow.keras.layers import Dense
@@ -7,220 +7,282 @@ from tensorflow.keras.optimizers import RMSprop
 from collections import deque 
 from tensorflow import gather_nd
 from tensorflow.keras.losses import mean_squared_error 
-
+ 
+ 
+ 
 class DeepQLearning:
      
     ###########################################################################
-    #   BẮT ĐẦU - hàm __init__
+    #   START - __init__ function
     ###########################################################################
-    # ĐẦU VÀO: 
-    # env - Môi trường Cart Pole
-    # gamma - tỷ lệ chiết khấu
-    # epsilon - tham số cho phương pháp epsilon-greedy
-    # numberEpisodes - tổng số episode mô phỏng
+    # INPUTS: 
+    # env - Cart Pole environment
+    # gamma - discount rate
+    # epsilon - parameter for epsilon-greedy approach
+    # numberEpisodes - total number of simulation episodes
      
              
-    def __init__(self, env, gamma, epsilon, numberEpisodes):
+    def __init__(self,env,gamma,epsilon,numberEpisodes):
          
          
-        self.env = env
-        self.gamma = gamma
-        self.epsilon = epsilon
-        self.numberEpisodes = numberEpisodes
+        self.env=env
+        self.gamma=gamma
+        self.epsilon=epsilon
+        self.numberEpisodes=numberEpisodes
          
-        # Kích thước trạng thái
-        self.stateDimension = 4
-        # Kích thước hành động
-        self.actionDimension = 2
-        # Đây là kích thước tối đa của bộ đệm lưu trữ trạng thái (replay buffer)
-        self.replayBufferSize = 300
-        # Đây là kích thước của lô huấn luyện được lấy ngẫu nhiên từ bộ đệm lưu trữ (replay buffer)
-        self.batchReplayBufferSize = 100
+        # state dimension
+        self.stateDimension=4
+        # action dimension
+        self.actionDimension=2
+        # this is the maximum size of the replay buffer
+        self.replayBufferSize=300
+        # this is the size of the training batch that is randomly sampled from the replay buffer
+        self.batchReplayBufferSize=100
          
-        # Biến này được sử dụng để lưu tổng của các phần thưởng thu được trong mỗi episode huấn luyện
-        self.sumRewardsEpisode = []
+        # number of training episodes it takes to update the target network parameters
+        # that is, every updateTargetNetworkPeriod we update the target network parameters
+        self.updateTargetNetworkPeriod=100
          
-        # Bộ đệm lưu trữ trạng thái (replay buffer)
-        self.replayBuffer = deque(maxlen=self.replayBufferSize)
+        # this is the counter for updating the target network 
+        # if this counter exceeds (updateTargetNetworkPeriod-1) we update the network 
+        # parameters and reset the counter to zero, this process is repeated until the end of the training process
+        self.counterUpdateTargetNetwork=0
          
-        # Đây là mạng chính (main network). DQN dùng mạng này cho cả 2 việc sau:
-        # 1. Dự đoán giá trị Q cho một trạng thái - Target network
-        # 2. Lựa chọn hành động tốt nhất cho trạng thái tiếp theo dựa trên kết quả của mạng Target - Main network
-        # Tạo mạng
-        self.mainNetwork = self.createNetwork()
+        # this sum is used to store the sum of rewards obtained during each training episode
+        self.sumRewardsEpisode=[]
          
-        # Danh sách này được sử dụng trong hàm chi phí để chọn các mục cụ thể của ma trận dự đoán và mẫu thực sự để tạo hàm loss
-        self.actionsAppend = []
+        # replay buffer
+        self.replayBuffer=deque(maxlen=self.replayBufferSize)
+         
+        # this is the main network
+        # create network
+        self.mainNetwork=self.createNetwork()       
+         
+        # this list is used in the cost function to select certain entries of the 
+        # predicted and true sample matrices in order to form the loss
+        self.actionsAppend=[]
      
     ###########################################################################
-    #   KẾT THÚC - hàm __init__
+    #   END - __init__ function
     ###########################################################################
      
     ###########################################################################
-    # BẮT ĐẦU - hàm định nghĩa hàm loss (cost function)
-    # ĐẦU VÀO: 
+    # START - function for defining the loss (cost) function
+    # INPUTS: 
     #
-    # y_true - ma trận có kích thước (self.batchReplayBufferSize, 2) - đây là mục tiêu dự đoán cần đạt
-    # y_pred - ma trận có kích thước (self.batchReplayBufferSize, 2) - đây là dự đoán của mạng
+    # y_true - matrix of dimension (self.batchReplayBufferSize,2) - this is the target 
+    # y_pred - matrix of dimension (self.batchReplayBufferSize,2) - this is predicted by the network
     # 
-    # - hàm này sẽ chọn một số mục cụ thể từ y_true và y_pred để tạo đầu ra 
-    # việc chọn lựa này được thực hiện dựa trên index các hành động của danh sách self.actionsAppend (lấy các hành động được chọn từ các lần huấn luyện trước)
-    # - hàm này được sử dụng trong hàm createNetwork(self) để tạo mạng
+    # - this function will select certain row entries from y_true and y_pred to form the output 
+    # the selection is performed on the basis of the action indices in the list  self.actionsAppend
+    # - this function is used in createNetwork(self) to create the network
     #
-    # ĐẦU RA: 
+    # OUTPUT: 
     #    
-    # - loss - chú ý ở đây, đây là một vector có kích thước (self.batchReplayBufferSize, 1), 
-    # với mỗi mục là bình phương sai số (mean square error) giữa các mục của y_true và y_pred
-    # sau đó, TensorFlow sẽ tính toán giá trị scalar từ vector này (mean squared error)
+    # - loss - watch out here, this is a vector of (self.batchReplayBufferSize,1), 
+    # with each entry being the squared error between the entries of y_true and y_pred
+    # later on, the tensor flow will compute the scalar out of this vector (mean squared error)
     ###########################################################################    
      
-    def my_loss_fn(self, y_true, y_pred):
+    def my_loss_fn(self,y_true, y_pred):
          
-        s1, s2 = y_true.shape
-        #print(s1, s2)
+        s1,s2=y_true.shape
+        #print(s1,s2)
          
-        # ma trận này xác định index của tập hợp các mục mà chúng ta muốn 
-        # trích xuất từ y_true và y_pred
+        # this matrix defines indices of a set of entries that we want to 
+        # extract from y_true and y_pred
         # s2=2
         # s1=self.batchReplayBufferSize
-        indices = np.zeros(shape=(s1, s2))
-        indices[:, 0] = np.arange(s1)
-        indices[:, 1] = self.actionsAppend
+        indices=np.zeros(shape=(s1,s2))
+        indices[:,0]=np.arange(s1)
+        indices[:,1]=self.actionsAppend
          
-        # gather_nd và mean_squared_error là các hàm TensorFlow
-        loss = mean_squared_error(gather_nd(y_true, indices=indices.astype(int)), gather_nd(y_pred, indices=indices.astype(int)))
+        # gather_nd and mean_squared_error are TensorFlow functions
+        loss = mean_squared_error(gather_nd(y_true,indices=indices.astype(int)), gather_nd(y_pred,indices=indices.astype(int)))
         #print(loss)
         return loss    
     ###########################################################################
-    #   KẾT THÚC - của hàm my_loss_fn
+    #   END - of function my_loss_fn
     ###########################################################################
      
+     
     ###########################################################################
-    #   BẮT ĐẦU - hàm tạo mạng (createNetwork())
-    # hàm này tạo mạng
+    #   START - function createNetwork()
+    # this function creates the network
     ###########################################################################
      
-    # tạo một mạng neural
+    # create a neural network
     def createNetwork(self):
-        model = Sequential()
-        model.add(Dense(128, input_dim=self.stateDimension, activation='relu'))
-        model.add(Dense(56, activation='relu'))
-        model.add(Dense(self.actionDimension, activation='linear'))
-        # biên dịch mạng với hàm loss tùy chỉnh được định nghĩa trong my_loss_fn
-        model.compile(optimizer=RMSprop(), loss=self.my_loss_fn, metrics=['accuracy'])
+        model=Sequential()
+        model.add(Dense(128,input_dim=self.stateDimension,activation='relu'))
+        model.add(Dense(56,activation='relu'))
+        model.add(Dense(self.actionDimension,activation='linear'))
+        # compile the network with the custom loss defined in my_loss_fn
+        model.compile(optimizer = RMSprop(), loss = self.my_loss_fn, metrics = ['accuracy'])
         return model
     ###########################################################################
-    #   KẾT THÚC - hàm tạo mạng (createNetwork())
+    #   END - function createNetwork()
     ###########################################################################
              
     ###########################################################################
-    #   BẮT ĐẦU - hàm trainingEpisodes()
-    #   - hàm này mô phỏng các episode và gọi hàm huấn luyện 
+    #   START - function trainingEpisodes()
+    #   - this function simulates the episodes and calls the training function 
     #   - trainNetwork()
     ###########################################################################
-
+ 
     def trainingEpisodes(self):
+    
+         
+        # here we loop through the episodes
         for indexEpisode in range(self.numberEpisodes):
-            rewardsEpisode = []
-            print("Đang mô phỏng episode {}".format(indexEpisode))
-            (currentState, _) = self.env.reset()
-            terminalState = False
+             
+            # list that stores rewards per episode - this is necessary for keeping track of convergence 
+            rewardsEpisode=[]
+                        
+            print("Simulating episode {}".format(indexEpisode))
+             
+            # reset the environment at the beginning of every episode
+            (currentState,_)=self.env.reset()
+                       
+            # here we step from one state to another
+            # this will loop until a terminal state is reached
+            terminalState=False
             while not terminalState:
-                action = self.selectAction(currentState, indexEpisode)
-                (nextState, reward, terminalState, _, _) = self.env.step(action)
+                                       
+                # select an action on the basis of the current state, denoted by currentState
+                action = self.selectAction(currentState,indexEpisode)
+                 
+                # here we step and return the state, reward, and boolean denoting if the state is a terminal state
+                (nextState, reward, terminalState,_,_) = self.env.step(action)          
                 rewardsEpisode.append(reward)
-                self.replayBuffer.append((currentState, action, reward, nextState, terminalState))
+          
+                # add current state, action, reward, next state, and terminal flag to the replay buffer
+                self.replayBuffer.append((currentState,action,reward,nextState,terminalState))
+                 
+                # train network
                 self.trainNetwork()
-                currentState = nextState
-            print("Tổng phần thưởng {}".format(np.sum(rewardsEpisode)))
+                 
+                # set the current state for the next step
+                currentState=nextState
+             
+            print("Sum of rewards {}".format(np.sum(rewardsEpisode)))        
             self.sumRewardsEpisode.append(np.sum(rewardsEpisode))
-
     ###########################################################################
-    #   KẾT THÚC - hàm trainingEpisodes()
+    #   END - function trainingEpisodes()
     ###########################################################################
              
         
     ###########################################################################
-    #    BẮT ĐẦU - hàm chọn hành động: phương pháp epsilon-greedy
+    #    START - function for selecting an action: epsilon-greedy approach
     ###########################################################################
-    # hàm này chọn một hành động dựa trên trạng thái hiện tại 
-    # ĐẦU VÀO: 
-    # state - trạng thái để tính toán hành động
-    # index - index của episode hiện tại
-    def selectAction(self, state, index):
+    # this function selects an action on the basis of the current state 
+    # INPUTS: 
+    # state - state for which to compute the action
+    # index - index of the current episode
+    def selectAction(self,state,index):
         import numpy as np
          
-        # trong những episode đầu tiên, chúng ta chọn các hành động hoàn toàn ngẫu nhiên để khám phá
-        # có thể tăng số index này lên để khám phá nhiều hơn
-        if index < 1:
+        # first index episodes we select completely random actions to have enough exploration
+        # change this
+        if index<1:
             return np.random.choice(self.actionDimension)   
              
-        # Trả về một số thực ngẫu nhiên trong khoảng [0.0, 1.0)
-        # số này dùng cho phương pháp epsilon-greedy
-        randomNumber = np.random.random()
+        # Returns a random real number in the half-open interval [0.0, 1.0)
+        # this number is used for the epsilon greedy approach
+        randomNumber=np.random.random()
          
-        # sau số lượng episode index nhất định, chúng ta bắt đầu từ từ giảm tham số epsilon
-        if index > 200:
-            self.epsilon = 0.999 * self.epsilon
+        # after index episodes, we slowly start to decrease the epsilon parameter
+        if index>200:
+            self.epsilon=0.999*self.epsilon
          
-        # nếu điều kiện này được đáp ứng, chúng ta đang thăm dò, tức là chúng ta chọn các hành động ngẫu nhiên
+        # if this condition is satisfied, we are exploring, that is, we select random actions
         if randomNumber < self.epsilon:
-            # trả về một hành động ngẫu nhiên được chọn từ: 0,1,...,actionNumber-1
+            # returns a random action selected from: 0,1,...,actionNumber-1
             return np.random.choice(self.actionDimension)            
          
-        # nếu không, chúng ta đang chọn các hành động tham lam
+        # otherwise, we are selecting greedy actions
         else:
-            # chúng ta trả về index trong đó Qvalues[state,:] có giá trị lớn nhất
-            # tức là, vì index đại diện cho một hành động, chúng ta chọn các hành động một cách tham lam (lấy cái lớn nhất)
+            # we return the index where Qvalues[state,:] has the max value
+            # that is, since the index denotes an action, we select greedy actions
                         
-            Qvalues = self.mainNetwork.predict(state.reshape(1, 4))
+            Qvalues=self.mainNetwork.predict(state.reshape(1,4))
            
-            return np.random.choice(np.where(Qvalues[0, :] == np.max(Qvalues[0, :]))[0])
-            # ở đây chúng ta cần trả về ít số lượng index nhất có thể vì 
-            # một số kết quả trả về của hàm max có thể giống nhau, ví dụ 
+            return np.random.choice(np.where(Qvalues[0,:]==np.max(Qvalues[0,:]))[0])
+            # here we need to return the minimum index since it can happen
+            # that there are several identical maximal entries, for example 
             # import numpy as np
-            # a = [0, 1, 1, 0]
-            # np.where(a == np.max(a))
-            # sẽ trả về [1, 2], nhưng chúng ta chỉ cần một index duy nhất
-            # đó là lý do tại sao chúng ta cần có np.random.choice(np.where(a == np.max(a))[0])
-            # lưu ý rằng phải thêm số 0 ở đây vì np.where() trả về một tuple và ta lấy kết quả đầu tiên
+            # a=[0,1,1,0]
+            # np.where(a==np.max(a))
+            # this will return [1,2], but we only need a single index
+            # that is why we need to have np.random.choice(np.where(a==np.max(a))[0])
+            # note that zero has to be added here since np.where() returns a tuple
     ###########################################################################
-    #    KẾT THÚC - hàm chọn hành động: phương pháp epsilon-greedy
+    #    END - function selecting an action: epsilon-greedy approach
     ###########################################################################
      
     ###########################################################################
-    #    BẮT ĐẦU - hàm trainNetwork() - hàm này huấn luyện mạng
+    #    START - function trainNetwork() - this function trains the network
     ###########################################################################
-
+     
     def trainNetwork(self):
-        if len(self.replayBuffer) > self.batchReplayBufferSize:
-            randomSampleBatch = random.sample(self.replayBuffer, self.batchReplayBufferSize)
-            
-            currentStateBatch = np.zeros(shape=(self.batchReplayBufferSize, 4))
-            nextStateBatch = np.zeros(shape=(self.batchReplayBufferSize, 4))
-
-            for index, tupleS in enumerate(randomSampleBatch):
-                currentStateBatch[index, :] = tupleS[0]
-                nextStateBatch[index, :] = tupleS[3]
-
-            QcurrentStateMainNetwork = self.mainNetwork.predict(currentStateBatch)
-            QnextStateMainNetwork = self.mainNetwork.predict(nextStateBatch)
-
-            inputNetwork = currentStateBatch
-            outputNetwork = np.zeros(shape=(self.batchReplayBufferSize, self.actionDimension))
-
-            for index, (currentState, action, reward, nextState, terminated) in enumerate(randomSampleBatch):
-                self.actionsAppend.append(action)  # Thêm hành động vào danh sách
-                target = reward
-
-                if not terminated:
-                    target += self.gamma * np.max(QnextStateMainNetwork[index])
-
-                outputNetwork[index] = QcurrentStateMainNetwork[index]
-                outputNetwork[index, action] = target
-
-            self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size=self.batchReplayBufferSize, verbose=0, epochs=1)
-
+ 
+        # if the replay buffer has at least batchReplayBufferSize elements,
+        # then train the model 
+        # otherwise wait until the size of the elements exceeds batchReplayBufferSize
+        if (len(self.replayBuffer)>self.batchReplayBufferSize):
+             
+ 
+            # sample a batch from the replay buffer
+            randomSampleBatch=random.sample(self.replayBuffer, self.batchReplayBufferSize)
+             
+            # here we form current state batch 
+            # and next state batch
+            # they are used as inputs for prediction
+            currentStateBatch=np.zeros(shape=(self.batchReplayBufferSize,4))
+            nextStateBatch=np.zeros(shape=(self.batchReplayBufferSize,4))            
+            # this will enumerate the tuple entries of the randomSampleBatch
+            # index will loop through the number of tuples
+            for index,tupleS in enumerate(randomSampleBatch):
+                # first entry of the tuple is the current state
+                currentStateBatch[index,:]=tupleS[0]
+                # fourth entry of the tuple is the next state
+                nextStateBatch[index,:]=tupleS[3]
+             
+            # here, use the target network to predict Q-values 
+            QnextStateTargetNetwork=self.mainNetwork.predict(nextStateBatch)
+            # here, use the main network to predict Q-values 
+            QcurrentStateMainNetwork=self.mainNetwork.predict(currentStateBatch)
+             
+            # now, we form batches for training
+            # input for training
+            inputNetwork=currentStateBatch
+            # output for training
+            outputNetwork=np.zeros(shape=(self.batchReplayBufferSize,2))
+             
+            # this list will contain the actions that are selected from the batch 
+            # this list is used in my_loss_fn to define the loss-function
+            self.actionsAppend=[]            
+            for index,(currentState,action,reward,nextState,terminated) in enumerate(randomSampleBatch):
+                 
+                # if the next state is the terminal state
+                if terminated:
+                    y=reward                  
+                # if the next state if not the terminal state    
+                else:
+                    y=reward+self.gamma*np.max(QnextStateTargetNetwork[index])
+                 
+                # this is necessary for defining the cost function
+                self.actionsAppend.append(action)
+                 
+                # this actually does not matter since we do not use all the entries in the cost function
+                outputNetwork[index]=QcurrentStateMainNetwork[index]
+                # this is what matters
+                outputNetwork[index,action]=y
+             
+            # here, we train the network
+            self.mainNetwork.fit(inputNetwork,outputNetwork,batch_size = self.batchReplayBufferSize, verbose=0,epochs=100)     
+             
     ###########################################################################
-    #    KẾT THÚC - hàm trainNetwork() 
-    ########################################################################### 
+    #    END - function trainNetwork() 
+    ###########################################################################     
+                  
