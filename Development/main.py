@@ -1,100 +1,108 @@
-import gym
-import numpy as np
+# Import tensorflow and numpy libraries
 import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.optimizers import Adam
-from NetworkHoneypotEnv import NetworkHoneypotEnv
+import numpy as np
 
-class DQN(tf.keras.Model):
-    def __init__(self, state_size, action_size):
-        super(DQN, self).__init__()
-        self.fc1 = Dense(24, activation='relu', input_shape=(state_size,))
-        self.fc2 = Dense(24, activation='relu')
-        self.fc3 = Dense(action_size, activation='linear')
+# Define some constants
+NUM_STATES = 10 # The number of states in the environment
+NUM_ACTIONS = 4 # The number of actions in the environment
+GAMMA = 0.9 # The discount factor for future rewards
+ALPHA = 0.1 # The learning rate for Q-learning
+EPSILON = 0.1 # The exploration rate for epsilon-greedy policy
+MAX_ITER = 1000 # The maximum number of iterations for the algorithm
 
-    def call(self, inputs):
-        x = self.fc1(inputs)
-        x = self.fc2(x)
-        return self.fc3(x)
+# Create a random target network TPN with 3 layers
+TPN = tf.keras.Sequential([
+    tf.keras.layers.Dense(32, activation='relu', input_shape=(1,)), # Change the input shape to (1,)
+    tf.keras.layers.Dense(16, activation='relu'),
+    tf.keras.layers.Dense(NUM_ACTIONS, activation='linear')
+])
 
-class DQNAgent:
-    def __init__(self, state_size, action_size, learning_rate=0.001, discount_factor=0.99, epsilon=1.0, epsilon_min=0.01, epsilon_decay=0.995):
-        self.state_size = state_size
-        self.action_size = action_size
-        self.memory = []
-        self.batch_size = 32
-        self.learning_rate = learning_rate
-        self.discount_factor = discount_factor
-        self.epsilon = epsilon
-        self.epsilon_min = epsilon_min
-        self.epsilon_decay = epsilon_decay
-        self.model = DQN(state_size, action_size)
-        self.optimizer = Adam(learning_rate=self.learning_rate)
-        
-    def remember(self, state, action, reward, next_state, done):
-        self.memory.append((state, action, reward, next_state, done))
-        
-    def choose_action(self, state):
-        if np.random.rand() <= self.epsilon:
-            return np.random.choice(self.action_size)
-        q_values = self.model.predict(state)
-        return np.argmax(q_values[0])
-        
-    def replay(self):
-        if len(self.memory) < self.batch_size:
-            return
-        
-        minibatch = np.random.choice(self.memory, self.batch_size, replace=False)
-        
-        for state, action, reward, next_state, done in minibatch:
-            print("Shapes:", state.shape, action.shape, reward.shape, next_state.shape, done.shape)  # Debug line
-            
-            target = reward
-            if not done:
-                target = (reward + self.discount_factor * np.amax(self.model.predict(next_state)[0]))
-            target_q_values = self.model.predict(state)
-            target_q_values[0][action] = target
-            
-            with tf.GradientTape() as tape:
-                q_values = self.model(state)
-                loss = tf.keras.losses.mean_squared_error(target_q_values, q_values)
-            gradients = tape.gradient(loss, self.model.trainable_variables)
-            self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
-        
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
+# Create a random deployment action graph DAG with NUM_STATES nodes and NUM_ACTIONS edges per node
+DAG = np.random.randint(0, 2, size=(NUM_STATES, NUM_ACTIONS))
+
+# Initialize the Q-table with zeros
+Q = np.zeros((NUM_STATES, NUM_ACTIONS))
+
+# Define a function to choose an action using epsilon-greedy policy
+def choose_action(state):
+    if np.random.rand() < EPSILON: # Explore with probability EPSILON
+        return np.random.randint(NUM_ACTIONS) # Choose a random action
+    else: # Exploit with probability 1 - EPSILON
+        return np.argmax(Q[state]) # Choose the action with the highest Q-value
+
+def get_reward(state, action):
+  """Gets the reward for taking an action in a state.
+
+  Args:
+    state: The current state.
+    action: The action to take.
+
+  Returns:
+    The reward for taking the action in the current state.
+  """
+
+  if state is None:
+    return 0.0
+  else:
+    state_tensor = tf.convert_to_tensor([state])
+    state_tensor = tf.expand_dims(state_tensor, axis=0)
+    action_tensor = tf.convert_to_tensor([action])
+    output_tensor = TPN(state_tensor)
+    reward = output_tensor[0][action]
+    return reward.numpy()
 
 
-env = NetworkHoneypotEnv()
-state_size = 10  # Use the state size you defined in NetworkHoneypotEnv class
-action_size = 3
+def get_next_state(state, action):
+  """Gets the next state for taking an action in a state.
 
-agent = DQNAgent(state_size, action_size)
+  Args:
+    state: The current state.
+    action: The action to take.
 
-num_episodes = 1000
+  Returns:
+    The next state for taking the action in the current state.
+  """
 
-for episode in range(num_episodes):
-    state = env.reset()
-    total_reward = 0
-    done = False
+  if state is None:
+    return None
+  elif state >= len(DAG):
+    return None
+  elif np.any(DAG[state][action]):
+    next_state = np.nonzero(DAG[state][action])[0][0]
+    return next_state
+  else:
+    return None
+
+
+# Initialize the target_policy variable as an empty list
+target_policy = []
+
+# Run the algorithm for MAX_ITER iterations
+for i in range(MAX_ITER):
+    # Choose a random initial state
+    state = np.random.randint(NUM_STATES)
     
-    while not done:
-        state_array = np.reshape(state, [1, state_size])
-        action = agent.choose_action(state_array)
+    # Repeat until reaching a terminal state (a state with no actions)
+    while np.sum(DAG[state]) > 0:
+        # Choose an action using epsilon-greedy policy
+        action = choose_action(state)
         
-        # Convert the chosen action to a binary array
-        action_array = np.zeros(action_size)
-        action_array[action] = 1
+        # Get the reward and the next state for taking the action in the current state
+        reward = get_reward(state, action)
+        next_state = get_next_state(state, action)
         
-        next_state, reward, done, _ = env.step(action_array)
-        total_reward += reward
-        agent.remember(state, action, reward, next_state, done)
+        # Update the Q-table using the Bellman equation
+        if next_state is not None:
+            Q[state][action] = Q[state][action] + ALPHA * (reward + GAMMA * np.max(Q[next_state]) - Q[state][action])
+        else:
+            Q[state][action] = 0.0
         
-        # Convert next_state to an array
-        next_state_array = np.reshape(next_state, [1, state_size])
+        # Update the target policy by appending the action with the highest Q-value for each state
+        target_policy.append(np.argmax(Q[state]))
         
-        agent.replay()
-        state = next_state_array
+        # Set the current state to be the next state
+        state = next_state
     
-    print(f"Episode: {episode + 1}, Total Reward: {total_reward}, Epsilon: {agent.epsilon:.4f}")
+    # Print some progress information every 100 iterations
+    if (i + 1) % 100 == 0:
+        print(f"Iteration {i + 1}: Q-table = {Q}, target policy = {target_policy}")
