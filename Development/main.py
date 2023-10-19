@@ -1,108 +1,306 @@
-# Import tensorflow and numpy libraries
-import tensorflow as tf
+# import the necessary libraries
 import numpy as np
-
-# Define some constants
-NUM_STATES = 10 # The number of states in the environment
-NUM_ACTIONS = 4 # The number of actions in the environment
-GAMMA = 0.9 # The discount factor for future rewards
-ALPHA = 0.1 # The learning rate for Q-learning
-EPSILON = 0.1 # The exploration rate for epsilon-greedy policy
-MAX_ITER = 1000 # The maximum number of iterations for the algorithm
-
-# Create a random target network TPN with 3 layers
-TPN = tf.keras.Sequential([
-    tf.keras.layers.Dense(32, activation='relu', input_shape=(1,)), # Change the input shape to (1,)
-    tf.keras.layers.Dense(16, activation='relu'),
-    tf.keras.layers.Dense(NUM_ACTIONS, activation='linear')
-])
-
-# Create a random deployment action graph DAG with NUM_STATES nodes and NUM_ACTIONS edges per node
-DAG = np.random.randint(0, 2, size=(NUM_STATES, NUM_ACTIONS))
-
-# Initialize the Q-table with zeros
-Q = np.zeros((NUM_STATES, NUM_ACTIONS))
-
-# Define a function to choose an action using epsilon-greedy policy
-def choose_action(state):
-    if np.random.rand() < EPSILON: # Explore with probability EPSILON
-        return np.random.randint(NUM_ACTIONS) # Choose a random action
-    else: # Exploit with probability 1 - EPSILON
-        return np.argmax(Q[state]) # Choose the action with the highest Q-value
-
-def get_reward(state, action):
-  """Gets the reward for taking an action in a state.
-
-  Args:
-    state: The current state.
-    action: The action to take.
-
-  Returns:
-    The reward for taking the action in the current state.
-  """
-
-  if state is None:
-    return 0.0
-  else:
-    state_tensor = tf.convert_to_tensor([state])
-    state_tensor = tf.expand_dims(state_tensor, axis=0)
-    action_tensor = tf.convert_to_tensor([action])
-    output_tensor = TPN(state_tensor)
-    reward = output_tensor[0][action]
-    return reward.numpy()
-
-
-def get_next_state(state, action):
-  """Gets the next state for taking an action in a state.
-
-  Args:
-    state: The current state.
-    action: The action to take.
-
-  Returns:
-    The next state for taking the action in the current state.
-  """
-
-  if state is None:
-    return None
-  elif state >= len(DAG):
-    return None
-  elif np.any(DAG[state][action]):
-    next_state = np.nonzero(DAG[state][action])[0][0]
-    return next_state
-  else:
-    return None
-
-
-# Initialize the target_policy variable as an empty list
-target_policy = []
-
-# Run the algorithm for MAX_ITER iterations
-for i in range(MAX_ITER):
-    # Choose a random initial state
-    state = np.random.randint(NUM_STATES)
+import random
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import RMSprop
+from collections import deque 
+from tensorflow import gather_nd
+from tensorflow.keras.losses import mean_squared_error 
+ 
+ 
+ 
+class DoubleDeepQLearning:
+     
+    ###########################################################################
+    #   START - __init__ function
+    ###########################################################################
+    # INPUTS: 
+    # env - Cart Pole environment
+    # gamma - discount rate
+    # epsilon - parameter for epsilon-greedy approach
+    # numberEpisodes - total number of simulation episodes
+     
+             
+    def __init__(self,env,gamma,epsilon,numberEpisodes):
+         
+         
+        self.env=env
+        self.gamma=gamma
+        self.epsilon=epsilon
+        self.numberEpisodes=numberEpisodes
+         
+        # state dimension
+        self.stateDimension=4
+        # action dimension
+        self.actionDimension=2
+        # this is the maximum size of the replay buffer
+        self.replayBufferSize=300
+        # this is the size of the training batch that is randomly sampled from the replay buffer
+        self.batchReplayBufferSize=100
+         
+        # number of training episodes it takes to update the target network parameters
+        # that is, every updateTargetNetworkPeriod we update the target network parameters
+        self.updateTargetNetworkPeriod=100
+         
+        # this is the counter for updating the target network 
+        # if this counter exceeds (updateTargetNetworkPeriod-1) we update the network 
+        # parameters and reset the counter to zero, this process is repeated until the end of the training process
+        self.counterUpdateTargetNetwork=0
+         
+        # this sum is used to store the sum of rewards obtained during each training episode
+        self.sumRewardsEpisode=[]
+         
+        # replay buffer
+        self.replayBuffer=deque(maxlen=self.replayBufferSize)
+         
+        # this is the main network
+        # create network
+        self.mainNetwork=self.createNetwork()
+         
+        # this is the target network
+        # create network
+        self.targetNetwork=self.createNetwork()
+         
+        # copy the initial weights to targetNetwork
+        self.targetNetwork.set_weights(self.mainNetwork.get_weights())
+         
+        # this list is used in the cost function to select certain entries of the 
+        # predicted and true sample matrices in order to form the loss
+        self.actionsAppend=[]
+     
+    ###########################################################################
+    #   END - __init__ function
+    ###########################################################################
+     ``
+    ###########################################################################
+    # START - function for defining the loss (cost) function
+    # INPUTS: 
+    #
+    # y_true - matrix of dimension (self.batchReplayBufferSize,2) - this is the target 
+    # y_pred - matrix of dimension (self.batchReplayBufferSize,2) - this is predicted by the network
+    # 
+    # - this function will select certain row entries from y_true and y_pred to form the output 
+    # the selection is performed on the basis of the action indices in the list  self.actionsAppend
+    # - this function is used in createNetwork(self) to create the network
+    #
+    # OUTPUT: 
+    #    
+    # - loss - watch out here, this is a vector of (self.batchReplayBufferSize,1), 
+    # with each entry being the squared error between the entries of y_true and y_pred
+    # later on, the tensor flow will compute the scalar out of this vector (mean squared error)
+    ###########################################################################    
+     
+    def my_loss_fn(self,y_true, y_pred):
+         
+        s1,s2=y_true.shape
+        #print(s1,s2)
+         
+        # this matrix defines indices of a set of entries that we want to 
+        # extract from y_true and y_pred
+        # s2=2
+        # s1=self.batchReplayBufferSize
+        indices=np.zeros(shape=(s1,s2))
+        indices[:,0]=np.arange(s1)
+        indices[:,1]=self.actionsAppend
+         
+        # gather_nd and mean_squared_error are TensorFlow functions
+        loss = mean_squared_error(gather_nd(y_true,indices=indices.astype(int)), gather_nd(y_pred,indices=indices.astype(int)))
+        #print(loss)
+        return loss    
+    ###########################################################################
+    #   END - of function my_loss_fn
+    ###########################################################################
+     
+     
+    ###########################################################################
+    #   START - function createNetwork()
+    # this function creates the network
+    ###########################################################################
+     
+    # create a neural network
+    def createNetwork(self):
+        model=Sequential()
+        model.add(Dense(128,input_dim=self.stateDimension,activation='relu'))
+        model.add(Dense(56,activation='relu'))
+        model.add(Dense(self.actionDimension,activation='linear'))
+        # compile the network with the custom loss defined in my_loss_fn
+        model.compile(optimizer = RMSprop(), loss = self.my_loss_fn, metrics = ['accuracy'])
+        return model
+    ###########################################################################
+    #   END - function createNetwork()
+    ###########################################################################
+             
+    ###########################################################################
+    #   START - function trainingEpisodes()
+    #   - this function simulates the episodes and calls the training function 
+    #   - trainNetwork()
+    ###########################################################################
+ 
+    def trainingEpisodes(self):
     
-    # Repeat until reaching a terminal state (a state with no actions)
-    while np.sum(DAG[state]) > 0:
-        # Choose an action using epsilon-greedy policy
-        action = choose_action(state)
+         
+        # here we loop through the episodes
+        for indexEpisode in range(self.numberEpisodes):
+             
+            # list that stores rewards per episode - this is necessary for keeping track of convergence 
+            rewardsEpisode=[]
+                        
+            print("Simulating episode {}".format(indexEpisode))
+             
+            # reset the environment at the beginning of every episode
+            (currentState,_)=self.env.reset()
+                       
+            # here we step from one state to another
+            # this will loop until a terminal state is reached
+            terminalState=False
+            while not terminalState:
+                                       
+                # select an action on the basis of the current state, denoted by currentState
+                action = self.selectAction(currentState,indexEpisode)
+                 
+                # here we step and return the state, reward, and boolean denoting if the state is a terminal state
+                (nextState, reward, terminalState,_,_) = self.env.step(action)          
+                rewardsEpisode.append(reward)
+          
+                # add current state, action, reward, next state, and terminal flag to the replay buffer
+                self.replayBuffer.append((currentState,action,reward,nextState,terminalState))
+                 
+                # train network
+                self.trainNetwork()
+                 
+                # set the current state for the next step
+                currentState=nextState
+             
+            print("Sum of rewards {}".format(np.sum(rewardsEpisode)))        
+            self.sumRewardsEpisode.append(np.sum(rewardsEpisode))
+    ###########################################################################
+    #   END - function trainingEpisodes()
+    ###########################################################################
+             
         
-        # Get the reward and the next state for taking the action in the current state
-        reward = get_reward(state, action)
-        next_state = get_next_state(state, action)
-        
-        # Update the Q-table using the Bellman equation
-        if next_state is not None:
-            Q[state][action] = Q[state][action] + ALPHA * (reward + GAMMA * np.max(Q[next_state]) - Q[state][action])
+    ###########################################################################
+    #    START - function for selecting an action: epsilon-greedy approach
+    ###########################################################################
+    # this function selects an action on the basis of the current state 
+    # INPUTS: 
+    # state - state for which to compute the action
+    # index - index of the current episode
+    def selectAction(self,state,index):
+        import numpy as np
+         
+        # first index episodes we select completely random actions to have enough exploration
+        # change this
+        if index<1:
+            return np.random.choice(self.actionDimension)   
+             
+        # Returns a random real number in the half-open interval [0.0, 1.0)
+        # this number is used for the epsilon greedy approach
+        randomNumber=np.random.random()
+         
+        # after index episodes, we slowly start to decrease the epsilon parameter
+        if index>200:
+            self.epsilon=0.999*self.epsilon
+         
+        # if this condition is satisfied, we are exploring, that is, we select random actions
+        if randomNumber < self.epsilon:
+            # returns a random action selected from: 0,1,...,actionNumber-1
+            return np.random.choice(self.actionDimension)            
+         
+        # otherwise, we are selecting greedy actions
         else:
-            Q[state][action] = 0.0
-        
-        # Update the target policy by appending the action with the highest Q-value for each state
-        target_policy.append(np.argmax(Q[state]))
-        
-        # Set the current state to be the next state
-        state = next_state
-    
-    # Print some progress information every 100 iterations
-    if (i + 1) % 100 == 0:
-        print(f"Iteration {i + 1}: Q-table = {Q}, target policy = {target_policy}")
+            # we return the index where Qvalues[state,:] has the max value
+            # that is, since the index denotes an action, we select greedy actions
+                        
+            Qvalues=self.mainNetwork.predict(state.reshape(1,4))
+           
+            return np.random.choice(np.where(Qvalues[0,:]==np.max(Qvalues[0,:]))[0])
+            # here we need to return the minimum index since it can happen
+            # that there are several identical maximal entries, for example 
+            # import numpy as np
+            # a=[0,1,1,0]
+            # np.where(a==np.max(a))
+            # this will return [1,2], but we only need a single index
+            # that is why we need to have np.random.choice(np.where(a==np.max(a))[0])
+            # note that zero has to be added here since np.where() returns a tuple
+    ###########################################################################
+    #    END - function selecting an action: epsilon-greedy approach
+    ###########################################################################
+     
+    ###########################################################################
+    #    START - function trainNetwork() - this function trains the network
+    ###########################################################################
+     
+    def trainNetwork(self):
+ 
+        # if the replay buffer has at least batchReplayBufferSize elements,
+        # then train the model 
+        # otherwise wait until the size of the elements exceeds batchReplayBufferSize
+        if (len(self.replayBuffer)>self.batchReplayBufferSize):
+             
+ 
+            # sample a batch from the replay buffer
+            randomSampleBatch=random.sample(self.replayBuffer, self.batchReplayBufferSize)
+             
+            # here we form current state batch 
+            # and next state batch
+            # they are used as inputs for prediction
+            currentStateBatch=np.zeros(shape=(self.batchReplayBufferSize,4))
+            nextStateBatch=np.zeros(shape=(self.batchReplayBufferSize,4))            
+            # this will enumerate the tuple entries of the randomSampleBatch
+            # index will loop through the number of tuples
+            for index,tupleS in enumerate(randomSampleBatch):
+                # first entry of the tuple is the current state
+                currentStateBatch[index,:]=tupleS[0]
+                # fourth entry of the tuple is the next state
+                nextStateBatch[index,:]=tupleS[3]
+             
+            # here, use the target network to predict Q-values 
+            QnextStateTargetNetwork=self.targetNetwork.predict(nextStateBatch)
+            # here, use the main network to predict Q-values 
+            QcurrentStateMainNetwork=self.mainNetwork.predict(currentStateBatch)
+             
+            # now, we form batches for training
+            # input for training
+            inputNetwork=currentStateBatch
+            # output for training
+            outputNetwork=np.zeros(shape=(self.batchReplayBufferSize,2))
+             
+            # this list will contain the actions that are selected from the batch 
+            # this list is used in my_loss_fn to define the loss-function
+            self.actionsAppend=[]            
+            for index,(currentState,action,reward,nextState,terminated) in enumerate(randomSampleBatch):
+                 
+                # if the next state is the terminal state
+                if terminated:
+                    y=reward                  
+                # if the next state if not the terminal state    
+                else:
+                    y=reward+self.gamma*np.max(QnextStateTargetNetwork[index])
+                 
+                # this is necessary for defining the cost function
+                self.actionsAppend.append(action)
+                 
+                # this actually does not matter since we do not use all the entries in the cost function
+                outputNetwork[index]=QcurrentStateMainNetwork[index]
+                # this is what matters
+                outputNetwork[index,action]=y
+             
+            # here, we train the network
+            self.mainNetwork.fit(inputNetwork,outputNetwork,batch_size = self.batchReplayBufferSize, verbose=0,epochs=100)     
+             
+            # after updateTargetNetworkPeriod training sessions, update the coefficients 
+            # of the target network
+            # increase the counter for training the target network
+            self.counterUpdateTargetNetwork+=1 
+            if (self.counterUpdateTargetNetwork>(self.updateTargetNetworkPeriod-1)):
+                # copy the weights to targetNetwork
+                self.targetNetwork.set_weights(self.mainNetwork.get_weights())        
+                print("Target network updated!")
+                print("Counter value {}".format(self.counterUpdateTargetNetwork))
+                # reset the counter
+                self.counterUpdateTargetNetwork=0
+    ###########################################################################
+    #    END - function trainNetwork() 
+    ###########################################################################     
+                  
