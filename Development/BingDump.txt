@@ -1,0 +1,66 @@
+Based on the current web page context, one possible way to store the state of the network is as follows:
+
+- A vector of length n, where n is the number of nodes in the target network, and each element is either 0 or 1, indicating whether the node is attacked or not. This vector represents the attacker's view of the network state.
+- A matrix of size m*k, where m is the number of deception resources and k is the number of normal nodes, and each element is either 0 or 1, indicating whether the deception resource is deployed on that node or not. This matrix represents the defender's view of the network state.
+- A dictionary of size n, where n is the number of nodes in the target network, and each key is a node IP address and each value is a list of tuples representing the edges from that node to other nodes in the network threat penetration graph (NTPG). Each tuple consists of two numbers: user privilege and root privilege. This dictionary represents the macro-penetration relationships between each node-pair in the target network.
+- A dictionary of size n, where n is the number of nodes in the target network, and each key is a node IP address and each value is another dictionary representing the host threat penetration graph (HTPG) for that node. The inner dictionary has keys as tuples of (host, privilege), and values as lists of triples representing the edges from that tuple to other tuples in the HTPG. Each triple consists of three elements: service, vulnerability, and probability. This dictionary represents the micro-penetration scenario between each node-pair in the target network.
+
+For example, suppose we have a target network with four nodes: n1, n2, n3, and n4. The attacker has attacked n1 and n3, but not n2 and n4. The defender has two deception resources: d1 and d2. The defender has deployed d1 on n2 and d2 on n4. The NTPG for this network is:
+
+n1 -> (0.8, 0.6) -> n2
+n1 -> (0.9, 0.7) -> n3
+n2 -> (0.5, 0.4) -> n4
+n3 -> (0.6, 0.5) -> n4
+
+The HTPG for each node is:
+
+n1: 
+(n1, User) -> (ServiceA, VulA1, 0.8) -> (n2, User)
+(n1, User) -> (ServiceB, VulB1, 0.9) -> (n3, User)
+(n1, User) -> (ServiceC, VulC1, 0.7) -> (n1, Root)
+(n1, Root) -> (ServiceD, VulD1, 0.6) -> (n2, Root)
+(n1, Root) -> (ServiceE, VulE1, 0.7) -> (n3, Root)
+
+n2:
+(n2, User) -> (ServiceF, VulF1, 0.5) -> (n4, User)
+(n2, User) -> (ServiceG, VulG1, 0.4) -> (n2, Root)
+(n2, Root) -> (ServiceH, VulH1, 0.4) -> (n4, Root)
+
+n3:
+(n3, User) -> (ServiceI, VulI1 , 0.6) -> (n4 , User)
+(n3 , User) -> (ServiceJ , VulJ1 , 0.5) -> (n3 , Root)
+(n3 , Root) -> (ServiceK , VulK1 , 0.5) -> (n4 , Root)
+
+n4:
+(n4 , User) -> (ServiceL , VulL1 , 0.3) -> (n4 , Root)
+
+The state of the network can be stored as:
+
+- A vector [1 , 0 , 1 , 0] for the attacker's view
+- A matrix [[0 , 0] , [1 , 0] , [0 , 0] , [0 , 1]] for the defender's view
+- A dictionary {'n1' : [('n2' , 0.8 , 0.6), ('n3' , 0.9 , 0.7)] ,
+               'n2' : [('n4' , 0.5 , 0.4)] ,
+               'n3' : [('n4' , 0.6 , 0.5)] ,
+               'n4' : []} for the NTPG
+- A dictionary {'n1' : {('n1' , User): [(ServiceA , VulA1 , 0.8), 
+                                       (ServiceB , VulB1 , 0.9), 
+                                       (ServiceC , VulC1 , 0.7)] ,
+                        ('n1' , Root): [(ServiceD , VulD1 , 0.6), 
+                                        (ServiceE , VulE1 , 0.7)]} ,
+               'n2' : {('n2' , User): [(ServiceF , VulF1 , 0.5), 
+                                       (ServiceG , VulG1 , 0.4)] ,
+                        ('n2' , Root): [(ServiceH , VulH1 , 0.4)]} ,
+               'n3' : {('n3' , User): [(ServiceI , VulI1 , 0.6), 
+                                       (ServiceJ , VulJ1 , 0.5)] ,
+                        ('n3' , Root): [(ServiceK , VulK1 , 0.5)]} ,
+               'n4' : {('n4' , User): [(ServiceL , VulL1 , 0.3)] ,
+                        ('n4' , Root): []}} for the HTPG
+
+This is just one possible way to store the state of the network, and there may be other ways to do so depending on the specific requirements and preferences of the implementation.
+
+Source: Conversation with Bing, 10/22/2023
+(1) Directed Graphs - Princeton University. https://algs4.cs.princeton.edu/42digraph/.
+(2) Three ways to store a graph in memory, advantages and disadvantages. https://stackoverflow.com/questions/3287003/three-ways-to-store-a-graph-in-memory-advantages-and-disadvantages.
+(3) algorithm Tutorial => Storing Graphs (Adjacency Matrix). https://riptutorial.com/algorithm/example/23963/storing-graphs--adjacency-matrix-.
+(4) Depth-First Search and Directed Graphs - Computer Science. http://cs.williams.edu/~shikha/teaching/spring20/cs256/lectures/Lecture04.pdf.
+(5) Graph and its representations - GeeksforGeeks. https://www.geeksforgeeks.org/graph-and-its-representations/.
