@@ -24,9 +24,14 @@ from gym import spaces
 # import the environment
 import NetworkHoneypotEnv
 
+# Defining parameters
+gamma = 0.99
+epsilon = 0.1
+
 env = NetworkHoneypotEnv.NetworkHoneypotEnv(10, 3, 7, 0.8, 0.2)
 # Create the environment. Since it was built using PyEnvironment, we need to wrap it in a TFEnvironment to use with TF-Agents
 tf_env = tf_py_environment.TFPyEnvironment(env)
+
 
 timestep = tf_env.reset()
 rewards = []
@@ -43,6 +48,14 @@ for _ in range(numberEpisodes):
         episode_reward += timestep.reward.numpy()
     rewards.append(episode_reward)
     steps.append(episode_steps)
+
+
+# create an object
+LearningQDeep=HoneypotDDQN.DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes)
+# run the learning process
+LearningQDeep.trainingEpisodes()
+# get the obtained rewards in every episode
+LearningQDeep.sumRewardsEpisode
 
 print(rewards)
 
