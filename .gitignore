@@ -3,3 +3,5 @@ lib/*
 lib64/*
 include/*
 bin/*
+Scripts/*
+Lib/*
