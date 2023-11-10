@@ -31,8 +31,6 @@ import numpy as np
 
 
 
-# Sure, I can try to implement the answer I gave you above to this code. Here is one possible way to do it:
-
 class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
     def __init__(self, N, M, K, P, Q):
 
@@ -80,65 +78,26 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # Or you can hard-code the graphs based on some predefined structure
         # Here I will just use a simple loop and random numbers as an example
         
-        for i in range(N):
-            # Generate a random IP address for each node
-            ip = f"192.168.0.{i+1}"
-            
-            # Add the node IP address as a key to the NTPG and HTPG dictionaries
-            self._ntpg[ip] = []
-            self._htpg[ip] = {}
-            
-            # Generate a random number of edges from this node to other nodes in the NTPG
-            num_edges = np.random.randint(0, N)
-            
-            # Choose num_edges random nodes as the destinations of the edges
-            dest_nodes = np.random.choice(N, size=num_edges, replace=False)
-            
-            # For each destination node, generate a random user privilege and root privilege
-            for j in dest_nodes:
-                up = np.random.uniform(0, 1) # User privilege
-                rp = np.random.uniform(0, 1) # Root privilege
-                
-                # Add the tuple (up, rp) as a value to the NTPG dictionary with the destination node IP address as a key
-                dest_ip = f"192.168.0.{j+1}"
-                self._ntpg[ip].append((dest_ip, up, rp))
-                
-            # Generate a random number of tuples for this node in the HTPG
-            num_tuples = np.random.randint(0, 2)
-            
-            # For each tuple, generate a random host and privilege
-            for k in range(num_tuples):
-                host = np.random.choice(N) + 1 # Host number
-                host_ip = f"192.168.0.{host}" # Host IP address
-                privilege = np.random.choice(["User", "Root"]) # Privilege
-                
-                # Add the tuple (host_ip, privilege) as a key to the HTPG dictionary with an empty list as a value
-                self._htpg[ip][(host_ip, privilege)] = []
-                
-                # Generate a random number of edges from this tuple to other tuples in the HTPG
-                num_edges = np.random.randint(0, N)
-                
-                # Choose num_edges random tuples as the destinations of the edges
-                dest_tuples = np.random.choice(N*2, size=num_edges, replace=False)
-                
-                # For each destination tuple, generate a random service, vulnerability, and probability
-                for l in dest_tuples:
-                    dest_host = l // 2 + 1 # Destination host number
-                    dest_host_ip = f"192.168.0.{dest_host}" # Destination host IP address
-                    dest_privilege = ["User", "Root"][l % 2] # Destination privilege
-                    
-                    service = f"Service{chr(ord('A') + l)}" # Service name
-                    vulnerability = f"Vul{service}{l+1}" # Vulnerability name
-                    probability = np.random.uniform(0, 1) # Probability
-                    
-                    # Add the triple (service, vulnerability, probability) as a value to the HTPG dictionary with the destination tuple as a key
-                    self._htpg[ip][(host_ip, privilege)].append((service, vulnerability, probability, (dest_host_ip, dest_privilege)))
+        # 29/10/2023 - Fixed example is provided as follow, i will include image of the sample graph
+        self._ntpg = {'192.168.0.2': [ ('192.168.0.3', 0.8,0.6),('192.168.0.3', 0.8,0.6)], 
+                      '192.168.0.3': [ ('192.168.0.5', 0.5,0.1)], 
+                      '192.168.0.4': [('192.168.0.5', 0.8,0.2),('192.168.0.6', 0.4,0.2),('192.168.0.7', 0.3,0.1),], 
+                      '192.168.0.5': [('192.168.0.8', 0.2,0.1),('192.168.0.7', 0.6,0.3)],
+                      '192.168.0.6': [],
+                      '192.168.0.7': [('192.168.0.8', 0.2,0.9)],
+                      '192.168.0.8': [],}
+
+
+        self._htpg = {''
+
+        }
         
-        # Print the state vector, the matrix, the NTPG, and the HTPG for debugging purposes
+
         print("State vector:", self._state)
         print("Matrix:", self._matrix)
         print("NTPG:", self._ntpg)
         print("HTPG:", self._htpg)
+
 
     def action_spec(self):
         return self._action_spec
@@ -173,58 +132,32 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # Regenerate the NTPG and HTPG based on some logic or data
         # Here I will use the same code as in the __init__ function
         for i in range(self.N):
-            # Generate a random IP address for each node
-            ip = f"192.168.0.{i+1}"
-            
-            # Add the node IP address as a key to the NTPG and HTPG dictionaries
+            ip = f"192.168.0.{i + 1}"
             self._ntpg[ip] = []
             self._htpg[ip] = {}
-            
-            # Generate a random number of edges from this node to other nodes in the NTPG
+
             num_edges = np.random.randint(0, self.N)
-            
-            # Choose num_edges random nodes as the destinations of the edges
             dest_nodes = np.random.choice(self.N, size=num_edges, replace=False)
-            
-            # For each destination node, generate a random user privilege and root privilege
+
             for j in dest_nodes:
-                up = np.random.uniform(0, 1) # User privilege
-                rp = np.random.uniform(0, 1) # Root privilege
-                
-                # Add the tuple (up, rp) as a value to the NTPG dictionary with the destination node IP address as a key
-                dest_ip = f"192.168.0.{j+1}"
+                up = np.random.uniform(0, 1)
+                rp = np.random.uniform(0, 1)
+                dest_ip = f"192.168.0.{j + 1}"
                 self._ntpg[ip].append((dest_ip, up, rp))
-                
-            # Generate a random number of tuples for this node in the HTPG
-            num_tuples = np.random.randint(0, 2)
-            
-            # For each tuple, generate a random host and privilege
-            for k in range(num_tuples):
-                host = np.random.choice(self.N) + 1 # Host number
-                host_ip = f"192.168.0.{host}" # Host IP address
-                privilege = np.random.choice(["User", "Root"]) # Privilege
-                
-                # Add the tuple (host_ip, privilege) as a key to the HTPG dictionary with an empty list as a value
-                self._htpg[ip][(host_ip, privilege)] = []
-                
-                # Generate a random number of edges from this tuple to other tuples in the HTPG
-                num_edges = np.random.randint(0, self.N)
-                
-                # Choose num_edges random tuples as the destinations of the edges
-                dest_tuples = np.random.choice(self.N*2, size=num_edges, replace=False)
-                
-                # For each destination tuple, generate a random service, vulnerability, and probability
+
+                # Create corresponding HTPG edges
+                self._htpg[ip][dest_ip] = []
+                num_htpg_edges = np.random.randint(0, self.N)
+                dest_tuples = np.random.choice(self.N * 2, size=num_htpg_edges, replace=False)
                 for l in dest_tuples:
-                    dest_host = l // 2 + 1 # Destination host number
-                    dest_host_ip = f"192.168.0.{dest_host}" # Destination host IP address
-                    dest_privilege = ["User", "Root"][l % 2] # Destination privilege
-                    
-                    service = f"Service{chr(ord('A') + l)}" # Service name
-                    vulnerability = f"Vul{service}{l+1}" # Vulnerability name
-                    probability = np.random.uniform(0, 1) # Probability
-                    
-                    # Add the triple (service, vulnerability, probability) as a value to the HTPG dictionary with the destination tuple as a key
-                    self._htpg[ip][(host_ip, privilege)].append((service, vulnerability, probability, (dest_host_ip, dest_privilege)))
+                    dest_host = l // 2 + 1
+                    dest_host_ip = f"192.168.0.{dest_host}"
+                    dest_privilege = ["User", "Root"][l % 2]
+                    service = f"Service{chr(ord('A') + l)}"
+                    vulnerability = f"Vul{service}{l + 1}"
+                    probability = np.random.uniform(0, 1)
+                    self._htpg[ip][dest_ip].append((service, vulnerability, probability, (dest_host_ip, dest_privilege)))
+
         
         # Return the state of the environment and information that it is the first step of the simulation
         return ts.restart(np.array([self._state], dtype=np.int32))
@@ -460,6 +393,8 @@ from tensorflow.keras.losses import mean_squared_error
 # - The policy is trained by the agent to maximize the total reward.
 # - Here, we use a neural network with two hidden layers of 100 units each and ReLU activation.
 # - The final layer is a dense layer with 2 units, one for each possible action in the deception network environment.
+
+# hình như thầy bảo cố định lại 1 cái môi trường HTPG NTPG
 
 
 class DoubleDeepQLearning:
