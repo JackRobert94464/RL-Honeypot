@@ -88,8 +88,28 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
                       '192.168.0.8': [],}
 
 
-        self._htpg = {''
-
+        self._htpg = {'192.168.0.2': [('NetBT', 'CVE-2017-0161', 0.6, ('192.168.0.4', 'User')),
+                                      ('Win32k', 'CVE-2018-8120', 0.04, ('192.168.0.4', 'Root')),
+                                      ('VBScript', 'CVE-2018-8174', 0.5, ('192.168.0.4', 'Root')),
+                                      ('Apache', 'CVE-2017-9798', 0.8, ('192.168.0.3', 'User')),
+                                      ('Apache', 'CVE-2014-0226', 0.6, ('192.168.0.3', 'Root')),], 
+                      '192.168.0.3': [('Apache', 'CVE-2017-9798', 0.5, ('192.168.0.5', 'User')),
+                                      ('Apache', 'CVE-2014-0226', 0.1, ('192.168.0.5', 'Root')),], 
+                      '192.168.0.4': [('NetBT', 'CVE-2017-0161', 0.8, ('192.168.0.5', 'User')),
+                                      ('Win32k', 'CVE-2018-8120', 0.02, ('192.168.0.5', 'Root')),
+                                      ('VBScript', 'CVE-2018-8174', 0.2, ('192.168.0.5', 'Root')),
+                                      ('OJVM', 'CVE-2016-5555', 0.4, ('192.168.0.6', 'User')),
+                                      ('RDP', 'CVE-2012-0002', 0.2, ('192.168.0.6', 'Root')),
+                                      ('HFS', 'CVE-2014-6287', 0.3, ('192.168.0.7', 'User')),
+                                      ('RDP', 'CVE-2012-0002', 0.1, ('192.168.0.7', 'Root')),], 
+                      '192.168.0.5': [('HFS', 'CVE-2014-6287', 0.6, ('192.168.0.7', 'User')),
+                                      ('RDP', 'CVE-2012-0002', 0.3, ('192.168.0.7', 'Root')),
+                                      ('OJVM', 'CVE-2016-5555', 0.2, ('192.168.0.8', 'User')),
+                                      ('RDP', 'CVE-2012-0002', 0.1, ('192.168.0.8', 'Root')),],
+                      '192.168.0.6': [],
+                      '192.168.0.7': [('OJVM', 'CVE-2016-5555', 0.2, ('192.168.0.8', 'User')),
+                                      ('RDP', 'CVE-2012-0002', 0.1, ('192.168.0.8', 'Root'))],
+                      '192.168.0.8': [],
         }
         
 
@@ -130,33 +150,39 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         self._episode_ended = False
             
         # Regenerate the NTPG and HTPG based on some logic or data
-        # Here I will use the same code as in the __init__ function
-        for i in range(self.N):
-            ip = f"192.168.0.{i + 1}"
-            self._ntpg[ip] = []
-            self._htpg[ip] = {}
+        # Here I will use the same code as in the __init__ function (12/11/2023 - reset to fixed example)
+        self._ntpg = {'192.168.0.2': [ ('192.168.0.3', 0.8,0.6),('192.168.0.3', 0.8,0.6)], 
+                      '192.168.0.3': [ ('192.168.0.5', 0.5,0.1)], 
+                      '192.168.0.4': [('192.168.0.5', 0.8,0.2),('192.168.0.6', 0.4,0.2),('192.168.0.7', 0.3,0.1),], 
+                      '192.168.0.5': [('192.168.0.8', 0.2,0.1),('192.168.0.7', 0.6,0.3)],
+                      '192.168.0.6': [],
+                      '192.168.0.7': [('192.168.0.8', 0.2,0.9)],
+                      '192.168.0.8': [],}
 
-            num_edges = np.random.randint(0, self.N)
-            dest_nodes = np.random.choice(self.N, size=num_edges, replace=False)
 
-            for j in dest_nodes:
-                up = np.random.uniform(0, 1)
-                rp = np.random.uniform(0, 1)
-                dest_ip = f"192.168.0.{j + 1}"
-                self._ntpg[ip].append((dest_ip, up, rp))
-
-                # Create corresponding HTPG edges
-                self._htpg[ip][dest_ip] = []
-                num_htpg_edges = np.random.randint(0, self.N)
-                dest_tuples = np.random.choice(self.N * 2, size=num_htpg_edges, replace=False)
-                for l in dest_tuples:
-                    dest_host = l // 2 + 1
-                    dest_host_ip = f"192.168.0.{dest_host}"
-                    dest_privilege = ["User", "Root"][l % 2]
-                    service = f"Service{chr(ord('A') + l)}"
-                    vulnerability = f"Vul{service}{l + 1}"
-                    probability = np.random.uniform(0, 1)
-                    self._htpg[ip][dest_ip].append((service, vulnerability, probability, (dest_host_ip, dest_privilege)))
+        self._htpg = {'192.168.0.2': [('NetBT', 'CVE-2017-0161', 0.6, ('192.168.0.4', 'User')),
+                                      ('Win32k', 'CVE-2018-8120', 0.04, ('192.168.0.4', 'Root')),
+                                      ('VBScript', 'CVE-2018-8174', 0.5, ('192.168.0.4', 'Root')),
+                                      ('Apache', 'CVE-2017-9798', 0.8, ('192.168.0.3', 'User')),
+                                      ('Apache', 'CVE-2014-0226', 0.6, ('192.168.0.3', 'Root')),], 
+                      '192.168.0.3': [('Apache', 'CVE-2017-9798', 0.5, ('192.168.0.5', 'User')),
+                                      ('Apache', 'CVE-2014-0226', 0.1, ('192.168.0.5', 'Root')),], 
+                      '192.168.0.4': [('NetBT', 'CVE-2017-0161', 0.8, ('192.168.0.5', 'User')),
+                                      ('Win32k', 'CVE-2018-8120', 0.02, ('192.168.0.5', 'Root')),
+                                      ('VBScript', 'CVE-2018-8174', 0.2, ('192.168.0.5', 'Root')),
+                                      ('OJVM', 'CVE-2016-5555', 0.4, ('192.168.0.6', 'User')),
+                                      ('RDP', 'CVE-2012-0002', 0.2, ('192.168.0.6', 'Root')),
+                                      ('HFS', 'CVE-2014-6287', 0.3, ('192.168.0.7', 'User')),
+                                      ('RDP', 'CVE-2012-0002', 0.1, ('192.168.0.7', 'Root')),], 
+                      '192.168.0.5': [('HFS', 'CVE-2014-6287', 0.6, ('192.168.0.7', 'User')),
+                                      ('RDP', 'CVE-2012-0002', 0.3, ('192.168.0.7', 'Root')),
+                                      ('OJVM', 'CVE-2016-5555', 0.2, ('192.168.0.8', 'User')),
+                                      ('RDP', 'CVE-2012-0002', 0.1, ('192.168.0.8', 'Root')),],
+                      '192.168.0.6': [],
+                      '192.168.0.7': [('OJVM', 'CVE-2016-5555', 0.2, ('192.168.0.8', 'User')),
+                                      ('RDP', 'CVE-2012-0002', 0.1, ('192.168.0.8', 'Root'))],
+                      '192.168.0.8': [],
+        }
 
         
         # Return the state of the environment and information that it is the first step of the simulation
@@ -182,98 +208,24 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # If all checks pass, return True
         return True
 
+
     def __attacker_move(self):
-        # Simulate the attacker's move based on the NTPG and HTPG
-        # Update the state vector with the new attacked node
-        
-        # Get the current attacked node IP address from the state vector
-        current_node = f"192.168.0.{np.where(self._state == 1)[0][0] + 1}"
-        print("CURRENT NODE:", current_node)
-        
-        # Get the list of possible destination nodes from the NTPG dictionary
-        dest_nodes = self._ntpg[current_node]
-        print("DESTINATION NODES", dest_nodes)
-        
-        # If there are no possible destination nodes, do nothing and return
-        if len(dest_nodes) == 0:
-            return
-        
-        # Calculate the probability of moving to each destination node based on the user privilege and root privilege
-        probs = [up * self.P + rp * self.Q for _, up, rp in dest_nodes]
-        print("PROBABILITIES:", probs)
-        
-        # Normalize the probabilities to sum up to 1
-        probs = probs / np.sum(probs)
-        print("PROBABILITIES:", probs)
-        
-        # Choose a random destination node based on the probabilities
-        dest_node = np.random.choice([node for node, _, _ in dest_nodes], p=probs)
-        print("DESTINATION NODES CHOICE", dest_nodes)
-        
-        # Get the index of the destination node from its IP address
-        dest_index = int(dest_node.split(".")[-1]) - 1
-        print("DESTINATION NODES INDEX", dest_index)
-        
-        # Check if the destination node is already attacked or not
-        if self._state[dest_index] == 1:
-            # If yes, do nothing and return
-            return
-        
-        # Get the list of possible tuples for the current node in the HTPG dictionary
-        current_tuples = self._htpg[current_node]
-        print("CURRENT TUPLES:", current_tuples)
-        
-        # Get the list of possible tuples for the destination node in the HTPG dictionary
-        dest_tuples = self._htpg[dest_node]
-        print("DESTINATION TUPLES:", dest_tuples)
-        
-        # Calculate the probability of moving from each current tuple to each destination tuple based on the service, vulnerability, and probability
-        # probs = []
-        for ct in current_tuples:
-            for dt in dest_tuples:
-                for service, vulnerability, probability, dest_tuple in current_tuples[ct]:
-                    if dest_tuple == dt:
-                        probs.append(probability)
-        
-        # Normalize the probabilities to sum up to 1
-        probs = probs / np.sum(probs)
-        print("PROBABILITIES AFTER SUM TO 1:", probs)
-        
-        # Choose a random tuple pair based on the probabilities
-        pair_index = np.random.choice(len(probs), p=probs)
-        print("PAIR INDEX:", pair_index)
-        print("LENGTH DEST TUPLES", len(dest_tuples))
-        
-        # Get the current tuple and destination tuple from their indices
-        if len(dest_tuples) == 0:
-            ct_index = 0
-            dt_index = 0
-            print("NO MORE DESTINATION CAN BE REACHED")
-            return
-        else:
-            ct_index = pair_index // len(dest_tuples)
-            dt_index = pair_index % len(dest_tuples)
+        """Simulates the attacker's move based on the NTPG and HTPG.
+        Updates the state vector with the new attacked node.
+        """
 
-        print("CURRENT TUPLE INDEX:", ct_index)
-        print("DESTINATION TUPLE INDEX:", dt_index)
+        # Choose a random node based on the NTPG
+        current_node = np.random.choice(list(self._ntpg.keys()))
 
-        if ct_index == 0 or dt_index == 0:
-            print("NO MORE DESTINATION CAN BE REACHED")
-            return
-        
-        current_tuple = list(current_tuples.keys())[ct_index]
-        dest_tuple = list(dest_tuples.keys())[dt_index]
-        
-        # Check if the attacker has obtained root privilege on both tuples or not
-        if current_tuple[1] == "Root" and dest_tuple[1] == "Root":
-            # If yes, update the state vector with the new attacked node and return
-            self._state[dest_index] = 1
-            print("ATTACKER HAS OBTAINED ROOT PRIVILEGE")
-            return
-        
-        # Otherwise, do nothing and return
-        print("ATTACKER WAS NOT ABLE TO OBTAINED ROOT PRIVILEGE")
-        return
+        # Attack the current node with a probability based on the HTPG
+        if np.random.random() <= self._htpg[current_node][0][2]:
+            self._state[current_node] = 1
+
+        # Update the NIFR list based on the action matrix
+        self.__update_nifr_nodes(self.nifr_nodes)
+
+
+
 
     def __is_nicr_attacked(self, nicr_nodes):
         # Check if any nicr (important resource node) is attacked or not
