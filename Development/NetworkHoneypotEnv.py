@@ -347,6 +347,7 @@ from tensorflow.keras.losses import mean_squared_error
 # - The final layer is a dense layer with 2 units, one for each possible action in the deception network environment.
 
 # hình như thầy bảo cố định lại 1 cái môi trường HTPG NTPG
+# 14/11/2023 - đã cố định một môi trường HTPG-NTPG
 
 
 class DoubleDeepQLearning:
