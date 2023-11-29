@@ -241,12 +241,12 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         while True:
             print("HTPG OF CURRENT NODE:" , self._htpg.get(current_node))
             # print(self._htpg.get(current_node)[0][2])
-            if self._htpg.get(current_node) is []:
+            if self._htpg.get(current_node) == []:
                 print("No more possible routes, exit the loop. State vector after the attack:", self._state)
                 break
 
             # Attack the current node with a probability based on the HTPG
-            if np.random.random() <= self._htpg.get(current_node)[0][2]:
+            elif np.random.random() <= self._htpg.get(current_node)[0][2]:
                 self._state[current_node_index] = 1  # Use the index to update the state
                 print("Attacked node:", current_node)
 
@@ -546,7 +546,7 @@ class DoubleDeepQLearning:
 
                 # here we step and return the state, reward, and boolean denoting if the state is a terminal state
                 (nextState, reward,_ ,terminalState) = self.env.step(action)
-                print("reward: ",reward)
+                print("------------------- REWARD OF THIS ACTION --------------------------: ",reward)
                 rewardsEpisode.append(reward)
 
                 # add current state, action, reward, next state, and terminal flag to the replay buffer
