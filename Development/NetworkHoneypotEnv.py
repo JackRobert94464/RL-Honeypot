@@ -44,28 +44,35 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # Pick a random node to be the nicr (important resource node)
         # As an example to test the environment, uncomment this for nicr hard-coded
         # self.nifr_nodes = [6]
-        self.nicr_nodes = [np.random.choice(N)]
+        self.nicr_nodes = [np.random.choice(K)]
+        print("NICR node:", self.nicr_nodes)
 
         # Initialize an empty list for the nifr (fake resource node)
         # As an example to test the environment, uncomment this for nifr hard-coded
         # self.nifr_nodes = [2,3,5]
         self.nifr_nodes = []
+        print("NIFR list:", self.nifr_nodes)
 
         self._action_spec = array_spec.BoundedArraySpec(
-            shape=(M,K), dtype=np.int32, minimum=0, maximum=1, name='action')
+            shape=(M, K), dtype=np.int32, minimum=0, maximum=1, name='action')
+        print("Action spec:", self._action_spec)
         
         # Add the observation spec for the state vector
         self._observation_spec = array_spec.BoundedArraySpec(
             shape=(1,K), dtype=np.int32, minimum=0, maximum=1, name='observation')
+        print("Observation spec:", self._observation_spec)
 
         self._reward_spec = array_spec.BoundedArraySpec(
             shape=(1,K), dtype=np.int32, minimum=-1, maximum=1, name='reward')
+        print("Reward spec:", self._reward_spec)
         
-        # Initialize the state vector as a random vector of 0s and 1s
-        self._state = np.random.randint(0, 2, size=(K))
+        # Initialize the state vector as an empty vector of 0s with size K
+        self._state = np.zeros(self.K, dtype=np.int32)
+        print("State vector:", self._state)
         
         # Initialize the matrix for the defender's view as zeros
         self._matrix = np.zeros((M, K), dtype=np.int32)
+        print("Matrix:", self._matrix)
         
         # Initialize the dictionary for the NTPG as an empty dictionary
         self._ntpg = {}
@@ -133,15 +140,18 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
 
         # Reset the nicr node by random choosing a new one
         self.nicr_nodes = [np.random.choice(self.K)]
+        print("NICR node after reset:", self.nicr_nodes)
 
         # Reset list for the nifr (fake resource node)
         self.nifr_nodes = []
 
-        # Reset the state vector as a random vector of 0s and 1s
-        self._state = np.random.randint(0, 2, size=(self.K))
+        # Reset the state vector as an empty vector of 0s with size K
+        self._state = np.zeros(self.K, dtype=np.int32)
+        print("State vector after reset:", self._state)
         
         # Reset the matrix for the defender's view as zeros
         self._matrix = np.zeros((self.M, self.K), dtype=np.int32)
+        print("Matrix after reset:", self._matrix)
         
         # Reset the dictionary for the NTPG as an empty dictionary
         self._ntpg = {}
@@ -151,6 +161,7 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         
         # Reset the episode ended flag as False
         self._episode_ended = False
+        print("Episode ended flag after reset:", self._episode_ended)
             
         # Regenerate the NTPG and HTPG based on some logic or data
         # Here I will use the same code as in the __init__ function (12/11/2023 - reset to fixed example)
@@ -208,6 +219,10 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         if not np.all(np.isin(action, [0, 1])):
             return False
         
+        # Check if each row has only one 1
+        if not np.all(np.sum(action, axis=1) == 1):
+            return False
+        
         # If all checks pass, return True
         return True
 
@@ -224,7 +239,11 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         print("Current node index:", current_node_index)
 
         while True:
-            print(self._htpg.get(current_node)[0][2])
+            print("HTPG OF CURRENT NODE:" , self._htpg.get(current_node))
+            # print(self._htpg.get(current_node)[0][2])
+            if self._htpg.get(current_node) is []:
+                print("No more possible routes, exit the loop. State vector after the attack:", self._state)
+                break
 
             # Attack the current node with a probability based on the HTPG
             if np.random.random() <= self._htpg.get(current_node)[0][2]:
@@ -232,12 +251,13 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
                 print("Attacked node:", current_node)
 
             # Move to the next node with a probability based on the NTPG
-            elif np.random.random() <= self._ntpg.get(current_node)[0][1]:
+            elif np.random.random() <= self._ntpg.get(current_node)[0][1] or np.random.random() <= self._ntpg.get(current_node)[0][2]:
                 current_node = self._ntpg.get(current_node)[0][0]
                 current_node_index = int(current_node.split('.')[-1]) - 2  # Update the current_node_index
-                print("Next node attacker residing in:", current_node)
+                print("Next node to attack:", current_node)
 
             else:
+                print("No more possible routes, exit the loop. State vector after the attack:", self._state)
                 break  # No more possible routes, exit the loop
 
         # Update the NIFR list based on the action matrix
@@ -290,9 +310,12 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
 
     # Updates the NIFR list based on the action matrix.
     def __update_nifr_nodes(self, nifr_nodes):
+        print("self._matrix to update nifr nodes:", self._matrix)
         for row in self._matrix:
             if any(row):
+                print("row.argmax():", row.argmax())
                 nifr_nodes.append(row.argmax())
+                print("NIFR list after update:", nifr_nodes)
     
     def _step(self, action):
         # Check if the episode has ended
@@ -323,6 +346,8 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
                 return ts.transition(np.array([self._state], dtype=np.int32), reward)
         else:
             # If no, end the episode and return the termination state and reward
+            print("Invalid Action:", action)
+            print("Invalid action, end the episode")
             self._episode_ended = True
             reward = -1
             return ts.termination(np.array([self._state], dtype=np.int32), reward)
@@ -340,8 +365,15 @@ utils.validate_py_environment(environment, episodes=10)
 
 
 
-
-
+print("------------------------------------------------------------------------------------------------------------------------")   
+print("------------------------------------------------------------------------------------------------------------------------")
+print("------------------------------------------------------------------------------------------------------------------------")
+print("------------------------------------------------------------------------------------------------------------------------")
+print("---------------------------------------  TRAINING THE AGENT BASED ON THE ENV -------------------------------------------")
+print("------------------------------------------------------------------------------------------------------------------------")   
+print("------------------------------------------------------------------------------------------------------------------------")
+print("------------------------------------------------------------------------------------------------------------------------")
+print("------------------------------------------------------------------------------------------------------------------------")
 
 
 
@@ -357,8 +389,10 @@ utils.validate_py_environment(environment, episodes=10)
 import numpy as np
 import random
 from keras.layers import Dense
+from keras.layers import InputLayer
 from keras.models import Sequential
 from keras.optimizers import RMSprop
+from keras.optimizers import Adam
 from collections import deque 
 from tensorflow import gather_nd
 from keras.losses import mean_squared_error 
@@ -408,7 +442,7 @@ class DoubleDeepQLearning:
       self.actionDimension = env.M * env.K
       print("ACTION DIMENSION --- AGENT TRAINING",self.actionDimension)
       # this is the maximum size of the replay buffer
-      self.replayBufferSize=300
+      self.replayBufferSize=10
       # this is the size of the training batch that is randomly sampled from the replay buffer
       self.batchReplayBufferSize=100
         
@@ -457,12 +491,16 @@ class DoubleDeepQLearning:
         # create a neural network with two hidden layers of 100 units each and ReLU activation (must fix!)
         # the final layer is a dense layer with m*k units, one for each possible deployment combination
         model = Sequential()
-        model.add(Dense(100, input_dim=self.stateDimension, activation='relu'))
-        model.add(Dense(100, activation='relu'))
+
+        model.add(InputLayer(input_shape=self.stateDimension))
+        model.add(Dense(64, activation='relu'))
+        model.add(Dense(64, activation='relu'))
         model.add(Dense(self.actionDimension, activation='linear'))
+        
         # use mean squared error as the loss function
         # original used a custom loss one, but for this case im not sure
-        model.compile(loss='mse', optimizer=RMSprop(), metrics = ['accuracy'])
+        model.compile(loss='mse', optimizer=Adam(), metrics = ['accuracy'])
+        print("Created network:", model.summary())
         return model
 
     ###########################################################################
@@ -481,7 +519,9 @@ class DoubleDeepQLearning:
             # list that store rewards in each episode to keep track of convergence
             rewardsEpisode=[]
 
+            print("------------------------------------------------------------------------------------------------------------------------")
             print("Simulating episode number: ",episode)
+            print("------------------------------------------------------------------------------------------------------------------------")
 
             # reset the environment
             # in other words, s=s0
@@ -497,7 +537,7 @@ class DoubleDeepQLearning:
             stateCount = 100
             for i in range (self.env.K):
                 
-                print("while loop") 
+                print("while looping through all the K nodes after stateCount times to check if nicr or nifr got attacked") 
 
                 # select the action based on the epsilon-greedy approach
                 action = self.selectAction(currentState, episode)
@@ -543,8 +583,12 @@ class DoubleDeepQLearning:
         # we know nothing about the environment in first few episodes, so we need to explore
         # feel free to change for more exploration
         if episode < 1:
-            print("ACTION MATRIX exploit:", np.eye(self.env.M, self.env.K))
-            return np.eye(self.env.M, self.env.K)
+            action = np.zeros((self.env.M, self.env.K))
+            for i in range(self.env.M):
+                action[i, np.random.randint(0, self.env.K)] = 1
+            action = action.astype(np.int32)
+            print("ACTION MATRIX exploit:", action)
+            return action
 
         # Random number for epsilon-greedy approach [0.0, 1.0)
         randomValue = np.random.random()
@@ -556,8 +600,12 @@ class DoubleDeepQLearning:
 
         # If the random number is less than epsilon, we explore
         if randomValue < self.epsilon:
-            print("ACTION MATRIX exploit:", np.eye(self.env.M, self.env.K))
-            return np.eye(self.env.M, self.env.K)
+            action = np.zeros((self.env.M, self.env.K))
+            for i in range(self.env.M):
+                action[i, np.random.randint(0, self.env.K)] = 1
+            action = action.astype(np.int32)
+            print("ACTION MATRIX exploit:", action)
+            return action
 
         # If the random number is greater than epsilon, we exploit
         else:
@@ -566,7 +614,9 @@ class DoubleDeepQLearning:
             # basically, we select the action that gives the max Qvalue
 
             # use mainNetwork to predict the Qvalues (Qvalues is an array of size m*k represent Q-values of all the actions)
+            print("STATE TO PREDICT:", state)
             Qvalues = self.mainNetwork.predict(state.reshape(1, self.env.K))
+            print("QVALUES:", Qvalues)
 
             # Get the index of the maximum Q-value
             max_index = np.argmax(Qvalues)
@@ -574,6 +624,8 @@ class DoubleDeepQLearning:
             # Create an action matrix with only one 1 on each row based on the maximum Q-value index
             action_matrix = np.zeros((self.env.M, self.env.K))
             action_matrix[max_index // self.env.K, max_index % self.env.K] = 1
+
+            action_matrix = action_matrix.astype(np.int32)
 
             print("ACTION MATRIX exploit:", action_matrix)
 
@@ -592,8 +644,11 @@ class DoubleDeepQLearning:
             return
 
         randomSampleBatch = random.sample(self.replayBuffer, self.batchReplayBufferSize)
+        print("Random sample batch:", randomSampleBatch)
         inputNetwork = np.zeros((self.batchReplayBufferSize, 4))
+        print("Input network:", inputNetwork)
         outputNetwork = np.zeros((self.batchReplayBufferSize, 2))
+        print("Output network:", outputNetwork)
         self.actionsAppend = []
         self.actionsAppend = []
 
