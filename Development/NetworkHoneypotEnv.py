@@ -56,10 +56,13 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         
         # Add the observation spec for the state vector
         self._observation_spec = array_spec.BoundedArraySpec(
-            shape=(1,N), dtype=np.int32, minimum=0, maximum=1, name='observation')
+            shape=(1,K), dtype=np.int32, minimum=0, maximum=1, name='observation')
+
+        self._reward_spec = array_spec.BoundedArraySpec(
+            shape=(1,K), dtype=np.int32, minimum=-1, maximum=1, name='reward')
         
         # Initialize the state vector as a random vector of 0s and 1s
-        self._state = np.random.randint(0, 2, size=(N,))
+        self._state = np.random.randint(0, 2, size=(K))
         
         # Initialize the matrix for the defender's view as zeros
         self._matrix = np.zeros((M, K), dtype=np.int32)
@@ -129,13 +132,13 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
     def _reset(self):
 
         # Reset the nicr node by random choosing a new one
-        self.nicr_nodes = [np.random.choice(self.N)]
+        self.nicr_nodes = [np.random.choice(self.K)]
 
         # Reset list for the nifr (fake resource node)
         self.nifr_nodes = []
 
         # Reset the state vector as a random vector of 0s and 1s
-        self._state = np.random.randint(0, 2, size=(self.N,))
+        self._state = np.random.randint(0, 2, size=(self.K))
         
         # Reset the matrix for the defender's view as zeros
         self._matrix = np.zeros((self.M, self.K), dtype=np.int32)
@@ -214,15 +217,34 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         Updates the state vector with the new attacked node.
         """
 
-        # Choose a random node based on the NTPG
-        current_node = np.random.choice(list(self._ntpg.keys()))
+        # Fix the current_node to the very first node
+        current_node = '192.168.0.2'
+        current_node_index = int(current_node.split('.')[-1]) - 2  # Get the index of the current_node
+        print("Current node attacker residing in:", current_node)
+        print("Current node index:", current_node_index)
 
-        # Attack the current node with a probability based on the HTPG
-        if np.random.random() <= self._htpg[current_node][0][2]:
-            self._state[current_node] = 1
+        while True:
+            print(self._htpg.get(current_node)[0][2])
+
+            # Attack the current node with a probability based on the HTPG
+            if np.random.random() <= self._htpg.get(current_node)[0][2]:
+                self._state[current_node_index] = 1  # Use the index to update the state
+                print("Attacked node:", current_node)
+
+            # Move to the next node with a probability based on the NTPG
+            elif np.random.random() <= self._ntpg.get(current_node)[0][1]:
+                current_node = self._ntpg.get(current_node)[0][0]
+                current_node_index = int(current_node.split('.')[-1]) - 2  # Update the current_node_index
+                print("Next node attacker residing in:", current_node)
+
+            else:
+                break  # No more possible routes, exit the loop
 
         # Update the NIFR list based on the action matrix
         self.__update_nifr_nodes(self.nifr_nodes)
+        print("NIFR list after attack:", self.nifr_nodes)
+
+
 
 
 
@@ -234,6 +256,8 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # Check if any nicr node is attacked in the state vector
         for i in nicr_nodes:
             if self._state[i] == 1:
+                # End the episode and calculate the reward
+                self._episode_ended = True
                 return True
         
         # If no nicr node is attacked, return False
@@ -246,6 +270,8 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # Check if any nicr node is attacked in the state vector
         for i in nifr_nodes:
             if self._state[i] == 1:
+                # End the episode and calculate the reward
+                self._episode_ended = True
                 return True
         
         # If no nicr node is attacked, return False
@@ -266,7 +292,7 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
     def __update_nifr_nodes(self, nifr_nodes):
         for row in self._matrix:
             if any(row):
-                self.nifr_nodes.append(row.argmax())
+                nifr_nodes.append(row.argmax())
     
     def _step(self, action):
         # Check if the episode has ended
@@ -292,17 +318,18 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
                 reward = 1 if self.__is_nifr_attacked(self.nifr_nodes) else -1
                 return ts.termination(np.array([self._state], dtype=np.int32), reward)
             else:
+                reward = 0
                 # If no, continue the episode and return the transition state and reward
-                return ts.transition(np.array([self._state], dtype=np.int32), reward=0, discount=1.0)
-        
+                return ts.transition(np.array([self._state], dtype=np.int32), reward)
         else:
             # If no, end the episode and return the termination state and reward
             self._episode_ended = True
-            return ts.termination(np.array([self._state], dtype=np.int32), -1)
+            reward = -1
+            return ts.termination(np.array([self._state], dtype=np.int32), reward)
         
           
-# environment = NetworkHoneypotEnv()
-# utils.validate_py_environment(environment, episodes=2)
+environment = NetworkHoneypotEnv(10, 3, 7, 0.8, 0.2)
+utils.validate_py_environment(environment, episodes=10)
 
 
 
@@ -329,12 +356,12 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
 # import the necessary libraries
 import numpy as np
 import random
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.optimizers import RMSprop
+from keras.layers import Dense
+from keras.models import Sequential
+from keras.optimizers import RMSprop
 from collections import deque 
 from tensorflow import gather_nd
-from tensorflow.keras.losses import mean_squared_error 
+from keras.losses import mean_squared_error 
  
 
 
@@ -375,7 +402,7 @@ class DoubleDeepQLearning:
       print(env)
 
       # state dimension 
-      self.stateDimension = env.N
+      self.stateDimension = env.K
       print("STATE DIMENSION --- AGENT TRAINING",self.stateDimension)
       # action dimension
       self.actionDimension = env.M * env.K
@@ -399,6 +426,9 @@ class DoubleDeepQLearning:
         
       # replay buffer
       self.replayBuffer=deque(maxlen=self.replayBufferSize)
+
+      # initialize visit(s,a)
+      self.visitCounts = 0
         
       # this is the main network
       # create network
@@ -418,229 +448,190 @@ class DoubleDeepQLearning:
     ###########################################################################
     #   END - __init__ function
     ###########################################################################
-     
+
     ###########################################################################
-    # START - function for defining the loss (cost) function
-    # INPUTS: 
-    #
-    # y_true - matrix of dimension (self.batchReplayBufferSize,2) - this is the target 
-    # y_pred - matrix of dimension (self.batchReplayBufferSize,2) - this is predicted by the network
-    # 
-    # - this function will select certain row entries from y_true and y_pred to form the output 
-    # the selection is performed on the basis of the action indices in the list  self.actionsAppend
-    # - this function is used in createNetwork(self) to create the network
-    #
-    # OUTPUT: 
-    #    
-    # - loss - watch out here, this is a vector of (self.batchReplayBufferSize,1), 
-    # with each entry being the squared error between the entries of y_true and y_pred
-    # later on, the tensor flow will compute the scalar out of this vector (mean squared error)
-    ###########################################################################    
-     
-    def my_loss_fn(self,y_true, y_pred):
-      s1,s2=y_true.shape
-      #print(s1,s2)
-        
-      # this matrix defines indices of a set of entries that we want to 
-      # extract from y_true and y_pred
-      # s2=2
-      # s1=self.batchReplayBufferSize
-      indices=np.zeros(shape=(s1,s2))
-      indices[:,0]=np.arange(s1)
-      indices[:,1]=self.actionsAppend
-        
-      # gather_nd and mean_squared_error are TensorFlow functions
-      loss = mean_squared_error(gather_nd(y_true,indices=indices.astype(int)), gather_nd(y_pred,indices=indices.astype(int)))
-      #print(loss)
-      return loss    
+    #   START - createNetwork function
     ###########################################################################
-    #   END - of function my_loss_fn
-    ###########################################################################
-     
-     
-    ###########################################################################
-    #   START - function createNetwork()
-    # this function creates the network
-    ###########################################################################
-     
-    # create a neural network
-    def createNetwork(self):
-      model=Sequential()
-      model.add(Dense(128,input_dim=self.stateDimension,activation='relu'))
-      model.add(Dense(56,activation='relu'))
-      model.add(Dense(self.actionDimension,activation='linear'))
-      # compile the network with the custom loss defined in my_loss_fn
-      model.compile(optimizer = RMSprop(), loss = self.my_loss_fn, metrics = ['accuracy'])
-      return model
-    ###########################################################################
-    #   END - function createNetwork()
-    ###########################################################################
-             
-    ###########################################################################
-    #   START - function trainingEpisodes()
-    #   - this function simulates the episodes and calls the training function 
-    #   - trainNetwork()
-    ###########################################################################
- 
-    def trainingEpisodes(self):        
-      # here we loop through the episodes
-      for indexEpisode in range(self.numberEpisodes):        
-        # list that stores rewards per episode - this is necessary for keeping track of convergence 
-        rewardsEpisode=[]
-                    
-        print("Simulating episode {}".format(indexEpisode))
-          
-        # reset the environment at the beginning of every episode
-        (currentState)=self.env.reset()
-                    
-        # here we step from one state to another
-        # this will loop until a terminal state is reached
-        terminalState=False
-        while not terminalState:
-                                    
-            # select an action on the basis of the current state, denoted by currentState
-            action = self.selectAction(currentState,indexEpisode,self.env.M,self.env.K)
-            print("Action selected {}".format(action))
-              
-            # here we step and return the state, reward, and boolean denoting if the state is a terminal state
-            print("self.env.step(action)", self.env.step(action))
-            (nextState, reward, terminalState,_) = self.env.step(action)          
-            rewardsEpisode.append(reward)
-      
-            # add current state, action, reward, next state, and terminal flag to the replay buffer
-            self.replayBuffer.append((currentState,action,reward,nextState,terminalState))
-              
-            # train network
-            self.trainNetwork()
-              
-            # set the current state for the next step
-            currentState=nextState
-          
-        print("Sum of rewards {}".format(np.sum(rewardsEpisode)))        
-        self.sumRewardsEpisode.append(np.sum(rewardsEpisode))
-    ###########################################################################
-    #   END - function trainingEpisodes()
-    ###########################################################################
-             
-        
-    ###########################################################################
-    #    START - function for selecting an action: epsilon-greedy approach
-    ###########################################################################
-    # this function selects an action on the basis of the current state 
-    # INPUTS: 
-    # state - state for which to compute the action
-    # index - index of the current episode
     
-    def selectAction(self,state,indexEpisode,M,K):
+    def createNetwork(self):
+        # create a neural network with two hidden layers of 100 units each and ReLU activation (must fix!)
+        # the final layer is a dense layer with m*k units, one for each possible deployment combination
+        model = Sequential()
+        model.add(Dense(100, input_dim=self.stateDimension, activation='relu'))
+        model.add(Dense(100, activation='relu'))
+        model.add(Dense(self.actionDimension, activation='linear'))
+        # use mean squared error as the loss function
+        # original used a custom loss one, but for this case im not sure
+        model.compile(loss='mse', optimizer=RMSprop(), metrics = ['accuracy'])
+        return model
 
-        print("STATE", state)
-        # first index episodes we select completely random actions to have enough exploration
-        # change this
-        if indexEpisode<1:
-            return np.random.randint(2, size=(M,K))  #np.random.choice(tf_env.action_spec().maximum + 1)
-        # Returns a random real number in the half-open interval [0.0, 1.0)
-        # this number is used for the epsilon greedy approach
-        randomNumber=np.random.random()
-        # after index episodes, we slowly start to decrease the epsilon parameter
-        if indexEpisode>200:
-            self.epsilon=0.999*self.epsilon
-        # if this condition is satisfied, we are exploring, that is, we select random actions
-        if randomNumber < self.epsilon:
-            # returns a random action selected from: 0,1,...,actionNumber-1
-            return np.random.randint(2, size=(M,K)) 
+    ###########################################################################
+    #   END - createNetwork function
+    ###########################################################################
 
-        # otherwise, we are selecting greedy actions
+    ###########################################################################
+    #   START - trainingEpisodes function
+    ###########################################################################
+    
+    def trainingEpisodes(self):
+        
+        # iterate over the episodes
+        for episode in range(self.numberEpisodes):
+
+            # list that store rewards in each episode to keep track of convergence
+            rewardsEpisode=[]
+
+            print("Simulating episode number: ",episode)
+
+            # reset the environment
+            # in other words, s=s0
+            # reset = self.env.reset()
+            # print("Resetting the environment", reset)
+            currentState=self.env.reset()
+
+            print("Current state: ", currentState)
+
+            # here we step from one state to another
+            # in other words, s=s0, s=s1, s=s2, ..., s=sn
+            # until either nicr or nifr got attacked, sum up the state and get reward
+            stateCount = 100
+            for i in range (self.env.K):
+                
+                print("while loop") 
+
+                # select the action based on the epsilon-greedy approach
+                action = self.selectAction(currentState, episode)
+                print("Action selected: ",action)
+                print("self.env.step based on action: ",self.env.step(action))
+
+                # here we step and return the state, reward, and boolean denoting if the state is a terminal state
+                (nextState, reward,_ ,terminalState) = self.env.step(action)
+                print("reward: ",reward)
+                rewardsEpisode.append(reward)
+
+                # add current state, action, reward, next state, and terminal flag to the replay buffer
+                self.replayBuffer.append((currentState, action, reward, nextState, terminalState))
+                print("Replay buffer: ",self.replayBuffer)
+
+                # train network
+                self.trainNetwork()
+
+                # visiting next node in the network
+                self.visitCounts = self.visitCounts + 1
+                print("Visit counts: ",self.visitCounts)
+                 
+                # set the current state for the next step s <- s'
+                currentState=nextState
+
+                # stateCount = stateCount + 1
+
+                print("------------------------- END LOOP HERE -------------------------")
+
+        # tbh i dont even know if summing reward here is neccessary
+        print("Sum of rewards {}".format(np.sum(rewardsEpisode)))        
+        self.sumRewardsEpisode.append(np.sum(rewardsEpisode)) 
+               
+    ###########################################################################
+    #   END - trainingEpisodes function
+    ###########################################################################
+
+    ###########################################################################
+    #   START - selectAction function
+    ###########################################################################
+    
+    def selectAction(self, state, episode):
+        # we know nothing about the environment in first few episodes, so we need to explore
+        # feel free to change for more exploration
+        if episode < 1:
+            print("ACTION MATRIX exploit:", np.eye(self.env.M, self.env.K))
+            return np.eye(self.env.M, self.env.K)
+
+        # Random number for epsilon-greedy approach [0.0, 1.0)
+        randomValue = np.random.random()
+
+        # After a certain amount of episode, we start to decrease the epsilon value
+        # This is to make sure that the agent will not stuck in a local optimum
+        if episode > 200:
+            self.epsilon = 0.999 * self.epsilon
+
+        # If the random number is less than epsilon, we explore
+        if randomValue < self.epsilon:
+            print("ACTION MATRIX exploit:", np.eye(self.env.M, self.env.K))
+            return np.eye(self.env.M, self.env.K)
+
+        # If the random number is greater than epsilon, we exploit
         else:
-            # we return the index where Qvalues[state,:] has the max value
+            # we return the action that Qvalues[state,:] of which has the max value
             # that is, since the index denotes an action, we select greedy actions
-            if len(state.observation) >= 4:
-                Qvalues=self.mainNetwork.predict(state.observation.reshape(1,4))
-                return np.argmax(Qvalues[0,:]) - 1
-            else:
-                # If the state observation does not have at least 4 elements, we return a random action.
-                return np.random.randint(2, size=(M,K))
+            # basically, we select the action that gives the max Qvalue
 
+            # use mainNetwork to predict the Qvalues (Qvalues is an array of size m*k represent Q-values of all the actions)
+            Qvalues = self.mainNetwork.predict(state.reshape(1, self.env.K))
 
+            # Get the index of the maximum Q-value
+            max_index = np.argmax(Qvalues)
+
+            # Create an action matrix with only one 1 on each row based on the maximum Q-value index
+            action_matrix = np.zeros((self.env.M, self.env.K))
+            action_matrix[max_index // self.env.K, max_index % self.env.K] = 1
+
+            print("ACTION MATRIX exploit:", action_matrix)
+
+            return action_matrix
 
     ###########################################################################
-    #    END - function selecting an action: epsilon-greedy approach
+    #   END - selectAction function
     ###########################################################################
-     
+
     ###########################################################################
-    #    START - function trainNetwork() - this function trains the network
+    #   START - trainNetwork function
     ###########################################################################
-     
+
     def trainNetwork(self):
-      # if the replay buffer has at least batchReplayBufferSize elements,
-      # then train the model 
-      # otherwise wait until the size of the elements exceeds batchReplayBufferSize
-      if (len(self.replayBuffer)>self.batchReplayBufferSize):
-        # sample a batch from the replay buffer
-        randomSampleBatch=random.sample(self.replayBuffer, self.batchReplayBufferSize)
-          
-        # here we form current state batch 
-        # and next state batch
-        # they are used as inputs for prediction
-        currentStateBatch=np.zeros(shape=(self.batchReplayBufferSize,4))
-        nextStateBatch=np.zeros(shape=(self.batchReplayBufferSize,4))            
-        # this will enumerate the tuple entries of the randomSampleBatch
-        # index will loop through the number of tuples
-        for index,tupleS in enumerate(randomSampleBatch):
-            # first entry of the tuple is the current state
-            currentStateBatch[index,:]=tupleS[0]
-            # fourth entry of the tuple is the next state
-            nextStateBatch[index,:]=tupleS[3]
-          
-        # here, use the target network to predict Q-values 
-        QnextStateTargetNetwork=self.targetNetwork.predict(nextStateBatch)
-        # here, use the main network to predict Q-values 
-        QcurrentStateMainNetwork=self.mainNetwork.predict(currentStateBatch)
-          
-        # now, we form batches for training
-        # input for training
-        inputNetwork=currentStateBatch
-        # output for training
-        outputNetwork=np.zeros(shape=(self.batchReplayBufferSize,2))
-          
-        # this list will contain the actions that are selected from the batch 
-        # this list is used in my_loss_fn to define the loss-function
-        self.actionsAppend=[]            
-        for index,(currentState,action,reward,nextState,terminated) in enumerate(randomSampleBatch):
-              
+        if len(self.replayBuffer) < self.replayBufferSize:
+            return
+
+        randomSampleBatch = random.sample(self.replayBuffer, self.batchReplayBufferSize)
+        inputNetwork = np.zeros((self.batchReplayBufferSize, 4))
+        outputNetwork = np.zeros((self.batchReplayBufferSize, 2))
+        self.actionsAppend = []
+        self.actionsAppend = []
+
+
+        for index, (currentState, action, reward, nextState, terminated) in enumerate(randomSampleBatch):
+            # parameter for the current state-action pair
+            alpha = 1 / (1 + self.visitCounts)
+
+            QcurrentStateMainNetwork = self.mainNetwork.predict(currentState.reshape(1, 4))
+            QnextStateMainNetwork = self.mainNetwork.predict(nextState.reshape(1, 4))
+
             # if the next state is the terminal state
             if terminated:
-                y=reward                  
-            # if the next state if not the terminal state    
+                y = reward
+            # if the next state is not the terminal state
             else:
-                y=reward+self.gamma*np.max(QnextStateTargetNetwork[index])
-              
-            # this is necessary for defining the cost function
-            self.actionsAppend.append(action)
-              
-            # this actually does not matter since we do not use all the entries in the cost function
-            outputNetwork[index]=QcurrentStateMainNetwork[index]
-            # this is what matters
-            outputNetwork[index,action]=y
-          
-        # here, we train the network
-        self.mainNetwork.fit(inputNetwork,outputNetwork,batch_size = self.batchReplayBufferSize, verbose=0,epochs=100)     
-          
-        # after updateTargetNetworkPeriod training sessions, update the coefficients 
-        # of the target network
-        # increase the counter for training the target network
-        self.counterUpdateTargetNetwork+=1 
-        if (self.counterUpdateTargetNetwork>(self.updateTargetNetworkPeriod-1)):
-            # copy the weights to targetNetwork
-            self.targetNetwork.set_weights(self.mainNetwork.get_weights())        
-            print("Target network updated!")
-            print("Counter value {}".format(self.counterUpdateTargetNetwork))
-            # reset the counter
-            self.counterUpdateTargetNetwork=0
-    ###########################################################################
-    #    END - function trainNetwork() 
-    ###########################################################################     
-                  
+                y = reward + self.gamma * np.max(QnextStateMainNetwork[0])
 
+            # this is necessary for defining the cost function
+            self.actionsAppend.append(action)  # this actually does not matter since we do not use all the entries in the cost function
+            outputNetwork[index] = QcurrentStateMainNetwork[0]  # this is what matters
+            outputNetwork[index, action] = y  # scale the output by the alpha parameter
+            outputNetwork[index] = outputNetwork[index] * alpha
+
+            # assign the current state to the input
+            inputNetwork[index] = currentState
+
+        self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size=self.batchReplayBufferSize, epochs=1, verbose=0)
+        self.counterUpdateTargetNetwork = self.counterUpdateTargetNetwork + 1
+
+        if self.counterUpdateTargetNetwork == self.updateTargetNetworkPeriod:
+            self.targetNetwork.set_weights(self.mainNetwork.get_weights())
+            self.counterUpdateTargetNetwork = 0
+            print("Target network updated!")
+
+    ###########################################################################
+    #   END - trainNetwork function
+    ###########################################################################
 
 
 
@@ -805,5 +796,5 @@ print('avg_length', avg_length)
     # sum the rewards
     sumObtainedRewards+=currentReward
 '''
-env.reset()
-env.close()
+# env.reset()
+# env.close()

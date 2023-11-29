@@ -158,15 +158,17 @@ class DoubleDeepQLearning:
         print("Simulating episode {}".format(indexEpisode))
           
         # reset the environment at the beginning of every episode
-        (currentState,_)=self.env.reset()
+        # (currentState,_)=self.env.reset()
                     
         # here we step from one state to another
         # this will loop until a terminal state is reached
         terminalState=False
-        while not terminalState:
+        for indexStep in range(1000):
                                     
             # select an action on the basis of the current state, denoted by currentState
             action = self.selectAction(currentState,indexEpisode)
+
+            print("Action {}".format(action))
               
             # here we step and return the state, reward, and boolean denoting if the state is a terminal state
             (nextState, reward, terminalState,_,_) = self.env.step(action)          
@@ -201,20 +203,26 @@ class DoubleDeepQLearning:
       # first index episodes we select completely random actions to have enough exploration
       # change this
       if index<1:
-          return np.random.choice(self.actionDimension)   
+          choice = np.random.choice(self.actionDimension)
+          print("Random action {}".format(choice))
+          return choice   
             
       # Returns a random real number in the half-open interval [0.0, 1.0)
       # this number is used for the epsilon greedy approach
       randomNumber=np.random.random()
+      print("Random number {}".format(randomNumber))
         
       # after index episodes, we slowly start to decrease the epsilon parameter
       if index>200:
           self.epsilon=0.999*self.epsilon
+          print("Epsilon {}".format(self.epsilon))
         
       # if this condition is satisfied, we are exploring, that is, we select random actions
       if randomNumber < self.epsilon:
           # returns a random action selected from: 0,1,...,actionNumber-1
-          return np.random.choice(self.actionDimension)            
+          choice = np.random.choice(self.actionDimension)
+          print("Random action {}".format(choice))
+          return choice          
         
       # otherwise, we are selecting greedy actions
       else:
@@ -222,8 +230,12 @@ class DoubleDeepQLearning:
           # that is, since the index denotes an action, we select greedy actions
                       
           Qvalues=self.mainNetwork.predict(state.reshape(1,4))
+
+          print("Qvalues {}".format(Qvalues))
           
-          return np.random.choice(np.where(Qvalues[0,:]==np.max(Qvalues[0,:]))[0])
+          choice = np.random.choice(np.where(Qvalues[0,:]==np.max(Qvalues[0,:]))[0])
+
+          print("Greedy action {}".format(choice))
           # here we need to return the minimum index since it can happen
           # that there are several identical maximal entries, for example 
           # import numpy as np
