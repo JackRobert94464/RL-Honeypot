@@ -442,7 +442,7 @@ class DoubleDeepQLearning:
       self.actionDimension = env.M * env.K
       print("ACTION DIMENSION --- AGENT TRAINING",self.actionDimension)
       # this is the maximum size of the replay buffer
-      self.replayBufferSize=10
+      self.replayBufferSize=100
       # this is the size of the training batch that is randomly sampled from the replay buffer
       self.batchReplayBufferSize=100
         
@@ -534,7 +534,7 @@ class DoubleDeepQLearning:
             # here we step from one state to another
             # in other words, s=s0, s=s1, s=s2, ..., s=sn
             # until either nicr or nifr got attacked, sum up the state and get reward
-            stateCount = 100
+            # stateCount = 100
             for i in range (self.env.K):
                 
                 print("while looping through all the K nodes after stateCount times to check if nicr or nifr got attacked") 
@@ -565,7 +565,7 @@ class DoubleDeepQLearning:
 
                 # stateCount = stateCount + 1
 
-                print("------------------------- END LOOP HERE -------------------------")
+            print("------------------------- END LOOP HERE -------------------------")
 
         # tbh i dont even know if summing reward here is neccessary
         print("Sum of rewards {}".format(np.sum(rewardsEpisode)))        
