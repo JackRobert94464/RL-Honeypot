@@ -546,9 +546,17 @@ class DoubleDeepQLearning:
                 print("self.env.step based on action: ",self.env.step(action))
 
                 # here we step and return the state, reward, and boolean denoting if the state is a terminal state
-                (discount, nextState, reward, terminalState) = self.env.step(action)
+                # (terminalState, discount, reward, nextState) = self.env.step(action)
+                nextState = self.env.step(action)
 
-                print((discount, nextState, reward, terminalState))
+                # Basically we just assign the result after we step to a variable called nextState
+                # Then we seperate the variable (which is a TimeStep object) to 4 part of it: step_type, reward, discount, and observation
+                # This kinda lengthen the process but im a student so...
+                (terminalState, discount, reward, nextStateObservation) = nextState
+                # This part is dumb probably need to fix
+                print((terminalState, discount, nextStateObservation, reward))
+
+
                 print("------------------- REWARD OF THIS ACTION --------------------------: ",reward)
                 rewardsEpisode.append(reward)
 
@@ -558,7 +566,7 @@ class DoubleDeepQLearning:
 
                 # add current state, action, reward, next state, and terminal flag to the replay buffer
                 # print("Next state observation array: ", nextState)
-                self.replayBuffer.append((currentState.observation, action, reward, nextState, terminalState))
+                self.replayBuffer.append((currentState.observation, action, reward, nextStateObservation, terminalState))
                 print("Replay buffer: ",self.replayBuffer)
 
                 # train network
@@ -570,6 +578,7 @@ class DoubleDeepQLearning:
                  
                 # set the current state for the next step s <- s'
                 currentState=nextState
+                print("Current state after step: ", currentState)
 
                 # stateCount = stateCount + 1
 
