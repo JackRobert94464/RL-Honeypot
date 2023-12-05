@@ -529,7 +529,7 @@ class DoubleDeepQLearning:
             # print("Resetting the environment", reset)
             currentState=self.env.reset()
 
-            print("Current state: ", currentState)
+            print("Current state: ", currentState.observation)
 
             # here we step from one state to another
             # in other words, s=s0, s=s1, s=s2, ..., s=sn
@@ -540,17 +540,25 @@ class DoubleDeepQLearning:
                 print("while looping through all the K nodes after stateCount times to check if nicr or nifr got attacked") 
 
                 # select the action based on the epsilon-greedy approach
-                action = self.selectAction(currentState, episode)
+                print("observed state: ",currentState.observation)
+                action = self.selectAction(currentState.observation.reshape(1, -1), episode)
                 print("Action selected: ",action)
                 print("self.env.step based on action: ",self.env.step(action))
 
                 # here we step and return the state, reward, and boolean denoting if the state is a terminal state
-                (nextState, reward,_ ,terminalState) = self.env.step(action)
+                (discount, nextState, reward, terminalState) = self.env.step(action)
+
+                print((discount, nextState, reward, terminalState))
                 print("------------------- REWARD OF THIS ACTION --------------------------: ",reward)
                 rewardsEpisode.append(reward)
 
+
+                print("Next state: ", nextState)
+
+
                 # add current state, action, reward, next state, and terminal flag to the replay buffer
-                self.replayBuffer.append((currentState, action, reward, nextState, terminalState))
+                # print("Next state observation array: ", nextState)
+                self.replayBuffer.append((currentState.observation, action, reward, nextState, terminalState))
                 print("Replay buffer: ",self.replayBuffer)
 
                 # train network
@@ -615,7 +623,7 @@ class DoubleDeepQLearning:
 
             # use mainNetwork to predict the Qvalues (Qvalues is an array of size m*k represent Q-values of all the actions)
             print("STATE TO PREDICT:", state)
-            Qvalues = self.mainNetwork.predict(state.reshape(1, self.env.K))
+            Qvalues = self.mainNetwork.predict(state)
             print("QVALUES:", Qvalues)
 
             # Get the index of the maximum Q-value
@@ -628,8 +636,9 @@ class DoubleDeepQLearning:
             action_matrix = action_matrix.astype(np.int32)
 
             print("ACTION MATRIX exploit:", action_matrix)
-
             return action_matrix
+
+            # return action_matrix
 
     ###########################################################################
     #   END - selectAction function
