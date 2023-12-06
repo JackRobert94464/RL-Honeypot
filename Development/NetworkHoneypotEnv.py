@@ -146,12 +146,14 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         self.nifr_nodes = []
 
         # Reset the state vector as an empty vector of 0s with size K
-        self._state = np.zeros(self.K, dtype=np.int32)
-        print("State vector after reset:", self._state)
+        # update 06/12/2023 - resetting state cause the next visit count to turn the state into 0, 
+        # which in turn make Q guessing networks broken. So i will comment this out.
+        # self._state = np.zeros(self.K, dtype=np.int32)
+        # print("State vector after reset:", self._state)
         
         # Reset the matrix for the defender's view as zeros
-        self._matrix = np.zeros((self.M, self.K), dtype=np.int32)
-        print("Matrix after reset:", self._matrix)
+        # self._matrix = np.zeros((self.M, self.K), dtype=np.int32)
+        # print("Matrix after reset:", self._matrix)
         
         # Reset the dictionary for the NTPG as an empty dictionary
         self._ntpg = {}
@@ -499,7 +501,7 @@ class DoubleDeepQLearning:
         
         # use mean squared error as the loss function
         # original used a custom loss one, but for this case im not sure
-        model.compile(loss='mse', optimizer=Adam(), metrics = ['accuracy'])
+        model.compile(loss=self.my_loss_fn, optimizer=Adam(), metrics = ['accuracy'])
         print("Created network:", model.summary())
         return model
 
@@ -706,6 +708,46 @@ class DoubleDeepQLearning:
     #   END - trainNetwork function
     ###########################################################################
 
+    ###########################################################################
+    # START - function for defining the loss (cost) function
+    # INPUTS: 
+    #
+    # y_true - matrix of dimension (self.batchReplayBufferSize,2) - this is the target 
+    # y_pred - matrix of dimension (self.batchReplayBufferSize,2) - this is predicted by the network
+    # 
+    # - this function will select certain row entries from y_true and y_pred to form the output 
+    # the selection is performed on the basis of the action indices in the list  self.actionsAppend
+    # - this function is used in createNetwork(self) to create the network
+    #
+    # OUTPUT: 
+    #    
+    # - loss - watch out here, this is a vector of (self.batchReplayBufferSize,1), 
+    # with each entry being the squared error between the entries of y_true and y_pred
+    # later on, the tensor flow will compute the scalar out of this vector (mean squared error)
+    ###########################################################################    
+    
+    def my_loss_fn(self,y_true, y_pred):
+        
+        s1,s2=y_true.shape
+        #print(s1,s2)
+        
+        # this matrix defines indices of a set of entries that we want to 
+        # extract from y_true and y_pred
+        # s2=2
+        # s1=self.batchReplayBufferSize
+        indices=np.zeros(shape=(s1,s2))
+        indices[:,0]=np.arange(s1)
+        indices[:,1]=self.actionsAppend
+        
+        # gather_nd and mean_squared_error are TensorFlow functions
+        loss = mean_squared_error(gather_nd(y_true,indices=indices.astype(int)), gather_nd(y_pred,indices=indices.astype(int)))
+        #print(loss)
+        return loss    
+    ###########################################################################
+    #   END - of function my_loss_fn
+    ###########################################################################
+     
+
 
 
 
@@ -752,7 +794,7 @@ tf_env = tf_py_environment.TFPyEnvironment(env)
 timestep = tf_env.reset()
 rewards = []
 steps = []
-numberEpisodes = 15
+numberEpisodes = 2
 
 
 
