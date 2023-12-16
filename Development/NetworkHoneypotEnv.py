@@ -148,12 +148,12 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # Reset the state vector as an empty vector of 0s with size K
         # update 06/12/2023 - resetting state cause the next visit count to turn the state into 0, 
         # which in turn make Q guessing networks broken. So i will comment this out.
-        # self._state = np.zeros(self.K, dtype=np.int32)
-        # print("State vector after reset:", self._state)
+        self._state = np.zeros(self.K, dtype=np.int32)
+        print("State vector after reset:", self._state)
         
         # Reset the matrix for the defender's view as zeros
         # self._matrix = np.zeros((self.M, self.K), dtype=np.int32)
-        # print("Matrix after reset:", self._matrix)
+        print("Matrix after reset:", self._matrix)
         
         # Reset the dictionary for the NTPG as an empty dictionary
         self._ntpg = {}
@@ -398,6 +398,8 @@ from keras.optimizers import Adam
 from collections import deque 
 from tensorflow import gather_nd
 from keras.losses import mean_squared_error 
+
+from math import factorial
  
 
 
@@ -440,13 +442,13 @@ class DoubleDeepQLearning:
       # state dimension 
       self.stateDimension = env.K
       print("STATE DIMENSION --- AGENT TRAINING",self.stateDimension)
-      # action dimension
-      self.actionDimension = env.M * env.K
+      # action dimension k!/(k-m)! (07/12/2023 - different permutation problem)
+      self.actionDimension = factorial(env.K) / factorial(env.K - env.M)
       print("ACTION DIMENSION --- AGENT TRAINING",self.actionDimension)
       # this is the maximum size of the replay buffer
       self.replayBufferSize=100
       # this is the size of the training batch that is randomly sampled from the replay buffer
-      self.batchReplayBufferSize=100
+      self.batchReplayBufferSize=50
         
       # number of training episodes it takes to update the target network parameters
       # that is, every updateTargetNetworkPeriod we update the target network parameters
@@ -491,7 +493,7 @@ class DoubleDeepQLearning:
     
     def createNetwork(self):
         # create a neural network with two hidden layers of 100 units each and ReLU activation (must fix!)
-        # the final layer is a dense layer with m*k units, one for each possible deployment combination
+        # the final layer is a dense layer with k!/(k-m)! units, one for each possible deployment combination
         model = Sequential()
 
         model.add(InputLayer(input_shape=self.stateDimension))
@@ -501,7 +503,7 @@ class DoubleDeepQLearning:
         
         # use mean squared error as the loss function
         # original used a custom loss one, but for this case im not sure
-        model.compile(loss=self.my_loss_fn, optimizer=Adam(), metrics = ['accuracy'])
+        model.compile(loss=mean_squared_error, optimizer=Adam(), metrics = ['accuracy'])
         print("Created network:", model.summary())
         return model
 
@@ -514,6 +516,8 @@ class DoubleDeepQLearning:
     ###########################################################################
     
     def trainingEpisodes(self):
+
+        currentState=self.env.reset()
         
         # iterate over the episodes
         for episode in range(self.numberEpisodes):
@@ -529,7 +533,7 @@ class DoubleDeepQLearning:
             # in other words, s=s0
             # reset = self.env.reset()
             # print("Resetting the environment", reset)
-            currentState=self.env.reset()
+            
 
             print("Current state: ", currentState.observation)
 
@@ -573,6 +577,7 @@ class DoubleDeepQLearning:
 
                 # train network
                 self.trainNetwork()
+                print("------------------- NETWORKS TRAINED -------------------")
 
                 # visiting next node in the network
                 self.visitCounts = self.visitCounts + 1
@@ -595,12 +600,12 @@ class DoubleDeepQLearning:
     ###########################################################################
 
     ###########################################################################
-    #   START - selectAction function
+    #   START - selectAction & mapping Q-values to action matrix function
+    #   Status: Active
     ###########################################################################
     
     def selectAction(self, state, episode):
-        # we know nothing about the environment in first few episodes, so we need to explore
-        # feel free to change for more exploration
+        # Exploration phase
         if episode < 1:
             action = np.zeros((self.env.M, self.env.K))
             for i in range(self.env.M):
@@ -609,30 +614,21 @@ class DoubleDeepQLearning:
             print("ACTION MATRIX exploit:", action)
             return action
 
-        # Random number for epsilon-greedy approach [0.0, 1.0)
+        # Epsilon-greedy approach
         randomValue = np.random.random()
-
-        # After a certain amount of episode, we start to decrease the epsilon value
-        # This is to make sure that the agent will not stuck in a local optimum
         if episode > 200:
             self.epsilon = 0.999 * self.epsilon
 
-        # If the random number is less than epsilon, we explore
-        if randomValue < self.epsilon:
-            action = np.zeros((self.env.M, self.env.K))
-            for i in range(self.env.M):
-                action[i, np.random.randint(0, self.env.K)] = 1
-            action = action.astype(np.int32)
-            print("ACTION MATRIX exploit:", action)
-            return action
+            if randomValue < self.epsilon:
+                action = np.zeros((self.env.M, self.env.K))
+                for i in range(self.env.M):
+                    action[i, np.random.randint(0, self.env.K)] = 1
+                action = action.astype(np.int32)
+                print("ACTION MATRIX exploit:", action)
+                return action
 
-        # If the random number is greater than epsilon, we exploit
+        # Exploitation phase
         else:
-            # we return the action that Qvalues[state,:] of which has the max value
-            # that is, since the index denotes an action, we select greedy actions
-            # basically, we select the action that gives the max Qvalue
-
-            # use mainNetwork to predict the Qvalues (Qvalues is an array of size m*k represent Q-values of all the actions)
             print("STATE TO PREDICT:", state)
             Qvalues = self.mainNetwork.predict(state)
             print("QVALUES:", Qvalues)
@@ -640,14 +636,28 @@ class DoubleDeepQLearning:
             # Get the index of the maximum Q-value
             max_index = np.argmax(Qvalues)
 
-            # Create an action matrix with only one 1 on each row based on the maximum Q-value index
-            action_matrix = np.zeros((self.env.M, self.env.K))
-            action_matrix[max_index // self.env.K, max_index % self.env.K] = 1
-
-            action_matrix = action_matrix.astype(np.int32)
+            # Map the index to an action matrix
+            action_matrix = self.index_to_action(max_index)
 
             print("ACTION MATRIX exploit:", action_matrix)
             return action_matrix
+
+    def index_to_action(self, index):
+        # Initialize the action matrix with zeros
+        action_matrix = np.zeros((self.env.M, self.env.K), dtype=np.int32)
+        print("action matrix to be indexed:", action_matrix)
+
+        # Convert the index to the corresponding row and column for the action matrix
+        for i in range(self.env.M):
+            # Calculate the index for the current row
+            row_index = index // (self.env.K ** (self.env.M - 1 - i))
+            index -= row_index * (self.env.K ** (self.env.M - 1 - i))
+
+            # Set the value in the action matrix
+            action_matrix[i, row_index] = 1
+
+        print("index to action matrix:", action_matrix)
+        return action_matrix
 
             # return action_matrix
 
@@ -657,52 +667,104 @@ class DoubleDeepQLearning:
 
     ###########################################################################
     #   START - trainNetwork function
+    #   07/12/2023 - Start working on this funtion 
+    #   Status: Not working
     ###########################################################################
 
     def trainNetwork(self):
-        if len(self.replayBuffer) < self.replayBufferSize:
-            return
+        print("------------------------------------------------------------------------------------------------------------------------------")  
+        print("---------------------------------------- TRAINING MAIN NETWORK AND TARGET NETWORK---------------------------------------------")
+        print("------------------------------------------------------------------------------------------------------------------------------")
 
-        randomSampleBatch = random.sample(self.replayBuffer, self.batchReplayBufferSize)
-        print("Random sample batch:", randomSampleBatch)
-        inputNetwork = np.zeros((self.batchReplayBufferSize, 4))
-        print("Input network:", inputNetwork)
-        outputNetwork = np.zeros((self.batchReplayBufferSize, 2))
-        print("Output network:", outputNetwork)
-        self.actionsAppend = []
-        self.actionsAppend = []
+ 
+        # if the replay buffer has at least batchReplayBufferSize elements,
+        # then train the model 
+        # otherwise wait until the size of the elements exceeds batchReplayBufferSize
+        if (len(self.replayBuffer)>self.batchReplayBufferSize):
+             
+ 
+            # sample a batch from the replay buffer
+            randomSampleBatch=random.sample(self.replayBuffer, self.batchReplayBufferSize)
+            print("Random sample batch chosen: ",randomSampleBatch)
+             
+            # here we form current state batch 
+            # and next state batch
+            # they are used as inputs for prediction
+            currentStateBatch=np.zeros(shape=(self.batchReplayBufferSize,7))
+            print("Current state batch: ",currentStateBatch)
 
+            nextStateBatch=np.zeros(shape=(self.batchReplayBufferSize,7))      
+            print("Next state batch: ",nextStateBatch)      
+            # this will enumerate the tuple entries of the randomSampleBatch
+            # index will loop through the number of tuples
+            for index,tupleS in enumerate(randomSampleBatch):
+                print("Sample batch no. ",index)
+                print("Current state of sample batch: ",tupleS[0])
+                # first entry of the tuple is the current state
+                currentStateBatch[index,:]=tupleS[0]
 
-        for index, (currentState, action, reward, nextState, terminated) in enumerate(randomSampleBatch):
-            # parameter for the current state-action pair
-            alpha = 1 / (1 + self.visitCounts)
-
-            QcurrentStateMainNetwork = self.mainNetwork.predict(currentState.reshape(1, 4))
-            QnextStateMainNetwork = self.mainNetwork.predict(nextState.reshape(1, 4))
-
-            # if the next state is the terminal state
-            if terminated:
-                y = reward
-            # if the next state is not the terminal state
-            else:
-                y = reward + self.gamma * np.max(QnextStateMainNetwork[0])
-
-            # this is necessary for defining the cost function
-            self.actionsAppend.append(action)  # this actually does not matter since we do not use all the entries in the cost function
-            outputNetwork[index] = QcurrentStateMainNetwork[0]  # this is what matters
-            outputNetwork[index, action] = y  # scale the output by the alpha parameter
-            outputNetwork[index] = outputNetwork[index] * alpha
-
-            # assign the current state to the input
-            inputNetwork[index] = currentState
-
-        self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size=self.batchReplayBufferSize, epochs=1, verbose=0)
-        self.counterUpdateTargetNetwork = self.counterUpdateTargetNetwork + 1
-
-        if self.counterUpdateTargetNetwork == self.updateTargetNetworkPeriod:
-            self.targetNetwork.set_weights(self.mainNetwork.get_weights())
-            self.counterUpdateTargetNetwork = 0
-            print("Target network updated!")
+                # fourth entry of the tuple is the next state
+                print("Next state of sample batch: ",tupleS[3])
+                nextStateBatch[index,:]=tupleS[3]
+             
+            # here, use the target network to predict Q-values 
+            QnextStateTargetNetwork=self.targetNetwork.predict(nextStateBatch)
+            print("QnextStateTargetNetwork: ",QnextStateTargetNetwork)
+            # here, use the main network to predict Q-values 
+            QcurrentStateMainNetwork=self.mainNetwork.predict(currentStateBatch)
+            print("QcurrentStateMainNetwork: ",QcurrentStateMainNetwork)
+             
+            # now, we form batches for training
+            # input for training
+            inputNetwork=currentStateBatch
+            print("Input network: ",inputNetwork)
+            # output for training
+            outputNetwork=np.zeros(shape=(self.batchReplayBufferSize,210))
+            print("Output network: ",outputNetwork)
+             
+            # this list will contain the actions that are selected from the batch 
+            # this list is used in my_loss_fn to define the loss-function
+            self.actionsAppend=[]            
+            for index,(currentState,action,reward,nextState,terminated) in enumerate(randomSampleBatch):
+                 
+                # if the next state is the terminal state
+                if terminated:
+                    print("Next state is the terminal state")
+                    print("y: ",reward)
+                    y=reward                  
+                # if the next state if not the terminal state    
+                else:
+                    print("Next state is not the terminal state")
+                    print("y: ",reward+self.gamma*np.max(QnextStateTargetNetwork[index]))
+                    y=reward+self.gamma*np.max(QnextStateTargetNetwork[index])
+                 
+                # this is necessary for defining the cost function
+                self.actionsAppend.append(action)
+                print("Actions after append: ",self.actionsAppend)
+                 
+                # this actually does not matter since we do not use all the entries in the cost function
+                outputNetwork[index]=QcurrentStateMainNetwork[index]
+                print("Output network index: ",outputNetwork)
+                # this is what matters
+                outputNetwork[index,action]=y
+                print("Output network: ",outputNetwork)
+             
+            # here, we train the network
+            self.mainNetwork.fit(inputNetwork,outputNetwork,batch_size = self.batchReplayBufferSize, verbose=1,epochs=100) 
+            print("Main network trained!")
+             
+            # after updateTargetNetworkPeriod training sessions, update the coefficients 
+            # of the target network
+            # increase the counter for training the target network
+            self.counterUpdateTargetNetwork+=1 
+            print("Counter value {}".format(self.counterUpdateTargetNetwork))
+            if (self.counterUpdateTargetNetwork>(self.updateTargetNetworkPeriod-1)):
+                # copy the weights to targetNetwork
+                self.targetNetwork.set_weights(self.mainNetwork.get_weights())        
+                print("Target network updated!")
+                print("Counter value {}".format(self.counterUpdateTargetNetwork))
+                # reset the counter
+                self.counterUpdateTargetNetwork=0
 
     ###########################################################################
     #   END - trainNetwork function
@@ -727,9 +789,9 @@ class DoubleDeepQLearning:
     ###########################################################################    
     
     def my_loss_fn(self,y_true, y_pred):
-        
+        print("LOSS FUNCTION - Y_TRUE:",y_true)
         s1,s2=y_true.shape
-        #print(s1,s2)
+        print("LOSS FUNCTION - S1 AND S2:",s1,s2)
         
         # this matrix defines indices of a set of entries that we want to 
         # extract from y_true and y_pred
@@ -794,7 +856,7 @@ tf_env = tf_py_environment.TFPyEnvironment(env)
 timestep = tf_env.reset()
 rewards = []
 steps = []
-numberEpisodes = 2
+numberEpisodes = 15
 
 
 
@@ -821,15 +883,85 @@ print('avg_length', avg_length)
 
 
 
+#  summarize the model
+LearningQDeep.mainNetwork.summary()
+# save the model, this is important, since it takes long time to train the model 
+# and we will need model in another file to visualize the trained model performance
+LearningQDeep.mainNetwork.save("RL_Honeypot_trained_model_temp.keras")
 
 
 
 
+import matplotlib.pyplot as plt
+
+# Load the trained model
+trained_model = tf.keras.models.load_model("RL_Honeypot_trained_model_temp.keras")
+
+# Create a new environment for evaluation
+eval_env = NetworkHoneypotEnv(10, 3, 7, 0.8, 0.2)
+tf_eval_env = tf_py_environment.TFPyEnvironment(eval_env)
+
+# Reset the environment
+eval_time_step = tf_eval_env.reset()
+
+# Initialize variables for tracking rewards and steps
+eval_rewards = []
+eval_steps = []
+
+# Evaluate the model for a certain number of episodes
+eval_episodes = 10
+for _ in range(eval_episodes):
+    episode_reward = 0
+    episode_steps = 0
+
+    # Run the evaluation episode
+    while not eval_time_step.is_last():
+        # Get the action from the trained model
+        
+        action = trained_model.predict([eval_time_step.observation(0), eval_time_step.observation(-1)])
+
+        # Take a step in the environment
+        eval_time_step = tf_eval_env.step(action)
+
+        # Update the episode reward and steps
+        episode_reward += eval_time_step.reward
+        episode_steps += 1
+
+    # Append the episode reward and steps to the evaluation lists
+    eval_rewards.append(episode_reward)
+    eval_steps.append(episode_steps)
+
+    # Reset the environment for the next episode
+    eval_time_step = tf_eval_env.reset()
+
+# Calculate the average reward and steps per episode
+avg_eval_reward = np.mean(eval_rewards)
+avg_eval_steps = np.mean(eval_steps)
+
+# Print the evaluation results
+print("Evaluation Results:")
+print("Average Reward per Episode:", avg_eval_reward)
+print("Average Steps per Episode:", avg_eval_steps)
+
+# Plot the rewards and steps per episode
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.plot(eval_rewards)
+plt.xlabel("Episode")
+plt.ylabel("Reward")
+plt.title("Rewards per Episode")
+
+plt.subplot(1, 2, 2)
+plt.plot(eval_steps)
+plt.xlabel("Episode")
+plt.ylabel("Steps")
+plt.title("Steps per Episode")
+
+plt.tight_layout()
+plt.show()
 
 
-
-
-
+# 17/12/2023 - Tam giai quyet xong phan ham lost, dang thuc hien evaluation model
 
 
 
