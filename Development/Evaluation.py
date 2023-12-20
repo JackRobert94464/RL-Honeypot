@@ -9,10 +9,9 @@ trained_model = tf.keras.models.load_model("RL_Honeypot_trained_model_temp.keras
 
 # Create a new environment for evaluation
 eval_env = NetworkHoneypotEnv(10, 3, 7, 0.8, 0.2)
-tf_eval_env = tf_py_environment.TFPyEnvironment(eval_env)
 
 # Reset the environment
-eval_time_step = tf_eval_env.reset()
+eval_time_step = eval_env.reset()
 
 # Initialize variables for tracking rewards and steps
 eval_rewards = []
@@ -30,7 +29,7 @@ for _ in range(eval_episodes):
         action = trained_model.predict(eval_time_step.observation.reshape(1, -1))
 
         # Take a step in the environment
-        eval_time_step = tf_eval_env.step(action)
+        eval_time_step = eval_env.step(action)
 
         # Update the episode reward and steps
         episode_reward += eval_time_step.reward
@@ -41,7 +40,7 @@ for _ in range(eval_episodes):
     eval_steps.append(episode_steps)
 
     # Reset the environment for the next episode
-    eval_time_step = tf_eval_env.reset()
+    eval_time_step = eval_env.reset()
 
 # Calculate the average reward and steps per episode
 avg_eval_reward = np.mean(eval_rewards)

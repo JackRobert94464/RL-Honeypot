@@ -28,7 +28,7 @@ import numpy as np
 #   - if the attacker is in the fake node, reward = 1, terminate the episode
 #   - if the attacker is in the nicr node, reward = -1, terminate the episode
 #   - if the attacker is in the normal node, reward = 0 and continue the episode
-
+# 20/12/2023 - added step counter to the environment
 
 
 class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
@@ -73,6 +73,11 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # Initialize the matrix for the defender's view as zeros
         self._matrix = np.zeros((M, K), dtype=np.int32)
         print("Matrix:", self._matrix)
+
+        # Step counter (20/12/2023 - added step counter)
+        self.current_step = 0
+        # Maximum number of steps in an episode
+        self.maxSteps=200
         
         # Initialize the dictionary for the NTPG as an empty dictionary
         self._ntpg = {}
@@ -128,6 +133,11 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         print("NTPG:", self._ntpg)
         print("HTPG:", self._htpg)
 
+        # Initialize attacker entrypoint
+        # 20/12/2023 - fixed example, will be change later 
+        # TODO: Dynamically locate this entrypoint
+        self._current_attacker_node = '192.168.0.2'
+
 
     def action_spec(self):
         return self._action_spec
@@ -137,6 +147,9 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
     
 
     def _reset(self):
+
+        # Reset the step counter
+        self.current_step = 0
 
         # Reset the nicr node by random choosing a new one
         self.nicr_nodes = [np.random.choice(self.K)]
@@ -200,7 +213,7 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
                       '192.168.0.8': [],
         }
 
-        
+        self._current_attacker_node = '192.168.0.2'
         # Return the state of the environment and information that it is the first step of the simulation
         return ts.restart(np.array([self._state], dtype=np.int32))
         
@@ -228,7 +241,9 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # If all checks pass, return True
         return True
 
-
+    
+    # Attacker themselves move with each "step" in the environment too
+    # Does this code represent that? or just a static mapping?
     def __attacker_move(self):
         """Simulates the attacker's move based on the NTPG and HTPG.
         Updates the state vector with the new attacked node.
@@ -261,6 +276,41 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
             else:
                 print("No more possible routes, exit the loop. State vector after the attack:", self._state)
                 break  # No more possible routes, exit the loop
+
+        # Update the NIFR list based on the action matrix
+        self.__update_nifr_nodes(self.nifr_nodes)
+        print("NIFR list after attack:", self.nifr_nodes)
+
+    # 20/12/2023 - Break the attacker movement into single independent step
+    def __attacker_move_step(self):
+        """Simulates one step of the attacker's move based on the NTPG and HTPG.
+        Updates the state vector with the new attacked node.
+        """
+        # Get the current node information
+        current_node = self._current_attacker_node
+        current_node_index = int(current_node.split('.')[-1]) - 2
+
+        # Check if the current node has possible routes
+        if self._htpg.get(current_node):
+            # Decide whether to attack the current node based on HTPG probability
+            if np.random.random() <= self._htpg.get(current_node)[0][2]:
+                self._state[current_node_index] = 1
+                print("Attacked node:", current_node)
+
+        # Move to the next node based on NTPG probability
+        print("current node:", current_node)
+        ntpg_list = self._ntpg.get(current_node)
+        if ntpg_list:
+            next_node_prob = ntpg_list[0][1] or ntpg_list[0][2]
+            if np.random.random() <= next_node_prob:
+                next_node = ntpg_list[0][0]
+                self._current_attacker_node = next_node
+                print("Next node to attack:", next_node)
+        else:
+            print("No more possible routes, exit the loop. State vector after the attack:", self._state)
+            # Somehow call for ending the episode
+            # 20/12/2023 - I think this is the place to end the episode
+            # self._episode_ended = True
 
         # Update the NIFR list based on the action matrix
         self.__update_nifr_nodes(self.nifr_nodes)
@@ -317,6 +367,8 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
             if any(row):
                 print("row.argmax():", row.argmax())
                 nifr_nodes.append(row.argmax())
+                if len(nifr_nodes) > 3:
+                    nifr_nodes.pop(0)
                 print("NIFR list after update:", nifr_nodes)
     
     def _step(self, action):
@@ -324,6 +376,14 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         if self._episode_ended:
             # If yes, reset the environment and return the initial state
             return self.reset()
+        
+        # Check if the maximum number of steps has been reached
+        if self.current_step >= self.maxSteps:
+            # If yes, end the episode and return the termination state and reward
+            print("Maximum number of steps reached, end the episode, agent lose")
+            self._episode_ended = True
+            reward = -1
+            return ts.termination(np.array([self._state], dtype=np.int32), reward)
         
         # Check if the action is valid
         if self.__is_action_valid(action):
@@ -334,16 +394,29 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
             self.__update_nifr_nodes(self.nifr_nodes)
             
             # Simulate the attacker's move based on the NTPG and HTPG
-            self.__attacker_move()
+            self.__attacker_move_step()
             
             # Check if the attacker has reached a nicr or a fake resource node
-            if self.__is_nicr_attacked(self.nicr_nodes) or self.__is_nifr_attacked(self.nifr_nodes):
+            if self.__is_nicr_attacked(self.nicr_nodes):
                 # If yes, end the episode and return the termination state and reward
                 self._episode_ended = True
-                reward = 1 if self.__is_nifr_attacked(self.nifr_nodes) else -1
+                print("Attacker reached nicr, end the episode")
+                print("Current node attacker residing in:", self._current_attacker_node)
+                print("nicr nodes:", self.nicr_nodes)
+                reward = -1
+                return ts.termination(np.array([self._state], dtype=np.int32), reward)
+            if self.__is_nifr_attacked(self.nifr_nodes):
+                # If yes, end the episode and return the termination state and reward
+                self._episode_ended = True
+                print("Attacker reached nifr, end the episode")
+                print("Current node attacker residing in:", self._current_attacker_node)
+                print("nifr nodes:", self.nifr_nodes)
+                reward = 1
                 return ts.termination(np.array([self._state], dtype=np.int32), reward)
             else:
                 reward = 0
+                # Increment the step counter
+                self.current_step += 1
                 # If no, continue the episode and return the transition state and reward
                 return ts.transition(np.array([self._state], dtype=np.int32), reward)
         else:
@@ -393,11 +466,17 @@ import random
 from keras.layers import Dense
 from keras.layers import InputLayer
 from keras.models import Sequential
+
+# Trying different optimizers
 from keras.optimizers import RMSprop
 from keras.optimizers import Adam
+
 from collections import deque 
 from tensorflow import gather_nd
+
+# Trying different loss function
 from keras.losses import mean_squared_error 
+from keras.losses import huber
 
 from math import factorial
  
@@ -446,18 +525,21 @@ class DoubleDeepQLearning:
       self.actionDimension = factorial(env.K) / factorial(env.K - env.M)
       print("ACTION DIMENSION --- AGENT TRAINING",self.actionDimension)
       # this is the maximum size of the replay buffer
-      self.replayBufferSize=100
+      self.replayBufferSize=300
       # this is the size of the training batch that is randomly sampled from the replay buffer
-      self.batchReplayBufferSize=50
+      self.batchReplayBufferSize=100
         
       # number of training episodes it takes to update the target network parameters
       # that is, every updateTargetNetworkPeriod we update the target network parameters
-      self.updateTargetNetworkPeriod=100
+      self.updateTargetNetworkPeriod=10
         
       # this is the counter for updating the target network 
       # if this counter exceeds (updateTargetNetworkPeriod-1) we update the network 
       # parameters and reset the counter to zero, this process is repeated until the end of the training process
       self.counterUpdateTargetNetwork=0
+      
+
+      
         
       # this sum is used to store the sum of rewards obtained during each training episode
       self.sumRewardsEpisode=[]
@@ -498,12 +580,13 @@ class DoubleDeepQLearning:
 
         model.add(InputLayer(input_shape=self.stateDimension))
         model.add(Dense(64, activation='relu'))
+        model.add(Dense(128, activation='relu'))
         model.add(Dense(64, activation='relu'))
         model.add(Dense(self.actionDimension, activation='linear'))
         
         # use mean squared error as the loss function
         # original used a custom loss one, but for this case im not sure
-        model.compile(loss=mean_squared_error, optimizer=Adam(), metrics = ['accuracy'])
+        model.compile(loss=mean_squared_error, optimizer=RMSprop(), metrics = ['accuracy'])
         print("Created network:", model.summary())
         return model
 
@@ -513,14 +596,17 @@ class DoubleDeepQLearning:
 
     ###########################################################################
     #   START - trainingEpisodes function
+    #   Status: Faulty Logic (552) - something wrong about the loop
     ###########################################################################
     
     def trainingEpisodes(self):
 
-        currentState=self.env.reset()
-        
         # iterate over the episodes
         for episode in range(self.numberEpisodes):
+            
+            # self.env = NetworkHoneypotEnv(10, 3, 7, 0.8, 0.2)
+            # reset the environment
+            currentState=self.env.reset()
 
             # list that store rewards in each episode to keep track of convergence
             rewardsEpisode=[]
@@ -541,9 +627,14 @@ class DoubleDeepQLearning:
             # in other words, s=s0, s=s1, s=s2, ..., s=sn
             # until either nicr or nifr got attacked, sum up the state and get reward
             # stateCount = 100
-            for i in range (self.env.K):
+            # This part logic is faulty - the attacker attack with each step, and we need to stop him on each step till he reach
+            # final state, not just doing K loop
+            # 20/12/2023 - Replacing for K loop whatever with indefinite while (until nicr or nifr got hit)
+            while not env.is_last():
+                # Your code here
                 
-                print("while looping through all the K nodes after stateCount times to check if nicr or nifr got attacked") 
+                #print("while looping through all the K nodes after stateCount times to check if nicr or nifr got attacked") 
+                print("Patroling until either nicr or nifr got attacked - end episode")
 
                 # select the action based on the epsilon-greedy approach
                 print("observed state: ",currentState.observation)
@@ -558,10 +649,9 @@ class DoubleDeepQLearning:
                 # Basically we just assign the result after we step to a variable called nextState
                 # Then we seperate the variable (which is a TimeStep object) to 4 part of it: step_type, reward, discount, and observation
                 # This kinda lengthen the process but im a student so...
-                (terminalState, discount, reward, nextStateObservation) = nextState
+                (discount, nextStateObservation, reward, terminalState) = (currentState.discount, nextState.observation, currentState.reward, currentState.is_last())
                 # This part is dumb probably need to fix
-                print((terminalState, discount, nextStateObservation, reward))
-
+                print((discount, nextStateObservation, reward, terminalState))
 
                 print("------------------- REWARD OF THIS ACTION --------------------------: ",reward)
                 rewardsEpisode.append(reward)
@@ -610,6 +700,7 @@ class DoubleDeepQLearning:
             action = np.zeros((self.env.M, self.env.K))
             for i in range(self.env.M):
                 action[i, np.random.randint(0, self.env.K)] = 1
+                print("Deploying honeypot number", i, "in normal nodes:", action)
             action = action.astype(np.int32)
             print("ACTION MATRIX exploit:", action)
             return action
@@ -623,6 +714,7 @@ class DoubleDeepQLearning:
                 action = np.zeros((self.env.M, self.env.K))
                 for i in range(self.env.M):
                     action[i, np.random.randint(0, self.env.K)] = 1
+                    print("Deploying honeypot number", i, "in normal nodes:", action)
                 action = action.astype(np.int32)
                 print("ACTION MATRIX exploit:", action)
                 return action
@@ -635,6 +727,7 @@ class DoubleDeepQLearning:
 
             # Get the index of the maximum Q-value
             max_index = np.argmax(Qvalues)
+            print("action with the highest Q-value:", max_index)
 
             # Map the index to an action matrix
             action_matrix = self.index_to_action(max_index)
@@ -668,7 +761,7 @@ class DoubleDeepQLearning:
     ###########################################################################
     #   START - trainNetwork function
     #   07/12/2023 - Start working on this funtion 
-    #   Status: Not working
+    #   Status: Active
     ###########################################################################
 
     def trainNetwork(self):
@@ -808,7 +901,55 @@ class DoubleDeepQLearning:
     ###########################################################################
     #   END - of function my_loss_fn
     ###########################################################################
-     
+
+
+
+
+    def selectActionEval(self, state, episode, model):
+        print("------------------------------------------------------------------------------------------------------------------------------")
+        print("---------------------------------------- EVALUATING THE TRAINED MAIN NETWORK -------------------------------------------------")
+        print("------------------------------------------------------------------------------------------------------------------------------")
+
+        # Exploration phase
+        if episode < 1:
+            action = np.zeros((self.env.M, self.env.K))
+            for i in range(self.env.M):
+                action[i, np.random.randint(0, self.env.K)] = 1
+                print("Deploying honeypot number", i, "in normal nodes:", action)
+            action = action.astype(np.int32)
+            print("ACTION MATRIX exploit:", action)
+            return action
+
+        # Epsilon-greedy approach
+        randomValue = np.random.random()
+        if episode > 200:
+            self.epsilon = 0.999 * self.epsilon
+
+            if randomValue < self.epsilon:
+                action = np.zeros((self.env.M, self.env.K))
+                for i in range(self.env.M):
+                    action[i, np.random.randint(0, self.env.K)] = 1
+                    print("Deploying honeypot number", i, "in normal nodes:", action)
+                action = action.astype(np.int32)
+                print("ACTION MATRIX exploit:", action)
+                return action
+
+        # Exploitation phase
+        else:
+            print("STATE TO PREDICT:", state)
+            Qvalues = model.predict(state)
+            print("QVALUES:", Qvalues)
+
+            # Get the index of the maximum Q-value
+            max_index = np.argmax(Qvalues)
+            print("Action with highest Q-values is", max_index)
+
+            # Map the index to an action matrix
+            action_matrix = self.index_to_action(max_index)
+
+            print("ACTION MATRIX exploit:", action_matrix)
+            return action_matrix
+
 
 
 
@@ -892,6 +1033,12 @@ LearningQDeep.mainNetwork.save("RL_Honeypot_trained_model_temp.keras")
 
 
 
+
+
+
+
+
+
 import matplotlib.pyplot as plt
 
 # Load the trained model
@@ -899,10 +1046,10 @@ trained_model = tf.keras.models.load_model("RL_Honeypot_trained_model_temp.keras
 
 # Create a new environment for evaluation
 eval_env = NetworkHoneypotEnv(10, 3, 7, 0.8, 0.2)
-tf_eval_env = tf_py_environment.TFPyEnvironment(eval_env)
+# tf_eval_env = tf_py_environment.TFPyEnvironment(eval_env)
 
 # Reset the environment
-eval_time_step = tf_eval_env.reset()
+eval_time_step = eval_env.reset()
 
 # Initialize variables for tracking rewards and steps
 eval_rewards = []
@@ -914,25 +1061,32 @@ for _ in range(eval_episodes):
     episode_reward = 0
     episode_steps = 0
 
+    print("------------------------------------------------------------------------------------------------------------------------")
+    print("Evaluating episode number: ",eval_episodes)
+    print("------------------------------------------------------------------------------------------------------------------------")
+
     # Run the evaluation episode
     while not eval_time_step.is_last():
         # Get the action from the trained model
         
-        action = trained_model.predict([eval_time_step.observation(0), eval_time_step.observation(-1)])
-
+        action = LearningQDeep.selectActionEval(eval_time_step.observation, _, trained_model)
+        print("ACTION SELECTED:", action)
         # Take a step in the environment
-        eval_time_step = tf_eval_env.step(action)
+        eval_time_step = eval_env.step(action)
+        print("EVAL TIME STEP:", eval_time_step)
 
         # Update the episode reward and steps
         episode_reward += eval_time_step.reward
+        print("EPISODE REWARD:", episode_reward)
         episode_steps += 1
+        print("EPISODE STEPS:", episode_steps)
 
     # Append the episode reward and steps to the evaluation lists
     eval_rewards.append(episode_reward)
     eval_steps.append(episode_steps)
 
     # Reset the environment for the next episode
-    eval_time_step = tf_eval_env.reset()
+    eval_time_step = eval_env.reset()
 
 # Calculate the average reward and steps per episode
 avg_eval_reward = np.mean(eval_rewards)
@@ -944,7 +1098,7 @@ print("Average Reward per Episode:", avg_eval_reward)
 print("Average Steps per Episode:", avg_eval_steps)
 
 # Plot the rewards and steps per episode
-plt.figure(figsize=(10, 5))
+plt.figure(figsize=(30, 30))
 plt.subplot(1, 2, 1)
 plt.plot(eval_rewards)
 plt.xlabel("Episode")
