@@ -138,6 +138,8 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # TODO: Dynamically locate this entrypoint
         self._current_attacker_node = '192.168.0.2'
 
+        #print(self.get_info())
+
 
     def action_spec(self):
         return self._action_spec
@@ -214,6 +216,9 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         }
 
         self._current_attacker_node = '192.168.0.2'
+
+        # print(self.get_info())
+
         # Return the state of the environment and information that it is the first step of the simulation
         return ts.restart(np.array([self._state], dtype=np.int32))
         
@@ -263,6 +268,8 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
                 break
 
             # Attack the current node with a probability based on the HTPG
+            # THis shit flop omg im dumb
+
             elif np.random.random() <= self._htpg.get(current_node)[0][2]:
                 self._state[current_node_index] = 1  # Use the index to update the state
                 print("Attacked node:", current_node)
@@ -296,6 +303,8 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
             if np.random.random() <= self._htpg.get(current_node)[0][2]:
                 self._state[current_node_index] = 1
                 print("Attacked node:", current_node)
+            else:
+                print("No attack on current node:", current_node)
 
         # Move to the next node based on NTPG probability
         print("current node:", current_node)
@@ -306,6 +315,9 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
                 next_node = ntpg_list[0][0]
                 self._current_attacker_node = next_node
                 print("Next node to attack:", next_node)
+            else:
+                print("No more possible routes, exit the loop. State vector after the attack:", self._state)
+    
         else:
             print("No more possible routes, exit the loop. State vector after the attack:", self._state)
             # Somehow call for ending the episode
@@ -479,6 +491,8 @@ from keras.losses import mean_squared_error
 from keras.losses import huber
 
 from math import factorial
+
+import keras
  
 
 
@@ -579,6 +593,35 @@ class DoubleDeepQLearning:
         model = Sequential()
 
         model.add(InputLayer(input_shape=self.stateDimension))
+
+        # Add another dropout layer with 0.25 probability
+        model.add(keras.layers.Dropout(0.25))
+
+        # Add a flatten layer to convert the 2D feature maps to 1D feature vectors
+        model.add(keras.layers.Flatten())
+
+        # Add a dense layer with 256 units and ReLU activation
+        model.add(keras.layers.Dense(256, activation='relu'))
+
+        # Add another batch normalization layer
+        model.add(keras.layers.BatchNormalization())
+
+        # Add another dropout layer with 0.5 probability
+        model.add(keras.layers.Dropout(0.5))
+
+        # Add another dense layer with 128 units and ReLU activation
+        model.add(keras.layers.Dense(128, activation='relu'))
+
+        # Add another batch normalization layer
+        model.add(keras.layers.BatchNormalization())
+
+        # Add another dropout layer with 0.5 probability
+        model.add(keras.layers.Dropout(0.5))
+
+        # Add an output layer with 10 units and softmax activation for multi-class classification
+        model.add(keras.layers.Dense(10, activation='softmax'))
+
+        #lmao
         model.add(Dense(64, activation='relu'))
         model.add(Dense(128, activation='relu'))
         model.add(Dense(64, activation='relu'))
@@ -1056,7 +1099,7 @@ eval_rewards = []
 eval_steps = []
 
 # Evaluate the model for a certain number of episodes
-eval_episodes = 10
+eval_episodes = 3
 for _ in range(eval_episodes):
     episode_reward = 0
     episode_steps = 0
