@@ -1,0 +1,16 @@
+Deployment:
+- NTPG & HTPG will be input as csv tables, read and translate into dict that can be use
+- State - Observation will use the log from NMS
+- NMS give logs -> Only select logs with CVE already predefine -> update the observation array (Replacing the attacker_move_single function)
+
+=> 2 new functions to add:
+- TPG csv to dict converter
+- new attacker_move funtion (replace the old one)
+
+Truong:
+- Thuc hien ghi nhan log tu NMS (Wazuh,ossec,...) roi tra ve ket qua gi do (JSON,csv,...)
+=> check CVE -> decide if true (attacked) or false (not attacked) -> update the observation state
+=> neu co CVE co kha nang chiem root nhung chua duoc cap nhat trong database se ko bat duoc
+
+HOW TO WRITE DRIVER CODE
+

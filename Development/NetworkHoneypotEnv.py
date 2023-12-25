@@ -738,8 +738,14 @@ class DoubleDeepQLearning:
     ###########################################################################
     
     def selectAction(self, state, episode):
+        
+        # Epsilon-greedy approach
+        randomValue = np.random.random()
+        if episode > 20:
+            self.epsilon = 0.999 * self.epsilon
+        
         # Exploration phase
-        if episode < 1:
+        if episode < 10:
             action = np.zeros((self.env.M, self.env.K))
             for i in range(self.env.M):
                 action[i, np.random.randint(0, self.env.K)] = 1
@@ -748,21 +754,16 @@ class DoubleDeepQLearning:
             print("ACTION MATRIX exploit:", action)
             return action
 
-        # Epsilon-greedy approach
-        randomValue = np.random.random()
-        if episode > 200:
-            self.epsilon = 0.999 * self.epsilon
-
-            if randomValue < self.epsilon:
-                action = np.zeros((self.env.M, self.env.K))
-                for i in range(self.env.M):
-                    action[i, np.random.randint(0, self.env.K)] = 1
-                    print("Deploying honeypot number", i, "in normal nodes:", action)
-                action = action.astype(np.int32)
-                print("ACTION MATRIX exploit:", action)
-                return action
-
         # Exploitation phase
+        if randomValue < self.epsilon:
+            action = np.zeros((self.env.M, self.env.K))
+            for i in range(self.env.M):
+                action[i, np.random.randint(0, self.env.K)] = 1
+                print("Deploying honeypot number", i, "in normal nodes:", action)
+            action = action.astype(np.int32)
+            print("ACTION MATRIX exploit:", action)
+            return action
+
         else:
             print("STATE TO PREDICT:", state)
             Qvalues = self.mainNetwork.predict(state)
@@ -1078,7 +1079,9 @@ LearningQDeep.mainNetwork.save("RL_Honeypot_trained_model_temp.keras")
 
 
 
-
+###########################################################################
+#    EVALUATION CODE
+###########################################################################   
 
 
 
