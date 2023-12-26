@@ -3,14 +3,31 @@ Deployment:
 - State - Observation will use the log from NMS
 - NMS give logs -> Only select logs with CVE already predefine -> update the observation array (Replacing the attacker_move_single function)
 
+(lam sao de co csv TPGs - nang cao)
+
 => 2 new functions to add:
 - TPG csv to dict converter
 - new attacker_move funtion (replace the old one)
 
 Truong:
 - Thuc hien ghi nhan log tu NMS (Wazuh,ossec,...) roi tra ve ket qua gi do (JSON,csv,...)
-=> check CVE -> decide if true (attacked) or false (not attacked) -> update the observation state
+=> check CVE -> decide if true (attacked) or false (not attacked) -> update the observation state -> nem observation state vao select_action nhu 1 attacker_move_step 
+-> agent tra ra ma tran deploy -> deploy tai cac node theo chi dinh cua ma tran (neu nhieu node trung 1 vi tri thi deploy duy nhat 1 honeypot cho vi tri do)
+
 => neu co CVE co kha nang chiem root nhung chua duoc cap nhat trong database se ko bat duoc
+
+25/12/2023 EXPLOITATION PROBABILITY CAN BE GUESS USING THIS 
+https://www.first.org/epss/
+https://github.com/kannkyo/epss-api
+https://arxiv.org/abs/2302.14172
+for NCKH tho, we just use fixed values
 
 HOW TO WRITE DRIVER CODE
 
+New workflow:
+init
+- cve.csv
+- ntpg.csv (chua co user + root prob)
+- htpg.csv (chua co attack_prob)
+flow
+cve.csv -> thong qua epss api lay attack_prob -> cve-epss.csv -> cap nhat attack_prob cho htpg -> cap nhat user + root probs cho ntpg
