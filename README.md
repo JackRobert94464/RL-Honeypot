@@ -44,13 +44,17 @@ Clone the repository
 
 git clone https://github.com/JackRobert94464/RL-Honeypot
 
+Create a new virtual environment
+
+python -m venv .
+
 Install the requirements
 
 pip install -r requirements.txt
 
-Run the program
+Run the code. Currently everything (training & validate) is in one big file.
 
-python main.py
+py
 
 ## Usage
 
