@@ -10,13 +10,17 @@ You can find the original vietnamese translated article inside Documents.
 
 - [x] Implement the environment
 
-- [ ] Implement the agent
+- [x] Implement the agent
 
-- [ ] Implement the training algorithm
+- [x] Implement the training algorithm
 
-- [ ] Train the agent
+- [x] Train the agent
 
-- [ ] Observe the result
+- [x] Observe the result
+
+- [x] Fix logic faults
+
+- [x] Design visualization (WIP)
 
 - [ ] Run the agent on the article's network
 
