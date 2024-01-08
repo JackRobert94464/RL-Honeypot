@@ -36,6 +36,8 @@ You can find the original vietnamese translated article inside Documents.
 
 - Working on implementing the agent
 
+- 08/01/2024 Finished most logic for the training algorithm. Working on visualization & waiting for Docker intergration.
+
 ## Installation
 
 Clone the repository
