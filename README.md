@@ -54,7 +54,7 @@ pip install -r requirements.txt
 
 Run the code. Currently everything (training & validate) is in one big file.
 
-py
+python Development/NetworkHoneypotEnv.py
 
 ## Usage
 
