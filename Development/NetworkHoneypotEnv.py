@@ -25,7 +25,7 @@ import imageio
 import matplotlib.pyplot as plt
 import networkx as nx
 
-def visualize_steps(steps, output_folder, output_movie):
+def visualize_steps(steps, output_folder, output_movie, episode):
     G = nx.Graph()
     G.add_nodes_from(your_nodes_list)
     G.add_edges_from(your_edges_list)
@@ -38,16 +38,28 @@ def visualize_steps(steps, output_folder, output_movie):
     for i, step in enumerate(steps):
         plt.figure()
         colors = []
+        text = ""
         for node in G.nodes:
             if node == step['attacker_node']:
-                colors.append('red')
+                if node in step['nifr_nodes']:
+                    colors.append('purple')
+                    text = "NIFR has been attacked. Defender wins."
+                elif node in step['nicr_nodes']:
+                    colors.append('yellow')
+                    text = "NICR has been attacked. Defender loses."
+                else:
+                    colors.append('red')
             elif node in step['nifr_nodes']:
                 colors.append('blue')
+            elif node in step['nicr_nodes']:
+                colors.append('orange')  # Color for NICR node
             else:
                 colors.append('green')
 
         nx.draw(G, with_labels=True, node_color=colors)
-        image_path = os.path.join(output_folder, f'step_{i}.png')
+        plt.figtext(0.1, 0.02, f"Episode: {episode}", transform=plt.gca().transAxes)
+        plt.figtext(0.1, 0.04, text, transform=plt.gca().transAxes)
+        image_path = os.path.join(output_folder, f'{episode}_step_{i}.png')
         plt.savefig(image_path)
         images.append(imageio.imread(image_path))
         plt.close()
@@ -365,8 +377,8 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # Check if the current node has possible routes
         print("NTPG:", self._ntpg)
         print("current_node:", current_node)
-        print("NTPG OF CURRENT NODE:" , self._ntpg.get(current_node)[0]) if self._ntpg.get(current_node) else print("I cum in yo mom mouth")
-        os.system("pause")
+        print("NTPG OF CURRENT NODE:" , self._ntpg.get(current_node)[0]) if self._ntpg.get(current_node) else print("there is no NTPG for this node, something is wrong")
+        # os.system("pause")
         if self._ntpg.get(current_node):
             # Iterate over the possible routes from the current node
             for route in self._ntpg.get(current_node):
@@ -730,6 +742,7 @@ class DoubleDeepQLearning:
 
             print("Current state: ", currentState.observation)
 
+
             # here we step from one state to another
             # in other words, s=s0, s=s1, s=s2, ..., s=sn
             # until either nicr or nifr got attacked, sum up the state and get reward
@@ -752,7 +765,15 @@ class DoubleDeepQLearning:
                 # here we step and return the state, reward, and boolean denoting if the state is a terminal state
                 # (terminalState, discount, reward, nextState) = self.env.step(action)
                 nextState = self.env.step(action)
-                steps.append({'attacker_node': self.env._current_attacker_node, 'nifr_nodes': self.env.nifr_nodes})
+                print("attacker node for drawing: ", self.env._current_attacker_node)
+                print("nifr nodes for drawing: ", self.env.nifr_nodes)
+                print("ntpg ip of the nifr nodes: ", [list(env._ntpg.keys())[node_index] for node_index in self.env.nifr_nodes])
+                print("nicr nodes for drawing: ", self.env.nicr_nodes)
+                print("ntpg ip of the nicr node: ", [list(env._ntpg.keys())[node_index] for node_index in self.env.nicr_nodes])
+                # os.system("pause")
+                steps.append({'attacker_node': self.env._current_attacker_node, 
+                              'nifr_nodes': [list(env._ntpg.keys())[node_index] for node_index in self.env.nifr_nodes], 
+                              'nicr_nodes': [list(env._ntpg.keys())[node_index] for node_index in self.env.nicr_nodes],})
 
 
                 # Basically we just assign the result after we step to a variable called nextState
@@ -760,19 +781,24 @@ class DoubleDeepQLearning:
                 # This kinda lengthen the process but im a student so...
                 (discount, nextStateObservation, reward, terminalState) = (currentState.discount, nextState.observation, currentState.reward, currentState.is_last())
                 # This part is dumb probably need to fix
-                print("I NEED TO LEARN HOW TO MLG LIKE BOSS PINK GUY")
+                print("parameters of environment:")
                 print((discount, nextStateObservation, reward, terminalState))
+
+                
+
+                
+        
+                print("------------------- REWARD OF THIS ACTION --------------------------: ",reward)
+                # os.system("pause")
+                rewardsEpisode.append(reward)
+
 
                 if terminalState:
                     print("Terminal state reached, end episode")
+                    break
                     
                 if not terminalState:
                     print("Terminal state not reached, continue episode")
-        
-                print("------------------- REWARD OF THIS ACTION --------------------------: ",reward)
-                os.system("pause")
-                rewardsEpisode.append(reward)
-
 
                 print("Next state: ", nextState)
 
@@ -796,11 +822,14 @@ class DoubleDeepQLearning:
 
                 # stateCount = stateCount + 1
 
+            # Visualize the steps
+            visualize_steps(steps, 'images', 'movie.gif', episode)
+            
+
             print("------------------------- END LOOP HERE -------------------------")
 
 
-        # Visualize the steps
-        visualize_steps(steps, 'images', 'movie.gif')
+        
 
 
         # tbh i dont even know if summing reward here is neccessary
