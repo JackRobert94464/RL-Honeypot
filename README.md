@@ -58,4 +58,6 @@ python Development/NetworkHoneypotEnv.py
 
 ## Usage
 
-- Nothing yet
+- Since I still have lots of schoolwork to do, the aim for this demo code end only at training/testing the agent on a very simple network with little CVE and lots of security flaws.
+
+- For future reference there will be GUI to help with easier deployment and running the model.
