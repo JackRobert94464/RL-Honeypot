@@ -70,7 +70,7 @@ def visualize_steps(steps, output_folder, output_movie, episode):
 
 
 
-
+#  rule đặt honeypot: vị trí đặt ko được trùng với node đang có kẻ tấn công và node nicr  
 
 
 
@@ -94,26 +94,30 @@ def visualize_steps(steps, output_folder, output_movie, episode):
 class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
 
 
-    #------------------------------------------------------------------------------------------------------------
-    #-------------------------------------------- TPGs Converter ------------------------------------------------
-    #------------------------------------------------------------------------------------------------------------
+    #------------------------------------------------------------------------------------------------------------------
+    #-------------------------------------------- TPGs Converter - WIP ------------------------------------------------
+    #------------------------------------------------------------------------------------------------------------------
     def tpgs_converter(self, ntpg, htpg):
         return ntpg, htpg        
     
 
 
-    def __init__(self, N, M, K, P, ntpg, htpg):
+    def __init__(self, N, M, K, ntpg, htpg):
 
         # Initialize the spec for the environment
         self.N = N # Total amount of nodes (n)
         self.M = M # Number of deception nodes (m)
         self.K = K # Number of normal nodes (k)
-        self.P = P # Probability of attacker moving to the next node
+        # self.P = P Probability of attacker moving to the next node
 
         # Pick a random node to be the nicr (important resource node)
         # As an example to test the environment, uncomment this for nicr hard-coded
         # self.nifr_nodes = [6]
-        self.nicr_nodes = [np.random.choice(K)]
+        # self.nicr_nodes = [np.random.choice(K)]
+        # 13/01/2024 (MUST FIX) - Fixed one nicr for presentation purpose comment this after DACN presentation
+        # Real system will take nicr as input for init - not change it in reset
+        # Train system will take nicr randomly
+        self.nicr_nodes = [5]
         print("NICR node:", self.nicr_nodes)
 
         # Initialize an empty list for the nifr (fake resource node)
@@ -156,48 +160,9 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         
         self._episode_ended = False
         
-        # Add some code to generate the NTPG and HTPG based on some logic or data
-        # For example, you can use a loop to iterate over the nodes and add edges randomly
-        # Or you can use some existing library or tool to generate the graphs
-        # Or you can hard-code the graphs based on some predefined structure
-        # Here I will just use a simple loop and random numbers as an example
-        
-        # 29/10/2023 - Fixed example is provided as follow, i will include image of the sample graph
-        # self._ntpg = {'192.168.0.2': [ ('192.168.0.3', 0.8,0.6),('192.168.0.3', 0.8,0.6)], 
-        #             '192.168.0.3': [ ('192.168.0.5', 0.5,0.1)], 
-        #             '192.168.0.4': [('192.168.0.5', 0.8,0.2),('192.168.0.6', 0.4,0.2),('192.168.0.7', 0.3,0.1),], 
-        #             '192.168.0.5': [('192.168.0.8', 0.2,0.1),('192.168.0.7', 0.6,0.3)],
-        #             '192.168.0.6': [],
-        #             '192.168.0.7': [('192.168.0.8', 0.2,0.9)],
-        #             '192.168.0.8': [],}
 
         # 5/1/2024 - add TPG input for initialization
         self._ntpg = ntpg
-
-
-        # self._htpg = {'192.168.0.2': [('NetBT', 'CVE-2017-0161', 0.6, ('192.168.0.4', 'User')),
-        #                            ('Win32k', 'CVE-2018-8120', 0.04, ('192.168.0.4', 'Root')),
-        #                            ('VBScript', 'CVE-2018-8174', 0.5, ('192.168.0.4', 'Root')),
-        #                            ('Apache', 'CVE-2017-9798', 0.8, ('192.168.0.3', 'User')),
-        #                            ('Apache', 'CVE-2014-0226', 0.6, ('192.168.0.3', 'Root')),], 
-        #            '192.168.0.3': [('Apache', 'CVE-2017-9798', 0.5, ('192.168.0.5', 'User')),
-        #                            ('Apache', 'CVE-2014-0226', 0.1, ('192.168.0.5', 'Root')),], 
-        #            '192.168.0.4': [('NetBT', 'CVE-2017-0161', 0.8, ('192.168.0.5', 'User')),
-        #                            ('Win32k', 'CVE-2018-8120', 0.02, ('192.168.0.5', 'Root')),
-        #                            ('VBScript', 'CVE-2018-8174', 0.2, ('192.168.0.5', 'Root')),
-        #                            ('OJVM', 'CVE-2016-5555', 0.4, ('192.168.0.6', 'User')),
-        #                            ('RDP', 'CVE-2012-0002', 0.2, ('192.168.0.6', 'Root')),
-        #                            ('HFS', 'CVE-2014-6287', 0.3, ('192.168.0.7', 'User')),
-        #                            ('RDP', 'CVE-2012-0002', 0.1, ('192.168.0.7', 'Root')),], 
-        #            '192.168.0.5': [('HFS', 'CVE-2014-6287', 0.6, ('192.168.0.7', 'User')),
-        #                            ('RDP', 'CVE-2012-0002', 0.3, ('192.168.0.7', 'Root')),
-        #                            ('OJVM', 'CVE-2016-5555', 0.2, ('192.168.0.8', 'User')),
-        #                            ('RDP', 'CVE-2012-0002', 0.1, ('192.168.0.8', 'Root')),],
-        #            '192.168.0.6': [],
-        #            '192.168.0.7': [('OJVM', 'CVE-2016-5555', 0.2, ('192.168.0.8', 'User')),
-        #                            ('RDP', 'CVE-2012-0002', 0.1, ('192.168.0.8', 'Root'))],
-        #            '192.168.0.8': [],
-        #}
 
         self._htpg = htpg
         
@@ -228,7 +193,10 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         self.current_step = 0
 
         # Reset the nicr node by random choosing a new one
-        self.nicr_nodes = [np.random.choice(self.K)]
+        # self.nicr_nodes = [np.random.choice(self.K)]
+        # 13/01/2024 (MUST FIX) - Fixed one nicr for presentation purpose comment this after DACN presentation
+        self.nicr_nodes = [5]
+
         print("NICR node after reset:", self.nicr_nodes)
 
         # Reset list for the nifr (fake resource node)
@@ -247,7 +215,7 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         print("Matrix after reset:", self._matrix)
         
         # Reset the dictionary for the NTPG as an empty dictionary
-        # self._ntpg = {} fug u bitch
+        # self._ntpg = {} 
         
         # Reset the dictionary for the HTPG as an empty dictionary
         # self._htpg = {}
@@ -255,41 +223,6 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # Reset the episode ended flag as False
         self._episode_ended = False
         print("Episode ended flag after reset:", self._episode_ended)
-            
-        # Regenerate the NTPG and HTPG based on some logic or data
-        # Here I will use the same code as in the __init__ function (12/11/2023 - reset to fixed example)
-        # self._ntpg = {'192.168.0.2': [ ('192.168.0.3', 0.8,0.6),('192.168.0.3', 0.8,0.6)], 
-        #               '192.168.0.3': [ ('192.168.0.5', 0.5,0.1)], 
-        #               '192.168.0.4': [('192.168.0.5', 0.8,0.2),('192.168.0.6', 0.4,0.2),('192.168.0.7', 0.3,0.1),], 
-        #               '192.168.0.5': [('192.168.0.8', 0.2,0.1),('192.168.0.7', 0.6,0.3)],
-        #               '192.168.0.6': [],
-        #               '192.168.0.7': [('192.168.0.8', 0.2,0.9)],
-        #               '192.168.0.8': [],}
-
-
-        # self._htpg = {'192.168.0.2': [('NetBT', 'CVE-2017-0161', 0.6, ('192.168.0.4', 'User')),
-        #                            ('Win32k', 'CVE-2018-8120', 0.04, ('192.168.0.4', 'Root')),
-        #                            ('VBScript', 'CVE-2018-8174', 0.5, ('192.168.0.4', 'Root')),
-        #                            ('Apache', 'CVE-2017-9798', 0.8, ('192.168.0.3', 'User')),
-        #                            ('Apache', 'CVE-2014-0226', 0.6, ('192.168.0.3', 'Root')),], 
-        #            '192.168.0.3': [('Apache', 'CVE-2017-9798', 0.5, ('192.168.0.5', 'User')),
-        #                            ('Apache', 'CVE-2014-0226', 0.1, ('192.168.0.5', 'Root')),], 
-        #            '192.168.0.4': [('NetBT', 'CVE-2017-0161', 0.8, ('192.168.0.5', 'User')),
-        #                            ('Win32k', 'CVE-2018-8120', 0.02, ('192.168.0.5', 'Root')),
-        #                            ('VBScript', 'CVE-2018-8174', 0.2, ('192.168.0.5', 'Root')),
-        #                            ('OJVM', 'CVE-2016-5555', 0.4, ('192.168.0.6', 'User')),
-        #                            ('RDP', 'CVE-2012-0002', 0.2, ('192.168.0.6', 'Root')),
-        #                            ('HFS', 'CVE-2014-6287', 0.3, ('192.168.0.7', 'User')),
-        #                            ('RDP', 'CVE-2012-0002', 0.1, ('192.168.0.7', 'Root')),], 
-        #            '192.168.0.5': [('HFS', 'CVE-2014-6287', 0.6, ('192.168.0.7', 'User')),
-        #                            ('RDP', 'CVE-2012-0002', 0.3, ('192.168.0.7', 'Root')),
-        #                            ('OJVM', 'CVE-2016-5555', 0.2, ('192.168.0.8', 'User')),
-        #                            ('RDP', 'CVE-2012-0002', 0.1, ('192.168.0.8', 'Root')),],
-        #            '192.168.0.6': [],
-        #            '192.168.0.7': [('OJVM', 'CVE-2016-5555', 0.2, ('192.168.0.8', 'User')),
-        #                            ('RDP', 'CVE-2012-0002', 0.1, ('192.168.0.8', 'Root'))],
-        #            '192.168.0.8': [],
-        #}
 
         self._current_attacker_node = list(ntpg.keys())[2]
 
@@ -322,49 +255,6 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # If all checks pass, return True
         return True
 
-    
-    # Attacker themselves move with each "step" in the environment too
-    # Does this code represent that? or just a static mapping?
-    def __attacker_move(self):
-        """Simulates the attacker's move based on the NTPG and HTPG.
-        Updates the state vector with the new attacked node.
-        """
-
-        # Fix the current_node to the very first node
-        current_node = '192.168.0.2'
-        current_node_index = int(current_node.split('.')[-1]) - 2  # Get the index of the current_node
-        print("Current node attacker residing in:", current_node)
-        print("Current node index:", current_node_index)
-
-        while True:
-            print("HTPG OF CURRENT NODE:" , self._htpg.get(current_node))
-            print(self._htpg.get(current_node)[0][2])
-            if self._htpg.get(current_node) == []:
-                print("No more possible routes, exit the loop. State vector after the attack:", self._state)
-                print(self._htpg.get(current_node)[0][2])
-                break
-
-            # Attack the current node with a probability based on the HTPG
-            # THis shit flop omg im dumb
-
-            elif np.random.random() <= self._htpg.get(current_node)[0][2]:
-                self._state[current_node_index] = 1  # Use the index to update the state
-                print("Attacked node:", current_node)
-
-            # Move to the next node with a probability based on the NTPG
-            elif np.random.random() <= self._ntpg.get(current_node)[0][1] or np.random.random() <= self._ntpg.get(current_node)[0][2]:
-                current_node = self._ntpg.get(current_node)[0][0]
-                current_node_index = int(current_node.split('.')[-1]) - 2  # Update the current_node_index
-                print("Next node to attack:", current_node)
-
-            else:
-                print("No more possible routes, exit the loop. State vector after the attack:", self._state)
-                print(self._htpg.get(current_node)[0][2])
-                break  # No more possible routes, exit the loop
-
-        # Update the NIFR list based on the action matrix
-        self.__update_nifr_nodes(self.nifr_nodes)
-        print("NIFR list after attack:", self.nifr_nodes)
 
     def __attacker_move_step(self):
         """Simulates one step of the attacker's move based on the NTPG and HTPG.
@@ -401,9 +291,19 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         self.__update_nifr_nodes(self.nifr_nodes)
         print("NIFR list after attack:", self.nifr_nodes)
 
+    def __truong_attacker_move(self):
+        # Simulates the attacker's move based on Truong's fixed flow.
 
+        print("Work In Progress - WIP")
 
+        # Fix the current_node to the very first node
 
+    def __NMS_alert_based_attacker_movement(self):
+        # Receive alert from NMS and update the observation space based on the alert.
+        # API code to receive alert from NMS and digest it into the observation space and reward.
+
+        # Fix the current_node to the very first node
+        print("Work In Progress - WIP")
 
 
     def __is_nicr_attacked(self, nicr_nodes):
@@ -452,7 +352,7 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
             if any(row):
                 print("row.argmax():", row.argmax())
                 nifr_nodes.append(row.argmax())
-                if len(nifr_nodes) > 3:
+                if len(nifr_nodes) > self.M:
                     nifr_nodes.pop(0)
                 print("NIFR list after update:", nifr_nodes)
     
@@ -513,7 +413,7 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
             return ts.termination(np.array([self._state], dtype=np.int32), reward)
         
           
-#environment = NetworkHoneypotEnv(10, 3, 7, 0.8, 0.2)
+#environment = NetworkHoneypotEnv(10, 3, 7, ntpg, htpg)
 #utils.validate_py_environment(environment, episodes=10)
 
 
@@ -723,7 +623,7 @@ class DoubleDeepQLearning:
         # iterate over the episodes
         for episode in range(self.numberEpisodes):
             
-            # self.env = NetworkHoneypotEnv(10, 3, 7, 0.8, 0.2)
+            # self.env = NetworkHoneypotEnv(10, 3, 7, ntpg, htpg)
             # reset the environment
             currentState=self.env.reset()
 
@@ -778,9 +678,8 @@ class DoubleDeepQLearning:
 
                 # Basically we just assign the result after we step to a variable called nextState
                 # Then we seperate the variable (which is a TimeStep object) to 4 part of it: step_type, reward, discount, and observation
-                # This kinda lengthen the process but im a student so...
                 (discount, nextStateObservation, reward, terminalState) = (currentState.discount, nextState.observation, currentState.reward, currentState.is_last())
-                # This part is dumb probably need to fix
+                # This part probably need to fix
                 print("parameters of environment:")
                 print((discount, nextStateObservation, reward, terminalState))
 
@@ -853,7 +752,7 @@ class DoubleDeepQLearning:
             self.epsilon = 0.999 * self.epsilon
         
         # Exploration phase
-        if episode < 20:
+        if episode < 3:
             action = np.zeros((self.env.M, self.env.K))
             for i in range(self.env.M):
                 action[i, np.random.randint(0, self.env.K)] = 1
@@ -995,7 +894,7 @@ class DoubleDeepQLearning:
                 print("Output network: ",outputNetwork)
              
             # here, we train the network
-            self.mainNetwork.fit(inputNetwork,outputNetwork,batch_size = self.batchReplayBufferSize, verbose=1,epochs=20) 
+            self.mainNetwork.fit(inputNetwork,outputNetwork,batch_size = self.batchReplayBufferSize, verbose=1,epochs=100) 
             print("Main network trained!")
              
             # after updateTargetNetworkPeriod training sessions, update the coefficients 
@@ -1176,7 +1075,7 @@ your_edges_list = [(node, edge[0]) for node in ntpg for edge in ntpg[node]]
 
 
 
-env = NetworkHoneypotEnv(10, 3, 7, 0.8, ntpg, htpg)
+env = NetworkHoneypotEnv(10, 3, 7, ntpg, htpg)
 # Create the environment. Since it was built using PyEnvironment, we need to wrap it in a TFEnvironment to use with TF-Agents
 tf_env = tf_py_environment.TFPyEnvironment(env)
 
@@ -1184,7 +1083,7 @@ tf_env = tf_py_environment.TFPyEnvironment(env)
 timestep = tf_env.reset()
 rewards = []
 steps = []
-numberEpisodes = 5
+numberEpisodes = 15
 
 
 
@@ -1227,14 +1126,14 @@ LearningQDeep.mainNetwork.save("RL_Honeypot_trained_model_temp.keras")
 ###########################################################################   
 
 
-
+import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load the trained model
 trained_model = tf.keras.models.load_model("RL_Honeypot_trained_model_temp.keras")
 
 # Create a new environment for evaluation
-eval_env = NetworkHoneypotEnv(10, 3, 7, 0.8, ntpg, htpg)
+eval_env = NetworkHoneypotEnv(10, 3, 7, ntpg, htpg)
 # tf_eval_env = tf_py_environment.TFPyEnvironment(eval_env)
 
 # Reset the environment
@@ -1245,19 +1144,21 @@ eval_rewards = []
 eval_steps = []
 
 # Evaluate the model for a certain number of episodes
-eval_episodes = 3
+eval_episodes = 15
+eval_rewards = []
+eval_steps = []
+
 for _ in range(eval_episodes):
     episode_reward = 0
     episode_steps = 0
 
     print("------------------------------------------------------------------------------------------------------------------------")
-    print("Evaluating episode number: ",eval_episodes)
+    print("Evaluating episode number: ", eval_episodes)
     print("------------------------------------------------------------------------------------------------------------------------")
 
     # Run the evaluation episode
     while not eval_time_step.is_last():
         # Get the action from the trained model
-        
         action = LearningQDeep.selectActionEval(eval_time_step.observation, _, trained_model)
         print("ACTION SELECTED:", action)
         # Take a step in the environment
@@ -1281,10 +1182,29 @@ for _ in range(eval_episodes):
 avg_eval_reward = np.mean(eval_rewards)
 avg_eval_steps = np.mean(eval_steps)
 
+
+# Create a dictionary with the evaluation results
+results = {
+    "Episode": list(range(1, eval_episodes + 1)),
+    "Reward": eval_rewards,
+    "Steps": eval_steps,
+}
+
+# Create a DataFrame from the dictionary
+df = pd.DataFrame(results)
+
+print(df)
+
 # Print the evaluation results
 print("Evaluation Results:")
+print("Number of Episodes:", eval_episodes)
+print("Total Reward:", np.sum(eval_rewards))
+print("Reward per Episode:", eval_rewards)
+print("Total Steps:", np.sum(eval_steps))
+print("Steps per Episode:", eval_steps)
 print("Average Reward per Episode:", avg_eval_reward)
 print("Average Steps per Episode:", avg_eval_steps)
+
 
 # Plot the rewards and steps per episode
 plt.figure(figsize=(30, 30))
@@ -1306,85 +1226,125 @@ plt.show()
 
 # 17/12/2023 - Tam giai quyet xong phan ham lost, dang thuc hien evaluation model
 
+# CONTRUCTION ZONE
+
+# Add some code to generate the NTPG and HTPG based on some logic or data
+# For example, you can use a loop to iterate over the nodes and add edges randomly
+# Or you can use some existing library or tool to generate the graphs
+# Or you can hard-code the graphs based on some predefined structure
+# Here I will just use a simple loop and random numbers as an example
+
+# 29/10/2023 - Fixed example is provided as follow, i will include image of the sample graph
+# self._ntpg = {'192.168.0.2': [ ('192.168.0.3', 0.8,0.6),('192.168.0.3', 0.8,0.6)], 
+#             '192.168.0.3': [ ('192.168.0.5', 0.5,0.1)], 
+#             '192.168.0.4': [('192.168.0.5', 0.8,0.2),('192.168.0.6', 0.4,0.2),('192.168.0.7', 0.3,0.1),], 
+#             '192.168.0.5': [('192.168.0.8', 0.2,0.1),('192.168.0.7', 0.6,0.3)],
+#             '192.168.0.6': [],
+#             '192.168.0.7': [('192.168.0.8', 0.2,0.9)],
+#             '192.168.0.8': [],}
+
+# self._htpg = {'192.168.0.2': [('NetBT', 'CVE-2017-0161', 0.6, ('192.168.0.4', 'User')),
+#                            ('Win32k', 'CVE-2018-8120', 0.04, ('192.168.0.4', 'Root')),
+#                            ('VBScript', 'CVE-2018-8174', 0.5, ('192.168.0.4', 'Root')),
+#                            ('Apache', 'CVE-2017-9798', 0.8, ('192.168.0.3', 'User')),
+#                            ('Apache', 'CVE-2014-0226', 0.6, ('192.168.0.3', 'Root')),], 
+#            '192.168.0.3': [('Apache', 'CVE-2017-9798', 0.5, ('192.168.0.5', 'User')),
+#                            ('Apache', 'CVE-2014-0226', 0.1, ('192.168.0.5', 'Root')),], 
+#            '192.168.0.4': [('NetBT', 'CVE-2017-0161', 0.8, ('192.168.0.5', 'User')),
+#                            ('Win32k', 'CVE-2018-8120', 0.02, ('192.168.0.5', 'Root')),
+#                            ('VBScript', 'CVE-2018-8174', 0.2, ('192.168.0.5', 'Root')),
+#                            ('OJVM', 'CVE-2016-5555', 0.4, ('192.168.0.6', 'User')),
+#                            ('RDP', 'CVE-2012-0002', 0.2, ('192.168.0.6', 'Root')),
+#                            ('HFS', 'CVE-2014-6287', 0.3, ('192.168.0.7', 'User')),
+#                            ('RDP', 'CVE-2012-0002', 0.1, ('192.168.0.7', 'Root')),], 
+#            '192.168.0.5': [('HFS', 'CVE-2014-6287', 0.6, ('192.168.0.7', 'User')),
+#                            ('RDP', 'CVE-2012-0002', 0.3, ('192.168.0.7', 'Root')),
+#                            ('OJVM', 'CVE-2016-5555', 0.2, ('192.168.0.8', 'User')),
+#                            ('RDP', 'CVE-2012-0002', 0.1, ('192.168.0.8', 'Root')),],
+#            '192.168.0.6': [],
+#            '192.168.0.7': [('OJVM', 'CVE-2016-5555', 0.2, ('192.168.0.8', 'User')),
+#                            ('RDP', 'CVE-2012-0002', 0.1, ('192.168.0.8', 'Root'))],
+#            '192.168.0.8': [],
+#}
 
 
+# Regenerate the NTPG and HTPG based on some logic or data
+# Here I will use the same code as in the __init__ function (12/11/2023 - reset to fixed example)
+# self._ntpg = {'192.168.0.2': [ ('192.168.0.3', 0.8,0.6),('192.168.0.3', 0.8,0.6)], 
+#               '192.168.0.3': [ ('192.168.0.5', 0.5,0.1)], 
+#               '192.168.0.4': [('192.168.0.5', 0.8,0.2),('192.168.0.6', 0.4,0.2),('192.168.0.7', 0.3,0.1),], 
+#               '192.168.0.5': [('192.168.0.8', 0.2,0.1),('192.168.0.7', 0.6,0.3)],
+#               '192.168.0.6': [],
+#               '192.168.0.7': [('192.168.0.8', 0.2,0.9)],
+#               '192.168.0.8': [],}
 
 
+# self._htpg = {'192.168.0.2': [('NetBT', 'CVE-2017-0161', 0.6, ('192.168.0.4', 'User')),
+#                            ('Win32k', 'CVE-2018-8120', 0.04, ('192.168.0.4', 'Root')),
+#                            ('VBScript', 'CVE-2018-8174', 0.5, ('192.168.0.4', 'Root')),
+#                            ('Apache', 'CVE-2017-9798', 0.8, ('192.168.0.3', 'User')),
+#                            ('Apache', 'CVE-2014-0226', 0.6, ('192.168.0.3', 'Root')),], 
+#            '192.168.0.3': [('Apache', 'CVE-2017-9798', 0.5, ('192.168.0.5', 'User')),
+#                            ('Apache', 'CVE-2014-0226', 0.1, ('192.168.0.5', 'Root')),], 
+#            '192.168.0.4': [('NetBT', 'CVE-2017-0161', 0.8, ('192.168.0.5', 'User')),
+#                            ('Win32k', 'CVE-2018-8120', 0.02, ('192.168.0.5', 'Root')),
+#                            ('VBScript', 'CVE-2018-8174', 0.2, ('192.168.0.5', 'Root')),
+#                            ('OJVM', 'CVE-2016-5555', 0.4, ('192.168.0.6', 'User')),
+#                            ('RDP', 'CVE-2012-0002', 0.2, ('192.168.0.6', 'Root')),
+#                            ('HFS', 'CVE-2014-6287', 0.3, ('192.168.0.7', 'User')),
+#                            ('RDP', 'CVE-2012-0002', 0.1, ('192.168.0.7', 'Root')),], 
+#            '192.168.0.5': [('HFS', 'CVE-2014-6287', 0.6, ('192.168.0.7', 'User')),
+#                            ('RDP', 'CVE-2012-0002', 0.3, ('192.168.0.7', 'Root')),
+#                            ('OJVM', 'CVE-2016-5555', 0.2, ('192.168.0.8', 'User')),
+#                            ('RDP', 'CVE-2012-0002', 0.1, ('192.168.0.8', 'Root')),],
+#            '192.168.0.6': [],
+#            '192.168.0.7': [('OJVM', 'CVE-2016-5555', 0.2, ('192.168.0.8', 'User')),
+#                            ('RDP', 'CVE-2012-0002', 0.1, ('192.168.0.8', 'Root'))],
+#            '192.168.0.8': [],
+#}
 
 
-# select the parameters
-# gamma=1
-# probability parameter for the epsilon-greedy approach
-# epsilon=0.1
-# number of training episodes
-# NOTE HERE THAT AFTER CERTAIN NUMBERS OF EPISODES, WHEN THE PARAMTERS ARE LEARNED
-# THE EPISODE WILL BE LONG, AT THAT POINT YOU CAN STOP THE TRAINING PROCESS BY PRESSING CTRL+C
-# DO NOT WORRY, THE PARAMETERS WILL BE MEMORIZED
-# numberEpisodes=20
- 
-# create an object
-# LearningQDeep=HoneypotDDQN.DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes)
-# run the learning process
-# LearningQDeep.trainingEpisodes()
-# get the obtained rewards in every episode
-# LearningQDeep.sumRewardsEpisode
- 
-#  summarize the model
-# LearningQDeep.mainNetwork.summary()
-# save the model, this is important, since it takes long time to train the model 
-# and we will need model in another file to visualize the trained model performance
-# LearningQDeep.mainNetwork.save("RL_Honeypot_trained_model_temp.keras")
+# Attacker themselves move with each "step" in the environment too
+# Does this code represent that? or just a static mapping?
+# 14/01/2023 Remove this function (logic fault), attacker will move with each step in the environment
+"""
+def __attacker_move(self):
+    # Simulates the attacker's move based on the NTPG and HTPG.
+    # Updates the state vector with the new attacked node.
+    
 
+    # Fix the current_node to the very first node
+    current_node = '192.168.0.2'
+    current_node_index = int(current_node.split('.')[-1]) - 2  # Get the index of the current_node
+    print("Current node attacker residing in:", current_node)
+    print("Current node index:", current_node_index)
 
+    while True:
+        print("HTPG OF CURRENT NODE:" , self._htpg.get(current_node))
+        print(self._htpg.get(current_node)[0][2])
+        if self._htpg.get(current_node) == []:
+            print("No more possible routes, exit the loop. State vector after the attack:", self._state)
+            print(self._htpg.get(current_node)[0][2])
+            break
 
-# Visualizing after training
+        # Attack the current node with a probability based on the HTPG
 
-# load the model
-# loaded_model = LearningQDeep.mainNetwok
+        elif np.random.random() <= self._htpg.get(current_node)[0][2]:
+            self._state[current_node_index] = 1  # Use the index to update the state
+            print("Attacked node:", current_node)
 
-# sumObtainedRewards=0
-# simulate the learned policy for verification
- 
- 
-# create the environment, here you need to keep render_mode='rgb_array' since otherwise it will not generate the movie
-# env = gym.make("CartPole-v1",render_mode='rgb_array')
+        # Move to the next node with a probability based on the NTPG
+        elif np.random.random() <= self._ntpg.get(current_node)[0][1] or np.random.random() <= self._ntpg.get(current_node)[0][2]:
+            current_node = self._ntpg.get(current_node)[0][0]
+            current_node_index = int(current_node.split('.')[-1]) - 2  # Update the current_node_index
+            print("Next node to attack:", current_node)
 
+        else:
+            print("No more possible routes, exit the loop. State vector after the attack:", self._state)
+            print(self._htpg.get(current_node)[0][2])
+            break  # No more possible routes, exit the loop
 
-# Create the environment. Since it was built using PyEnvironment, we need to wrap it in a TFEnvironment to use with TF-Agents
-# env = tf_py_environment.TFPyEnvironment(NetworkHoneypotEnv.NetworkHoneypotEnv())
-
-
-# reset the environment
-# (currentState,prob)=env.reset()
- 
-# Wrapper for recording the video
-# https://gymnasium.farama.org/api/wrappers/misc_wrappers/#gymnasium.wrappers.RenderCollection
-# the name of the folder in which the video is stored is "stored_video"
-# length of the video in the number of simulation steps
-# if we do not specify the length, the video will be recorded until the end of the episode 
-# that is, when terminalState becomes TRUE
-# just make sure that this parameter is smaller than the expected number of 
-# time steps within an episode
-# for some reason this parameter does not produce the expected results, for smaller than 450 it gives OK results
-# video_length=400
-# the step_trigger parameter is set to 1 in order to ensure that we record the video every step
-#env = gym.wrappers.RecordVideo(env, 'stored_video',step_trigger = lambda x: x == 1, video_length=video_length)
-# env = gym.wrappers.RecordVideo(env, 'stored_video_ddqn', video_length=video_length)
- 
- 
-# since the initial state is not a terminal state, set this flag to false
-# terminalState=False
-'''while not terminalState:
-    # get the Q-value (1 by 2 vector)
-    Qvalues=loaded_model.predict(currentState.reshape(1,4))
-    # select the action that gives the max Qvalue
-    action=np.random.choice(np.where(Qvalues[0,:]==np.max(Qvalues[0,:]))[0])
-    # if you want random actions for comparison
-    #action = env.action_space.sample()
-    # apply the action
-    (currentState, currentReward, terminalState,_,_) = env.step(action)
-    # sum the rewards
-    sumObtainedRewards+=currentReward
-'''
-# env.reset()
-# env.close()
+    # Update the NIFR list based on the action matrix
+    self.__update_nifr_nodes(self.nifr_nodes)
+    print("NIFR list after attack:", self.nifr_nodes)
+"""

@@ -1,20 +1,30 @@
-import tensorflow as tf
+import pandas as pd
 import numpy as np
+# Define the accuracy_per_episode variable
+accuracy_per_episode = [0.4, 0.8, 0.7, 0.85, 0.75, 0.95, 0.95, 1, 1, 0.9]  # Replace with the actual accuracy values
 
-from tf_agents.environments import py_environment
-from tf_agents.environments import tf_environment
-from tf_agents.environments import tf_py_environment
-from tf_agents.environments import utils
-from tf_agents.specs import array_spec
-from tf_agents.environments import wrappers
-from tf_agents.environments import suite_gym
-from tf_agents.trajectories import time_step as ts
+# Create a dictionary with the evaluation results
+eval_episodes = 10
+eval_rewards = [-1, 1, 1, 1, 1, 1, 0, 1, 1, 1]
+eval_steps = [100, 132, 98, 101, 85, 73, 64, 97, 52, 76]
+results = {
+    "Episode": list(range(1, eval_episodes + 1)),
+    "Reward": eval_rewards,
+    "Steps": eval_steps,
+    "Accuracy": accuracy_per_episode  # Add the accuracy values here
+}
 
-N = 10 # Total amount of nodes (n)
-M = 3  # Number of deception nodes (m)
-K = N - M  # Number of normal nodes (k)
-P = 0.8 # Probability of attacker moving to the next node
-Q = 0.2 # Probability of attacker moving to a random node
+# Create a DataFrame from the dictionary
+df = pd.DataFrame(results)
 
-print(array_spec.BoundedArraySpec(
-            shape=(N,), dtype=np.int32, minimum=0, maximum=1, name='observation'))
+print(df)
+
+# Print the evaluation results
+print("Evaluation Results:")
+print("Number of Episodes:", eval_episodes)
+print("Total Reward:", np.sum(eval_rewards))
+print("Reward per Episode:", eval_rewards)
+print("Total Steps:", np.sum(eval_steps))
+print("Steps per Episode:", eval_steps)
+print("Average Reward per Episode:", np.mean(eval_rewards))
+print("Average Steps per Episode:", np.mean(eval_steps))
