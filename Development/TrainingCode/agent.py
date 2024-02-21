@@ -193,6 +193,19 @@ class DoubleDeepQLearning:
         # Create a list to store step for visualization
         step_visualization = []
 
+        # Create a temporary list to hold the step
+        steps = []
+
+        # import ntpg
+        ntpg = self.env.get_ntpg()
+        htpg = self.env.get_htpg()
+
+        # Extract nodes from the ntpg dictionary
+        your_nodes_list = list(ntpg.keys())
+
+        # Extract edges from the ntpg dictionary
+        your_edges_list = [(node, edge[0]) for node in ntpg for edge in ntpg[node]]
+
         # iterate over the episodes
         for episode in range(self.numberEpisodes):
             
@@ -223,7 +236,7 @@ class DoubleDeepQLearning:
             # This part logic is faulty - the attacker attack with each step, and we need to stop him on each step till he reach
             # final state, not just doing K loop
             # 20/12/2023 - Replacing for K loop whatever with indefinite while (until nicr or nifr got hit)
-            while not env.is_last():
+            while not self.env.is_last():
                 # Your code here
                 
                 #print("while looping through all the K nodes after stateCount times to check if nicr or nifr got attacked") 
@@ -240,13 +253,13 @@ class DoubleDeepQLearning:
                 nextState = self.env.step(action)
                 print("attacker node for drawing: ", self.env._current_attacker_node)
                 print("nifr nodes for drawing: ", self.env.nifr_nodes)
-                print("ntpg ip of the nifr nodes: ", [list(env._ntpg.keys())[node_index] for node_index in self.env.nifr_nodes])
+                print("ntpg ip of the nifr nodes: ", [list(self.env._ntpg.keys())[node_index] for node_index in self.env.nifr_nodes])
                 print("nicr nodes for drawing: ", self.env.nicr_nodes)
-                print("ntpg ip of the nicr node: ", [list(env._ntpg.keys())[node_index] for node_index in self.env.nicr_nodes])
+                print("ntpg ip of the nicr node: ", [list(self.env._ntpg.keys())[node_index] for node_index in self.env.nicr_nodes])
                 # os.system("pause")
                 steps.append({'attacker_node': self.env._current_attacker_node, 
-                              'nifr_nodes': [list(env._ntpg.keys())[node_index] for node_index in self.env.nifr_nodes], 
-                              'nicr_nodes': [list(env._ntpg.keys())[node_index] for node_index in self.env.nicr_nodes],})
+                              'nifr_nodes': [list(self.env._ntpg.keys())[node_index] for node_index in self.env.nifr_nodes], 
+                              'nicr_nodes': [list(self.env._ntpg.keys())[node_index] for node_index in self.env.nicr_nodes],})
 
 
                 # Basically we just assign the result after we step to a variable called nextState
@@ -295,7 +308,7 @@ class DoubleDeepQLearning:
                 # stateCount = stateCount + 1
 
             # Visualize the steps
-            visualize_steps(steps, 'images', 'movie.gif', episode)
+            visualize_steps(steps, your_nodes_list, your_edges_list, 'images', 'movie.gif', episode)
             
 
             print("------------------------- END LOOP HERE -------------------------")

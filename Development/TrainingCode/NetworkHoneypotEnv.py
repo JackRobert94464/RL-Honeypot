@@ -134,6 +134,11 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
     def observation_spec(self):
         return self._observation_spec
     
+    def get_ntpg(self):
+        return self._ntpg
+    
+    def get_htpg(self):
+        return self._htpg
 
     def _reset(self):
 
@@ -172,7 +177,7 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         self._episode_ended = False
         print("Episode ended flag after reset:", self._episode_ended)
 
-        self._current_attacker_node = list(ntpg.keys())[2]
+        self._current_attacker_node = list(self._ntpg.keys())[2]
 
         # print(self.get_info())
 

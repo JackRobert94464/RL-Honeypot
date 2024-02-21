@@ -61,14 +61,6 @@ htpg = {'192.168.1.3': [('Apache', 'CVE-2014-6271', 0.9756, ('192.168.4.3', 'Roo
                                       ('PHP Server', 'CVE-2016-10033', 0.9746, ('192.168.3.3', 'User')),],}
 
 
-# Extract nodes from the ntpg dictionary
-your_nodes_list = list(ntpg.keys())
-
-# Extract edges from the ntpg dictionary
-your_edges_list = [(node, edge[0]) for node in ntpg for edge in ntpg[node]]
-
-
-
 
 
 env = NetworkHoneypotEnv(10, 3, 7, ntpg, htpg)
@@ -78,7 +70,6 @@ tf_env = tf_py_environment.TFPyEnvironment(env)
 
 timestep = tf_env.reset()
 rewards = []
-steps = []
 numberEpisodes = 15
 
 
