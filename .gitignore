@@ -6,3 +6,5 @@ bin/*
 Scripts/*
 Lib/*
 images/*
+cvelist/*
+Development/TPG-Data/allitems.csv

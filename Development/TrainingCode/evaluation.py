@@ -4,10 +4,12 @@
 
 # Import the environment 
 from NetworkHoneypotEnv import NetworkHoneypotEnv
+from agent import DoubleDeepQLearning
 
 import pandas as pd
 import matplotlib.pyplot as plt
 import tensorflow as tf
+import numpy as np
 
 # Load the trained model
 trained_model = tf.keras.models.load_model("RL_Honeypot_trained_model_temp.keras")
@@ -39,7 +41,7 @@ for _ in range(eval_episodes):
     # Run the evaluation episode
     while not eval_time_step.is_last():
         # Get the action from the trained model
-        action = LearningQDeep.selectActionEval(eval_time_step.observation, _, trained_model)
+        action = DoubleDeepQLearning.selectActionEval(eval_time_step.observation, _, trained_model)
         print("ACTION SELECTED:", action)
         # Take a step in the environment
         eval_time_step = eval_env.step(action)
