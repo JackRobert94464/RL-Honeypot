@@ -29,8 +29,8 @@ def epss_retrieval(cve):
 def main():
     """Reads CVE data from a CSV file, retrieves EPSS data, and writes the results to a new file."""
 
-    input_file = "allitems.csv"
-    output_file = "allitems_epss.csv"
+    input_file = "selected-300-entries.csv"
+    output_file = "300-entries-epss.csv"
 
     with open(input_file, "r") as csvfile, open(output_file, "w") as outputfile:
         reader = csv.DictReader(csvfile)
@@ -43,6 +43,7 @@ def main():
             probabilities = epss_retrieval(cve)
 
             row["EPSS Probabilities"] = probabilities or "Error retrieving data"
+            print(f"Retrieved EPSS data for {cve}")
             writer.writerow(row)
 
     print(f"Output file with EPSS data: {output_file}")

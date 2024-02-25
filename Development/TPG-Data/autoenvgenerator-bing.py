@@ -5,10 +5,10 @@ import csv
 import random
 
 # Define the path of the cve description csv file
-cve_file = "allitems.csv"
+cve_file = "300-entries-epss.csv"
 
 # Define the path of the epss csv file
-epss_file = "epss_scores-2024-02-21.csv"
+epss_file = "epss_scores-2024-02-25.csv"
 
 # Define the path of the output csv file for the Node TPG
 ntpg_file = "ntpg.csv"
@@ -41,6 +41,7 @@ with open(cve_file, "r") as cve_csv:
     cve_reader = csv.reader(cve_csv)
     next(cve_reader) # Skip the header row
     for row in cve_reader:
+        print(row)
         # Get the CVE name and the description from the row
         cve_name = row[0]
         cve_desc = row[2]
@@ -48,11 +49,12 @@ with open(cve_file, "r") as cve_csv:
         # Read the epss csv file and find the EPSS score for the CVE
         with open(epss_file, "r") as epss_csv:
             epss_reader = csv.reader(epss_csv)
+            next(epss_reader) # Skip the info row
             next(epss_reader) # Skip the header row
             for line in epss_reader:
                 # Get the CVE name and the EPSS score from the line
                 epss_cve = line[0]
-                # print(line[1])
+                # print(line)
                 epss_score = float(line[1])
 
                 # If the CVE names match, store the CVE, the EPSS score, and the description in the cve_list
@@ -138,6 +140,8 @@ for i in range(num_nodes):
         user_count = 0
         root_count = 0
 
+        print(cve_conn)
+
         # Loop through the CVEs in the cve_conn
         for cve, epss in cve_conn:
             # Find the description of the CVE from the cve_list
@@ -158,8 +162,12 @@ for i in range(num_nodes):
                 user_count += 1
         
         # Calculate the average user and root probabilities for the connection
-        user_prob = user_prob / user_count
-        root_prob = root_prob / root_count
+        user_prob = user_prob / user_count if user_count > 0 else 0
+        print(user_prob)
+        print(user_count)
+        print(root_prob)
+        print(root_count)
+        root_prob = root_prob / root_count if root_count > 0 else 0
 
         # Store the source, target, user probability, and root probability in the conn_list
         conn_list.append((source, target, user_prob, root_prob))
