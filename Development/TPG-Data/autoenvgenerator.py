@@ -18,7 +18,7 @@ htpg_file = "htpg.csv"
 
 # Define the minimum and maximum number of nodes in the network
 min_nodes = 10
-max_nodes = 30
+max_nodes = 15
 
 # Define the minimum and maximum number of CVEs per connection
 min_cves = 2
