@@ -62,7 +62,6 @@ with open(cve_file, "r") as cve_csv:
                     cve_list.append((cve_name, epss_score, cve_desc))
                     break # Stop searching for the EPSS score
 
-                
 # Generate a random number of nodes in the network
 num_nodes = random.randint(min_nodes, max_nodes)
 

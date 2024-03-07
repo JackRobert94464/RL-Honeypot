@@ -31,11 +31,17 @@ from NetworkHoneypotEnv import NetworkHoneypotEnv
 # import the agent
 from agent import DoubleDeepQLearning
 
+# import miscellaneous funtions
+from misc import Miscellaneous as misc
+
+import os
+
 # Defining parameters
 gamma = 0.9
 # Epsilon parameter for the epsilon-greedy approach
 epsilon = 0.1
 
+'''
 ntpg = {'192.168.1.3': [('192.168.4.3', 0,0.9756),('192.168.3.3', 0.9746,0),('192.168.2.3', 0,0.9756)],
                       '192.168.2.3': [('192.168.1.3', 0,0.0009),('192.168.4.3', 0,0.9756),('192.168.3.3', 0.9746,0)],
                       '192.168.2.4': [('192.168.2.3', 0,0.9756),('192.168.4.3', 0,0.9756),('192.168.3.3', 0.9746,0)],
@@ -59,11 +65,43 @@ htpg = {'192.168.1.3': [('Apache', 'CVE-2014-6271', 0.9756, ('192.168.4.3', 'Roo
                       '192.168.4.3': [('Apache', 'CVE-2014-6271', 0.9756, ('192.168.3.4', 'Root')),
                                       ('PHP Server','CVE-2020-35132','0.0009', ('192.168.3.5', 'Root')),
                                       ('PHP Server', 'CVE-2016-10033', 0.9746, ('192.168.3.3', 'User')),],}
+'''
+
+misc_func = misc()
+
+ntpg = misc_func.create_dictionary_ntpg()
+os.system("pause")
+htpg = misc_func.create_dictionary_htpg()
 
 
+def get_deception_nodes():
+        num_deception_nodes = int(input("How many deception nodes available for deployment? "))
+        return num_deception_nodes
+
+def count_nodes(ntpg):
+        num_nodes = len(ntpg.keys())
+        return num_nodes
+
+def calculate_first_parameter(num_deception_nodes, num_nodes):
+        first_parameter = num_deception_nodes + num_nodes
+        return first_parameter
+
+deception_nodes = get_deception_nodes()
+normal_nodes = count_nodes(ntpg)
+first_parameter = calculate_first_parameter(deception_nodes, normal_nodes)
+
+print("First parameter:", first_parameter)
+print("Deception nodes:", deception_nodes)
+print("Normal nodes:", normal_nodes)
+
+os.system("pause")
+
+env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, htpg)
+
+os.system("pause")
+# exit(0)
 
 
-env = NetworkHoneypotEnv(10, 3, 7, ntpg, htpg)
 # Create the environment. Since it was built using PyEnvironment, we need to wrap it in a TFEnvironment to use with TF-Agents
 tf_env = tf_py_environment.TFPyEnvironment(env)
 
