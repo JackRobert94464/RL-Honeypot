@@ -66,64 +66,71 @@ class DoubleDeepQLearning:
     # numberEpisodes - total number of simulation episodes
     
       
-    def __init__(self,env,gamma,epsilon,numberEpisodes):
-      self.env=env
-      self.gamma=gamma
-      self.epsilon=epsilon
-      self.numberEpisodes=numberEpisodes
-      
-      # self.n = "total number of nodes"
-      # self.m = "number of deception resource available"
-      # self.k = "number of normal nodes"
+    def __init__(self,env,gamma,epsilon,numberEpisodes,nodecount,totalpermutation):
+        self.env=env
+        self.gamma=gamma
+        self.epsilon=epsilon
+        self.numberEpisodes=numberEpisodes
 
-      print(env)
+        # self.n = "total number of nodes"
+        # self.m = "number of deception resource available"
+        # self.k = "number of normal nodes"
 
-      # state dimension 
-      self.stateDimension = env.K
-      print("STATE DIMENSION --- AGENT TRAINING",self.stateDimension)
-      # action dimension k!/(k-m)! (07/12/2023 - different permutation problem)
-      self.actionDimension = factorial(env.K) / factorial(env.K - env.M)
-      print("ACTION DIMENSION --- AGENT TRAINING",self.actionDimension)
-      # this is the maximum size of the replay buffer
-      self.replayBufferSize=300
-      # this is the size of the training batch that is randomly sampled from the replay buffer
-      self.batchReplayBufferSize=20
-        
-      # number of training episodes it takes to update the target network parameters
-      # that is, every updateTargetNetworkPeriod we update the target network parameters
-      self.updateTargetNetworkPeriod=10
-        
-      # this is the counter for updating the target network 
-      # if this counter exceeds (updateTargetNetworkPeriod-1) we update the network 
-      # parameters and reset the counter to zero, this process is repeated until the end of the training process
-      self.counterUpdateTargetNetwork=0
-      
+        # normal node count
+        self.nodecount = nodecount
 
-      
-        
-      # this sum is used to store the sum of rewards obtained during each training episode
-      self.sumRewardsEpisode=[]
-        
-      # replay buffer
-      self.replayBuffer=deque(maxlen=self.replayBufferSize)
+        # matrix stuff
+        # actually permutation without repetition
+        # P(n,r) = n! / (n-r)!
+        # with n as normal nodes and r as deception nodes
+        self.totalpermutation = totalpermutation
 
-      # initialize visit(s,a)
-      self.visitCounts = 0
-        
-      # this is the main network
-      # create network
-      self.mainNetwork=self.createNetwork()
-        
-      # this is the target network
-      # create network
-      self.targetNetwork=self.createNetwork()
-        
-      # copy the initial weights to targetNetwork
-      self.targetNetwork.set_weights(self.mainNetwork.get_weights())
-        
-      # this list is used in the cost function to select certain entries of the 
-      # predicted and true sample matrices in order to form the loss
-      self.actionsAppend=[]
+        print(env)
+
+        # state dimension 
+        self.stateDimension = env.K
+        print("STATE DIMENSION --- AGENT TRAINING",self.stateDimension)
+        # action dimension k!/(k-m)! (07/12/2023 - different permutation problem)
+        self.actionDimension = factorial(env.K) / factorial(env.K - env.M)
+        print("ACTION DIMENSION --- AGENT TRAINING",self.actionDimension)
+        # this is the maximum size of the replay buffer
+        self.replayBufferSize=300
+        # this is the size of the training batch that is randomly sampled from the replay buffer
+        self.batchReplayBufferSize=20
+
+        # number of training episodes it takes to update the target network parameters
+        # that is, every updateTargetNetworkPeriod we update the target network parameters
+        self.updateTargetNetworkPeriod=10
+
+        # this is the counter for updating the target network 
+        # if this counter exceeds (updateTargetNetworkPeriod-1) we update the network 
+        # parameters and reset the counter to zero, this process is repeated until the end of the training process
+        self.counterUpdateTargetNetwork=0
+
+
+        # this sum is used to store the sum of rewards obtained during each training episode
+        self.sumRewardsEpisode=[]
+
+        # replay buffer
+        self.replayBuffer=deque(maxlen=self.replayBufferSize)
+
+        # initialize visit(s,a)
+        self.visitCounts = 0
+
+        # this is the main network
+        # create network
+        self.mainNetwork=self.createNetwork()
+
+        # this is the target network
+        # create network
+        self.targetNetwork=self.createNetwork()
+
+        # copy the initial weights to targetNetwork
+        self.targetNetwork.set_weights(self.mainNetwork.get_weights())
+
+        # this list is used in the cost function to select certain entries of the 
+        # predicted and true sample matrices in order to form the loss
+        self.actionsAppend=[]
      
     ###########################################################################
     #   END - __init__ function
@@ -139,33 +146,6 @@ class DoubleDeepQLearning:
         model = Sequential()
 
         model.add(InputLayer(input_shape=self.stateDimension))
-
-        # Add another dropout layer with 0.25 probability
-        model.add(keras.layers.Dropout(0.25))
-
-        # Add a flatten layer to convert the 2D feature maps to 1D feature vectors
-        model.add(keras.layers.Flatten())
-
-        # Add a dense layer with 256 units and ReLU activation
-        model.add(keras.layers.Dense(256, activation='relu'))
-
-        # Add another batch normalization layer
-        model.add(keras.layers.BatchNormalization())
-
-        # Add another dropout layer with 0.5 probability
-        model.add(keras.layers.Dropout(0.5))
-
-        # Add another dense layer with 128 units and ReLU activation
-        model.add(keras.layers.Dense(128, activation='relu'))
-
-        # Add another batch normalization layer
-        model.add(keras.layers.BatchNormalization())
-
-        # Add another dropout layer with 0.5 probability
-        model.add(keras.layers.Dropout(0.5))
-
-        # Add an output layer with 10 units and softmax activation for multi-class classification
-        model.add(keras.layers.Dense(10, activation='softmax'))
 
         #lmao
         model.add(Dense(64, activation='relu'))
@@ -253,13 +233,13 @@ class DoubleDeepQLearning:
                 nextState = self.env.step(action)
                 print("attacker node for drawing: ", self.env._current_attacker_node)
                 print("nifr nodes for drawing: ", self.env.nifr_nodes)
-                print("ntpg ip of the nifr nodes: ", [list(self.env._ntpg.keys())[node_index] for node_index in self.env.nifr_nodes])
+                print("ntpg ip of the nifr nodes: ", [list(self.env._ntpg.keys())[node_index-1] for node_index in self.env.nifr_nodes])
                 print("nicr nodes for drawing: ", self.env.nicr_nodes)
-                print("ntpg ip of the nicr node: ", [list(self.env._ntpg.keys())[node_index] for node_index in self.env.nicr_nodes])
+                print("ntpg ip of the nicr node: ", [list(self.env._ntpg.keys())[node_index-1] for node_index in self.env.nicr_nodes])
                 # os.system("pause")
                 steps.append({'attacker_node': self.env._current_attacker_node, 
-                              'nifr_nodes': [list(self.env._ntpg.keys())[node_index] for node_index in self.env.nifr_nodes], 
-                              'nicr_nodes': [list(self.env._ntpg.keys())[node_index] for node_index in self.env.nicr_nodes],})
+                              'nifr_nodes': [list(self.env._ntpg.keys())[node_index-1] for node_index in self.env.nifr_nodes], 
+                              'nicr_nodes': [list(self.env._ntpg.keys())[node_index-1] for node_index in self.env.nicr_nodes],})
 
 
                 # Basically we just assign the result after we step to a variable called nextState
@@ -398,8 +378,14 @@ class DoubleDeepQLearning:
     ###########################################################################
     #   START - trainNetwork function
     #   07/12/2023 - Start working on this funtion 
-    #   Status: Active
+    #   Status: Taking too much resource, moving...
     ###########################################################################
+
+
+    # add nodecount and totalpermutation as input
+    # nodecount = number of nodes in the network
+    # totalpermutation = number of possible actions in the network
+
 
     def trainNetwork(self):
         print("------------------------------------------------------------------------------------------------------------------------------")  
@@ -420,10 +406,10 @@ class DoubleDeepQLearning:
             # here we form current state batch 
             # and next state batch
             # they are used as inputs for prediction
-            currentStateBatch=np.zeros(shape=(self.batchReplayBufferSize,7))
+            currentStateBatch=np.zeros(shape=(self.batchReplayBufferSize,self.nodecount))
             print("Current state batch: ",currentStateBatch)
 
-            nextStateBatch=np.zeros(shape=(self.batchReplayBufferSize,7))      
+            nextStateBatch=np.zeros(shape=(self.batchReplayBufferSize,self.nodecount))      
             print("Next state batch: ",nextStateBatch)      
             # this will enumerate the tuple entries of the randomSampleBatch
             # index will loop through the number of tuples
@@ -449,7 +435,7 @@ class DoubleDeepQLearning:
             inputNetwork=currentStateBatch
             print("Input network: ",inputNetwork)
             # output for training
-            outputNetwork=np.zeros(shape=(self.batchReplayBufferSize,210))
+            outputNetwork=np.zeros(shape=(self.batchReplayBufferSize,int(self.totalpermutation)))
             print("Output network: ",outputNetwork)
              
             # this list will contain the actions that are selected from the batch 
@@ -502,6 +488,8 @@ class DoubleDeepQLearning:
 
     ###########################################################################
     # START - function for defining the loss (cost) function
+    # FIX THIS ASAP
+    # Status: FIX THIS ASAP
     # INPUTS: 
     #
     # y_true - matrix of dimension (self.batchReplayBufferSize,2) - this is the target 
@@ -518,7 +506,7 @@ class DoubleDeepQLearning:
     # later on, the tensor flow will compute the scalar out of this vector (mean squared error)
     ###########################################################################    
     
-    def my_loss_fn(self,y_true, y_pred):
+    def ddqn_loss_fn(self,y_true, y_pred):
         print("LOSS FUNCTION - Y_TRUE:",y_true)
         s1,s2=y_true.shape
         print("LOSS FUNCTION - S1 AND S2:",s1,s2)
@@ -538,6 +526,9 @@ class DoubleDeepQLearning:
     ###########################################################################
     #   END - of function my_loss_fn
     ###########################################################################
+    
+    def ddqn_loss_fn(y_true, y_pred):
+        return keras.losses.mean_squared_error(y_true, y_pred)
 
 
 

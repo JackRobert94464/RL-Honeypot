@@ -4,18 +4,32 @@
 
 # Import the environment 
 from NetworkHoneypotEnv import NetworkHoneypotEnv
-from agent import DoubleDeepQLearning
+from ddqn_agent import DoubleDeepQLearning
 
 import pandas as pd
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
 
+import misc
+
 # Load the trained model
 trained_model = tf.keras.models.load_model("RL_Honeypot_trained_model_temp.keras")
 
+# Load the NTPG and HTPG dictionaries
+ntpg = misc.create_dictionary_ntpg("ntpg_eval.csv")
+htpg = misc.create_dictionary_htpg("htpg_eval.csv")
+
+# Load the topology param from TPGs
+deception_nodes = misc.get_deception_nodes()
+normal_nodes = misc.count_nodes(ntpg)
+first_parameter = misc.calculate_first_parameter(deception_nodes, normal_nodes)
+
+# calculate the number of possible combinations
+total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
+
 # Create a new environment for evaluation
-eval_env = NetworkHoneypotEnv(10, 3, 7, ntpg, htpg)
+eval_env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, htpg)
 # tf_eval_env = tf_py_environment.TFPyEnvironment(eval_env)
 
 # Reset the environment
@@ -30,6 +44,14 @@ eval_episodes = 15
 eval_rewards = []
 eval_steps = []
 
+# Define initial gamma and epsilon
+gamma = 0.9
+# Epsilon parameter for the epsilon-greedy approach
+epsilon = 0.1
+
+# Create the model
+ddqn_agent = DoubleDeepQLearning(eval_env, gamma, epsilon, eval_episodes, normal_nodes, total_permutations)
+
 for _ in range(eval_episodes):
     episode_reward = 0
     episode_steps = 0
@@ -41,7 +63,7 @@ for _ in range(eval_episodes):
     # Run the evaluation episode
     while not eval_time_step.is_last():
         # Get the action from the trained model
-        action = DoubleDeepQLearning.selectActionEval(eval_time_step.observation, _, trained_model)
+        action = ddqn_agent.selectActionEval(eval_time_step.observation, _, trained_model)
         print("ACTION SELECTED:", action)
         # Take a step in the environment
         eval_time_step = eval_env.step(action)

@@ -13,7 +13,7 @@ from tf_agents.trajectories import time_step as ts
 import gym
 from gym import spaces
 import numpy as np
-
+import os
 
 
 
@@ -215,7 +215,9 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         """
         # Get the current node information
         current_node = self._current_attacker_node
-        current_node_index = int(current_node.split('.')[-1]) - 2
+        current_node_index = list(self._ntpg.keys()).index(current_node)
+        print("Current node index:", current_node_index)
+        # os.system("pause")
 
         # Check if the current node has possible routes
         print("NTPG:", self._ntpg)
@@ -265,7 +267,7 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         
         # Check if any nicr node is attacked in the state vector
         for i in nicr_nodes:
-            if self._state[i] == 1:
+            if i < len(self._state) and self._state[i] == 1:
                 # End the episode and calculate the reward
                 self._episode_ended = True
                 return True
@@ -279,7 +281,7 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
 
         # Check if any nicr node is attacked in the state vector
         for i in nifr_nodes:
-            if self._state[i] == 1:
+            if i < len(self._state) and self._state[i] == 1:
                 # End the episode and calculate the reward
                 self._episode_ended = True
                 return True

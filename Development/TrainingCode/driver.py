@@ -10,6 +10,7 @@ import gym
 #import gymnasium as gym
 
 import numpy as np
+import math
 
 import tensorflow as tf
 import numpy as np
@@ -29,10 +30,12 @@ from gym import spaces
 from NetworkHoneypotEnv import NetworkHoneypotEnv
 
 # import the agent
-from agent import DoubleDeepQLearning
+from ddqn_agent import DoubleDeepQLearning
+
+ 
 
 # import miscellaneous funtions
-from misc import Miscellaneous as misc
+import misc
 
 import os
 
@@ -67,38 +70,27 @@ htpg = {'192.168.1.3': [('Apache', 'CVE-2014-6271', 0.9756, ('192.168.4.3', 'Roo
                                       ('PHP Server', 'CVE-2016-10033', 0.9746, ('192.168.3.3', 'User')),],}
 '''
 
-misc_func = misc()
 
-ntpg = misc_func.create_dictionary_ntpg()
-os.system("pause")
-htpg = misc_func.create_dictionary_htpg()
+ntpg = misc.create_dictionary_ntpg("ntpg.csv")
+# os.system("pause")
+htpg = misc.create_dictionary_htpg("htpg.csv")
 
 
-def get_deception_nodes():
-        num_deception_nodes = int(input("How many deception nodes available for deployment? "))
-        return num_deception_nodes
 
-def count_nodes(ntpg):
-        num_nodes = len(ntpg.keys())
-        return num_nodes
 
-def calculate_first_parameter(num_deception_nodes, num_nodes):
-        first_parameter = num_deception_nodes + num_nodes
-        return first_parameter
-
-deception_nodes = get_deception_nodes()
-normal_nodes = count_nodes(ntpg)
-first_parameter = calculate_first_parameter(deception_nodes, normal_nodes)
+deception_nodes = misc.random_deception_amount(ntpg)
+normal_nodes = misc.count_nodes(ntpg)
+first_parameter = misc.calculate_first_parameter(deception_nodes, normal_nodes)
 
 print("First parameter:", first_parameter)
 print("Deception nodes:", deception_nodes)
 print("Normal nodes:", normal_nodes)
 
-os.system("pause")
+# os.system("pause")
 
 env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, htpg)
 
-os.system("pause")
+# os.system("pause")
 # exit(0)
 
 
@@ -111,9 +103,11 @@ rewards = []
 numberEpisodes = 15
 
 
+# calculate the number of possible combinations
+total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
 
 # create an object
-LearningQDeep=DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes)
+LearningQDeep=DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations)
 # run the learning process
 LearningQDeep.trainingEpisodes()
 # get the obtained rewards in every episode
