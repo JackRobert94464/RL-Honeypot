@@ -117,6 +117,10 @@ class DoubleDeepQLearning:
         # initialize visit(s,a)
         self.visitCounts = 0
 
+        # this list is used in the cost function to select certain entries of the 
+        # predicted and true sample matrices in order to form the loss
+        self.actionsAppend=[]
+
         # this is the main network
         # create network
         self.mainNetwork=self.createNetwork()
@@ -128,9 +132,6 @@ class DoubleDeepQLearning:
         # copy the initial weights to targetNetwork
         self.targetNetwork.set_weights(self.mainNetwork.get_weights())
 
-        # this list is used in the cost function to select certain entries of the 
-        # predicted and true sample matrices in order to form the loss
-        self.actionsAppend=[]
      
     ###########################################################################
     #   END - __init__ function
@@ -149,13 +150,13 @@ class DoubleDeepQLearning:
 
         #lmao
         model.add(Dense(64, activation='relu'))
-        model.add(Dense(128, activation='relu'))
+        # model.add(Dense(128, activation='relu'))
         model.add(Dense(64, activation='relu'))
         model.add(Dense(self.actionDimension, activation='linear'))
         
         # use mean squared error as the loss function
         # original used a custom loss one, but for this case im not sure
-        model.compile(loss=DoubleDeepQLearning.ddqn_loss_fn, optimizer=RMSprop(), metrics = ['accuracy'])
+        model.compile(loss=DoubleDeepQLearning.create_loss_fn(self), optimizer=Adam(), metrics = ['accuracy'])
         print("Created network:", model.summary())
         return model
 
@@ -440,7 +441,7 @@ class DoubleDeepQLearning:
              
             # this list will contain the actions that are selected from the batch 
             # this list is used in my_loss_fn to define the loss-function
-            self.actionsAppend=[]            
+            # self.actionsAppend=[]            
             for index,(currentState,action,reward,nextState,terminated) in enumerate(randomSampleBatch):
                  
                 # if the next state is the terminal state
@@ -507,23 +508,35 @@ class DoubleDeepQLearning:
     ###########################################################################    
     
     
-    def ddqn_loss_fn(self, y_true, y_pred):
-        print("LOSS FUNCTION - Y_TRUE:",y_true)
-        s1,s2=y_true.shape
-        print("LOSS FUNCTION - S1 AND S2:",s1,s2)
-        
-        # this matrix defines indices of a set of entries that we want to 
-        # extract from y_true and y_pred
-        # s2=2
-        # s1=self.batchReplayBufferSize
-        indices=np.zeros(shape=(s1,s2))
-        indices[:,0]=np.arange(s1)
-        indices[:,1]=self.actionsAppend
-        
-        # gather_nd and mean_squared_error are TensorFlow functions
-        loss = mean_squared_error(gather_nd(y_true,indices=indices.astype(int)), gather_nd(y_pred,indices=indices.astype(int)))
-        #print(loss)
-        return loss    
+    def create_loss_fn(self):
+        actionsAppend = self.actionsAppend  # capture the current value of self.actionsAppend
+
+        def ddqn_loss_fn(y_true, y_pred):
+            print("LOSS FUNCTION - Y_TRUE:", y_true)
+            s1, s2 = y_true.shape
+            print("LOSS FUNCTION - S1 AND S2:", s1, s2)
+            print("LOSS FUNCTION - ACTIONS APPEND:", actionsAppend)
+
+            # count the amount of actions in actionsAppend
+            countact = len(actionsAppend)
+            print("LOSS FUNCTION - COUNTACT:", countact)
+
+            import numpy as np
+
+            # Calculate the number of actions
+            num_actions = len(actionsAppend[0])
+
+            # Reshape indices to have shape (batch_size * num_actions, 2)
+            indices = np.zeros(shape=(s1 * num_actions, 2))
+            indices[:, 0] = np.repeat(np.arange(s1), num_actions)
+            indices[:, 1] = np.tile(np.arange(num_actions), s1)
+
+
+            loss = mean_squared_error(gather_nd(y_true, indices=indices.astype(int)),
+                                    gather_nd(y_pred, indices=indices.astype(int)))
+            return loss
+
+        return ddqn_loss_fn
     ###########################################################################
     #   END - of function my_loss_fn
     ###########################################################################
