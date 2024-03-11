@@ -71,9 +71,9 @@ htpg = {'192.168.1.3': [('Apache', 'CVE-2014-6271', 0.9756, ('192.168.4.3', 'Roo
 '''
 
 
-ntpg = misc.create_dictionary_ntpg("ntpg.csv")
+ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg.csv")
 # os.system("pause")
-htpg = misc.create_dictionary_htpg("htpg.csv")
+htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg.csv")
 
 
 

@@ -40,7 +40,7 @@ eval_rewards = []
 eval_steps = []
 
 # Evaluate the model for a certain number of episodes
-eval_episodes = 15
+eval_episodes = 50
 eval_rewards = []
 eval_steps = []
 

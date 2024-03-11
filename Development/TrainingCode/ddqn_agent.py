@@ -155,7 +155,7 @@ class DoubleDeepQLearning:
         
         # use mean squared error as the loss function
         # original used a custom loss one, but for this case im not sure
-        model.compile(loss=mean_squared_error, optimizer=RMSprop(), metrics = ['accuracy'])
+        model.compile(loss=DoubleDeepQLearning.ddqn_loss_fn, optimizer=RMSprop(), metrics = ['accuracy'])
         print("Created network:", model.summary())
         return model
 
@@ -506,7 +506,8 @@ class DoubleDeepQLearning:
     # later on, the tensor flow will compute the scalar out of this vector (mean squared error)
     ###########################################################################    
     
-    def ddqn_loss_fn(self,y_true, y_pred):
+    
+    def ddqn_loss_fn(self, y_true, y_pred):
         print("LOSS FUNCTION - Y_TRUE:",y_true)
         s1,s2=y_true.shape
         print("LOSS FUNCTION - S1 AND S2:",s1,s2)
@@ -527,7 +528,7 @@ class DoubleDeepQLearning:
     #   END - of function my_loss_fn
     ###########################################################################
     
-    def ddqn_loss_fn(y_true, y_pred):
+    def ddqn_loss_fn_02(y_true, y_pred):
         return keras.losses.mean_squared_error(y_true, y_pred)
 
 
