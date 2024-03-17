@@ -156,7 +156,7 @@ class DoubleDeepQLearning:
         
         # use mean squared error as the loss function
         # original used a custom loss one, but for this case im not sure
-        model.compile(loss=DoubleDeepQLearning.create_loss_fn(self), optimizer=Adam(), metrics = ['accuracy'])
+        model.compile(loss=DoubleDeepQLearning.create_loss_fn(self), optimizer=RMSprop(), metrics = ['accuracy'])
         print("Created network:", model.summary())
         return model
 

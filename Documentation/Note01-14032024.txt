@@ -1,0 +1,7 @@
+Random 1 so -> so sanh voi tat ca cac duong, neu lon hon se lua duong dau tien duoc chon
+
+Luu y tim ham random voi xac suat co san
+
+train with no gradient
+
+ghi nhan state vao csv roi moi xuat hinh -> nhanh hon xuat hinh tai tung state
