@@ -15,7 +15,9 @@ from gym import spaces
 import numpy as np
 import os
 
-
+import misc
+import random
+import csv
 
 
 #  rule đặt honeypot: vị trí đặt ko được trùng với node đang có kẻ tấn công và node nicr  
@@ -208,57 +210,66 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # If all checks pass, return True
         return True
 
-
-    def __attacker_move_step(self):
+    
+    def attacker_move_step(self):
         """Simulates one step of the attacker's move based on the NTPG and HTPG.
-        Updates the state vector with the new attacked node.
+           Updates the state vector with the new attacked node.
         """
+
         # Get the current node information
         current_node = self._current_attacker_node
         current_node_index = list(self._ntpg.keys()).index(current_node)
         print("Current node index:", current_node_index)
-        # os.system("pause")
+
+        # Prepare data for CSV
+        data = {
+            'current_node': current_node,
+            'current_node_index': current_node_index,
+            'EPSS_of_next_node': None,
+            'next_node': None,
+            'EPSS_of_connected_nodes': None,
+            
+        }
 
         # Check if the current node has possible routes
-        print("NTPG:", self._ntpg)
+        # print("NTPG:", self._ntpg)
         print("current_node:", current_node)
-        print("NTPG OF CURRENT NODE:" , self._ntpg.get(current_node)[0]) if self._ntpg.get(current_node) else print("there is no NTPG for this node, something is wrong")
-        # os.system("pause")
         if self._ntpg.get(current_node):
-            # Iterate over the possible routes from the current node
-            for route in self._ntpg.get(current_node):
-                next_node = route[0]
-                attack_chance = route[1]  # Use the chance to attack the node
-                if np.random.random() <= attack_chance:
-                    self._state[current_node_index] = 1
-                    print("Attacked node:", current_node)
-                    break  # Attack successful, exit the loop
 
-            # Move to the next node based on HTPG probability
-            next_node = np.random.choice([route[0] for route in self._ntpg.get(current_node)])  # Fix: Specify a 1-dimensional array
+            print("Possible routes from the current node:", self._ntpg.get(current_node))
+            pop=[route[0] for route in self._ntpg.get(current_node)]
+            wei=[(route[1] + route[2])/2 for route in self._ntpg.get(current_node)]
+
+            print("Population:", pop)
+            print("Weights:", wei)
+            
+            next_node = random.choices(
+                population=pop, # the list to pick stuff out from in this case the ip of the next possible nodes
+                # THIS ONE I FOUDN IT
+                # WEIGHT SHOULD BE AVG OF BOTH ROOT AND USER
+                # TODO: make this easier to read
+                weights=wei,
+                # THIS ONE I FOUDN IT
+                k=1 # number of sample to pick from population
+            )[0]
+
+            data['EPSS_of_connected_nodes'] = [(route[1] + route[2])/2 for route in self._ntpg.get(current_node)]
+
             self._current_attacker_node = next_node
             print("Next node to attempt attack:", next_node)
+            data['next_node'] = next_node
+            print("DO NOT TOUCH --- DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---")
+            print(self._ntpg[next_node])
+            print("DO NOT TOUCH --- DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---")
+            data['EPSS_of_next_node'] = (self._ntpg[next_node][0][1] + self._ntpg[next_node][0][2])/2
 
         else:
             print("No more possible routes, exit the loop. State vector after the attack:", self._state)
 
-        # Update the NIFR list based on the action matrix
-        self.__update_nifr_nodes(self.nifr_nodes)
-        print("NIFR list after attack:", self.nifr_nodes)
-
-    def __truong_attacker_move(self):
-        # Simulates the attacker's move based on Truong's fixed flow.
-
-        print("Work In Progress - WIP")
-
-        # Fix the current_node to the very first node
-
-    def __NMS_alert_based_attacker_movement(self):
-        # Receive alert from NMS and update the observation space based on the alert.
-        # API code to receive alert from NMS and digest it into the observation space and reward.
-
-        # Fix the current_node to the very first node
-        print("Work In Progress - WIP")
+        # Write data to CSV
+        with open('attacker_moves.csv', 'a', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=data.keys())
+            writer.writerow(data)
 
 
     def __is_nicr_attacked(self, nicr_nodes):
@@ -334,7 +345,7 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
             self.__update_nifr_nodes(self.nifr_nodes)
             
             # Simulate the attacker's move based on the NTPG and HTPG
-            self.__attacker_move_step()
+            self.attacker_move_step()
             
             # Check if the attacker has reached a nicr or a fake resource node
             if self.__is_nicr_attacked(self.nicr_nodes):
@@ -367,9 +378,26 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
             reward = -1
             return ts.termination(np.array([self._state], dtype=np.int32), reward)
         
-          
-#environment = NetworkHoneypotEnv(10, 3, 7, ntpg, htpg)
-#utils.validate_py_environment(environment, episodes=10)
+
+
+
+
+
+# Load the NTPG and HTPG dictionaries
+# ntpg = misc.create_dictionary_ntpg("ntpg_eval.csv")
+# htpg = misc.create_dictionary_htpg("htpg_eval.csv")
+
+# Load the topology param from TPGs
+# deception_nodes = misc.get_deception_nodes()
+# normal_nodes = misc.count_nodes(ntpg)
+# first_parameter = misc.calculate_first_parameter(deception_nodes, normal_nodes)
+
+# calculate the number of possible combinations
+# total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
+
+# Create a new environment for evaluation
+# environment = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, htpg)
+# utils.validate_py_environment(environment, episodes=10)
 
 
 
