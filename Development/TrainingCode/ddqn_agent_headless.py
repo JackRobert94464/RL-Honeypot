@@ -1,12 +1,12 @@
-print("------------------------------------------------------------------------------------------------------------------------")   
-print("------------------------------------------------------------------------------------------------------------------------")
-print("------------------------------------------------------------------------------------------------------------------------")
-print("------------------------------------------------------------------------------------------------------------------------")
-print("---------------------------------------  TRAINING THE AGENT BASED ON THE ENV -------------------------------------------")
-print("------------------------------------------------------------------------------------------------------------------------")   
-print("------------------------------------------------------------------------------------------------------------------------")
-print("------------------------------------------------------------------------------------------------------------------------")
-print("------------------------------------------------------------------------------------------------------------------------")
+# print("------------------------------------------------------------------------------------------------------------------------")   
+# print("------------------------------------------------------------------------------------------------------------------------")
+# print("------------------------------------------------------------------------------------------------------------------------")
+# print("------------------------------------------------------------------------------------------------------------------------")
+# print("---------------------------------------  TRAINING THE AGENT BASED ON THE ENV -------------------------------------------")
+# print("------------------------------------------------------------------------------------------------------------------------")   
+# print("------------------------------------------------------------------------------------------------------------------------")
+# print("------------------------------------------------------------------------------------------------------------------------")
+# print("------------------------------------------------------------------------------------------------------------------------")
 
 
 
@@ -39,10 +39,10 @@ from keras.losses import huber
 from math import factorial
 
 import keras
-
-import pandas as pd
  
 from visualizer import visualize_steps
+
+import pandas as pd
 
 # Outline the difference from cartpole:
 # Policy
@@ -89,14 +89,14 @@ class DoubleDeepQLearning:
         # with n as normal nodes and r as deception nodes
         self.totalpermutation = totalpermutation
 
-        print(env)
+        # print(env)
 
         # state dimension 
         self.stateDimension = env.K
-        print("STATE DIMENSION --- AGENT TRAINING",self.stateDimension)
+        # print("STATE DIMENSION --- AGENT TRAINING",self.stateDimension)
         # action dimension k!/(k-m)! (07/12/2023 - different permutation problem)
         self.actionDimension = factorial(env.K) / factorial(env.K - env.M)
-        print("ACTION DIMENSION --- AGENT TRAINING",self.actionDimension)
+        # print("ACTION DIMENSION --- AGENT TRAINING",self.actionDimension)
         # this is the maximum size of the replay buffer
         self.replayBufferSize=300
         # this is the size of the training batch that is randomly sampled from the replay buffer
@@ -163,14 +163,14 @@ class DoubleDeepQLearning:
     
     @keras.saving.register_keras_serializable()
     def ddqn_loss_fn(y_true, y_pred):
-        print("LOSS FUNCTION - Y_TRUE:", y_true)
+        # print("LOSS FUNCTION - Y_TRUE:", y_true)
         s1, s2 = y_true.shape
-        print("LOSS FUNCTION - S1 AND S2:", s1, s2)
-        print("LOSS FUNCTION - ACTIONS APPEND:", actionsAppend)
+        # print("LOSS FUNCTION - S1 AND S2:", s1, s2)
+        # print("LOSS FUNCTION - ACTIONS APPEND:", actionsAppend)
 
         # count the amount of actions in actionsAppend
         countact = len(actionsAppend)
-        print("LOSS FUNCTION - COUNTACT:", countact)
+        # print("LOSS FUNCTION - COUNTACT:", countact)
 
 
         # Calculate the number of actions
@@ -243,13 +243,11 @@ class DoubleDeepQLearning:
         your_edges_list = [(node, edge[0]) for node in ntpg for edge in ntpg[node]]
 
         # Create a DataFrame to store the data
-        data = pd.DataFrame(columns=['steps', 'nodes', 'edges', 'episode'])
-
+        data = pd.DataFrame(columns=['attacker_node', 'nifr_nodes', 'nicr_nodes' , 'nodes', 'edges', 'episode'])
 
         # iterate over the episodes
         for episode in range(self.numberEpisodes):
             
-            # self.env = NetworkHoneypotEnv(10, 3, 7, ntpg, htpg)
             # reset the environment
             currentState=self.env.reset()
 
@@ -260,61 +258,21 @@ class DoubleDeepQLearning:
             print("Simulating episode number: ",episode)
             print("------------------------------------------------------------------------------------------------------------------------")
 
-            # reset the environment
-            # in other words, s=s0
-            # reset = self.env.reset()
-            # print("Resetting the environment", reset)
-            
-
             print("Current state: ", currentState.observation)
 
-
-            # here we step from one state to another
-            # in other words, s=s0, s=s1, s=s2, ..., s=sn
-            # until either nicr or nifr got attacked, sum up the state and get reward
-            # stateCount = 100
-            # This part logic is faulty - the attacker attack with each step, and we need to stop him on each step till he reach
-            # final state, not just doing K loop
-            # 20/12/2023 - Replacing for K loop whatever with indefinite while (until nicr or nifr got hit)
             while not self.env.is_last():
-                # Your code here
-                
-                #print("while looping through all the K nodes after stateCount times to check if nicr or nifr got attacked") 
-                print("Patroling until either nicr or nifr got attacked - end episode")
-
-                # select the action based on the epsilon-greedy approach
-                print("observed state: ",currentState.observation)
                 action = self.selectAction(currentState.observation.reshape(1, -1), episode)
                 print("Action selected: ",action)
-                print("self.env.step based on action: ",self.env.step(action))
 
-                # here we step and return the state, reward, and boolean denoting if the state is a terminal state
-                # (terminalState, discount, reward, nextState) = self.env.step(action)
                 nextState = self.env.step(action)
-                print("attacker node for drawing: ", self.env._current_attacker_node)
-                print("nifr nodes for drawing: ", self.env.nifr_nodes)
-                print("ntpg ip of the nifr nodes: ", [list(self.env._ntpg.keys())[node_index-1] for node_index in self.env.nifr_nodes])
-                print("nicr nodes for drawing: ", self.env.nicr_nodes)
-                print("ntpg ip of the nicr node: ", [list(self.env._ntpg.keys())[node_index-1] for node_index in self.env.nicr_nodes])
-                # os.system("pause")
                 steps.append({'attacker_node': self.env._current_attacker_node, 
                               'nifr_nodes': [list(self.env._ntpg.keys())[node_index-1] for node_index in self.env.nifr_nodes], 
                               'nicr_nodes': [list(self.env._ntpg.keys())[node_index-1] for node_index in self.env.nicr_nodes],})
 
-
-                # Basically we just assign the result after we step to a variable called nextState
-                # Then we seperate the variable (which is a TimeStep object) to 4 part of it: step_type, reward, discount, and observation
                 (discount, nextStateObservation, reward, terminalState) = (currentState.discount, nextState.observation, currentState.reward, currentState.is_last())
-                # This part probably need to fix
-                print("parameters of environment:")
-                print((discount, nextStateObservation, reward, terminalState))
 
-            
-        
                 print("------------------- REWARD OF THIS ACTION --------------------------: ",reward)
-                # os.system("pause")
                 rewardsEpisode.append(reward)
-
 
                 if terminalState:
                     print("Terminal state reached, end episode")
@@ -325,43 +283,36 @@ class DoubleDeepQLearning:
 
                 print("Next state: ", nextState)
 
-
-                # add current state, action, reward, next state, and terminal flag to the replay buffer
-                # print("Next state observation array: ", nextState)
                 self.replayBuffer.append((currentState.observation, action, reward, nextStateObservation, terminalState))
-                print("Replay buffer: ",self.replayBuffer)
 
-                # train network
                 self.trainNetwork()
                 print("------------------- NETWORKS TRAINED -------------------")
 
-                # visiting next node in the network
                 self.visitCounts = self.visitCounts + 1
                 print("Visit counts: ",self.visitCounts)
                  
-                # set the current state for the next step s <- s'
                 currentState=nextState
-                print("Current state after step: ", currentState)
 
-                # stateCount = stateCount + 1
-
-            # Visualize the steps
-            # visualize_steps(steps, your_nodes_list, your_edges_list, 'images', 'movie.gif', episode)
-
-            # Append the data to the DataFrame
-            data = data.append({'steps': steps, 'nodes': your_nodes_list, 'edges': your_edges_list, 'episode': episode}, ignore_index=True)
+            # visualize_steps(steps, your_nodes_list, your_edges_list, 'images', f'movie_{episode}.gif', episode)
             
+            print("Nodes list: ", your_nodes_list)
+            print("Edges list: ", your_edges_list)
+            print("STEPS:", steps)
 
-            print("------------------------- END LOOP HERE -------------------------")
+            data = data._append({'attacker_node': steps[-1]['attacker_node'], 
+                                'nifr_nodes': steps[-1]['nifr_nodes'], 
+                                'nicr_nodes': steps[-1]['nicr_nodes'], 
+                                'nodes': your_nodes_list, 
+                                'edges': your_edges_list, 
+                                'episode': episode}, ignore_index=True)
 
+            steps = []
 
-        # Save the DataFrame to a CSV file
         data.to_csv('sim_graph.csv', index=False)
 
-
-        # tbh i dont even know if summing reward here is neccessary
         print("Sum of rewards {}".format(np.sum(rewardsEpisode)))        
         self.sumRewardsEpisode.append(np.sum(rewardsEpisode)) 
+
                
     ###########################################################################
     #   END - trainingEpisodes function
@@ -384,9 +335,9 @@ class DoubleDeepQLearning:
             action = np.zeros((self.env.M, self.env.K))
             for i in range(self.env.M):
                 action[i, np.random.randint(0, self.env.K)] = 1
-                print("Deploying honeypot number", i, "in normal nodes:", action)
+                # print("Deploying honeypot number", i, "in normal nodes:", action)
             action = action.astype(np.int32)
-            print("ACTION MATRIX exploit:", action)
+            # print("ACTION MATRIX exploit:", action)
             return action
 
         # Exploitation phase
@@ -394,30 +345,30 @@ class DoubleDeepQLearning:
             action = np.zeros((self.env.M, self.env.K))
             for i in range(self.env.M):
                 action[i, np.random.randint(0, self.env.K)] = 1
-                print("Deploying honeypot number", i, "in normal nodes:", action)
+                # print("Deploying honeypot number", i, "in normal nodes:", action)
             action = action.astype(np.int32)
-            print("ACTION MATRIX exploit:", action)
+            # print("ACTION MATRIX exploit:", action)
             return action
 
         else:
-            print("STATE TO PREDICT:", state)
+            # print("STATE TO PREDICT:", state)
             Qvalues = self.mainNetwork.predict(state)
-            print("QVALUES:", Qvalues)
+            # print("QVALUES:", Qvalues)
 
             # Get the index of the maximum Q-value
             max_index = np.argmax(Qvalues)
-            print("action with the highest Q-value:", max_index)
+            # print("action with the highest Q-value:", max_index)
 
             # Map the index to an action matrix
             action_matrix = self.index_to_action(max_index)
 
-            print("ACTION MATRIX exploit:", action_matrix)
+            # print("ACTION MATRIX exploit:", action_matrix)
             return action_matrix
 
     def index_to_action(self, index):
         # Initialize the action matrix with zeros
         action_matrix = np.zeros((self.env.M, self.env.K), dtype=np.int32)
-        print("action matrix to be indexed:", action_matrix)
+        # print("action matrix to be indexed:", action_matrix)
 
         # Convert the index to the corresponding row and column for the action matrix
         for i in range(self.env.M):
@@ -428,7 +379,7 @@ class DoubleDeepQLearning:
             # Set the value in the action matrix
             action_matrix[i, row_index] = 1
 
-        print("index to action matrix:", action_matrix)
+        # print("index to action matrix:", action_matrix)
         return action_matrix
 
             # return action_matrix
@@ -450,9 +401,9 @@ class DoubleDeepQLearning:
 
 
     def trainNetwork(self):
-        print("------------------------------------------------------------------------------------------------------------------------------")  
-        print("---------------------------------------- TRAINING MAIN NETWORK AND TARGET NETWORK---------------------------------------------")
-        print("------------------------------------------------------------------------------------------------------------------------------")
+        # print("------------------------------------------------------------------------------------------------------------------------------")  
+        # print("---------------------------------------- TRAINING MAIN NETWORK AND TARGET NETWORK---------------------------------------------")
+        # print("------------------------------------------------------------------------------------------------------------------------------")
 
  
         # if the replay buffer has at least batchReplayBufferSize elements,
@@ -463,42 +414,42 @@ class DoubleDeepQLearning:
  
             # sample a batch from the replay buffer
             randomSampleBatch=random.sample(self.replayBuffer, self.batchReplayBufferSize)
-            print("Random sample batch chosen: ",randomSampleBatch)
+            # print("Random sample batch chosen: ",randomSampleBatch)
              
             # here we form current state batch 
             # and next state batch
             # they are used as inputs for prediction
             currentStateBatch=np.zeros(shape=(self.batchReplayBufferSize,self.nodecount))
-            print("Current state batch: ",currentStateBatch)
+            # print("Current state batch: ",currentStateBatch)
 
             nextStateBatch=np.zeros(shape=(self.batchReplayBufferSize,self.nodecount))      
-            print("Next state batch: ",nextStateBatch)      
+            # print("Next state batch: ",nextStateBatch)      
             # this will enumerate the tuple entries of the randomSampleBatch
             # index will loop through the number of tuples
             for index,tupleS in enumerate(randomSampleBatch):
-                print("Sample batch no. ",index)
-                print("Current state of sample batch: ",tupleS[0])
+                # print("Sample batch no. ",index)
+                # print("Current state of sample batch: ",tupleS[0])
                 # first entry of the tuple is the current state
                 currentStateBatch[index,:]=tupleS[0]
 
                 # fourth entry of the tuple is the next state
-                print("Next state of sample batch: ",tupleS[3])
+                # print("Next state of sample batch: ",tupleS[3])
                 nextStateBatch[index,:]=tupleS[3]
              
             # here, use the target network to predict Q-values 
             QnextStateTargetNetwork=self.targetNetwork.predict(nextStateBatch)
-            print("QnextStateTargetNetwork: ",QnextStateTargetNetwork)
+            # print("QnextStateTargetNetwork: ",QnextStateTargetNetwork)
             # here, use the main network to predict Q-values 
             QcurrentStateMainNetwork=self.mainNetwork.predict(currentStateBatch)
-            print("QcurrentStateMainNetwork: ",QcurrentStateMainNetwork)
+            # print("QcurrentStateMainNetwork: ",QcurrentStateMainNetwork)
              
             # now, we form batches for training
             # input for training
             inputNetwork=currentStateBatch
-            print("Input network: ",inputNetwork)
+            # print("Input network: ",inputNetwork)
             # output for training
             outputNetwork=np.zeros(shape=(self.batchReplayBufferSize,int(self.totalpermutation)))
-            print("Output network: ",outputNetwork)
+            # print("Output network: ",outputNetwork)
              
             # this list will contain the actions that are selected from the batch 
             # this list is used in my_loss_fn to define the loss-function
@@ -507,25 +458,25 @@ class DoubleDeepQLearning:
                  
                 # if the next state is the terminal state
                 if terminated:
-                    print("Next state is the terminal state")
-                    print("y: ",reward)
+                    # print("Next state is the terminal state")
+                    # print("y: ",reward)
                     y=reward                  
                 # if the next state if not the terminal state    
                 else:
-                    print("Next state is not the terminal state")
-                    print("y: ",reward+self.gamma*np.max(QnextStateTargetNetwork[index]))
+                    # print("Next state is not the terminal state")
+                    # print("y: ",reward+self.gamma*np.max(QnextStateTargetNetwork[index]))
                     y=reward+self.gamma*np.max(QnextStateTargetNetwork[index])
                  
                 # this is necessary for defining the cost function
                 actionsAppend.append(action)
-                print("Actions after append: ",actionsAppend)
+                # print("Actions after append: ",actionsAppend)
                  
                 # this actually does not matter since we do not use all the entries in the cost function
                 outputNetwork[index]=QcurrentStateMainNetwork[index]
-                print("Output network index: ",outputNetwork)
+                # print("Output network index: ",outputNetwork)
                 # this is what matters
                 outputNetwork[index,action]=y
-                print("Output network: ",outputNetwork)
+                # print("Output network: ",outputNetwork)
              
             # here, we train the network
             self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size = self.batchReplayBufferSize, verbose=0, epochs=100)
@@ -551,18 +502,18 @@ class DoubleDeepQLearning:
     
 
     def selectActionEval(self, state, episode, model):
-        print("------------------------------------------------------------------------------------------------------------------------------")
-        print("---------------------------------------- EVALUATING THE TRAINED MAIN NETWORK -------------------------------------------------")
-        print("------------------------------------------------------------------------------------------------------------------------------")
+        # print("------------------------------------------------------------------------------------------------------------------------------")
+        # print("---------------------------------------- EVALUATING THE TRAINED MAIN NETWORK -------------------------------------------------")
+        # print("------------------------------------------------------------------------------------------------------------------------------")
 
         # Exploration phase
         if episode < 1:
             action = np.zeros((self.env.M, self.env.K))
             for i in range(self.env.M):
                 action[i, np.random.randint(0, self.env.K)] = 1
-                print("Deploying honeypot number", i, "in normal nodes:", action)
+                # print("Deploying honeypot number", i, "in normal nodes:", action)
             action = action.astype(np.int32)
-            print("ACTION MATRIX exploit:", action)
+            # print("ACTION MATRIX exploit:", action)
             return action
 
         # Epsilon-greedy approach
@@ -574,23 +525,23 @@ class DoubleDeepQLearning:
                 action = np.zeros((self.env.M, self.env.K))
                 for i in range(self.env.M):
                     action[i, np.random.randint(0, self.env.K)] = 1
-                    print("Deploying honeypot number", i, "in normal nodes:", action)
+                    # print("Deploying honeypot number", i, "in normal nodes:", action)
                 action = action.astype(np.int32)
-                print("ACTION MATRIX exploit:", action)
+                # print("ACTION MATRIX exploit:", action)
                 return action
 
         # Exploitation phase
         else:
-            print("STATE TO PREDICT:", state)
+            # print("STATE TO PREDICT:", state)
             Qvalues = model.predict(state)
-            print("QVALUES:", Qvalues)
+            # print("QVALUES:", Qvalues)
 
             # Get the index of the maximum Q-value
             max_index = np.argmax(Qvalues)
-            print("Action with highest Q-values is", max_index)
+            # print("Action with highest Q-values is", max_index)
 
             # Map the index to an action matrix
             action_matrix = self.index_to_action(max_index)
 
-            print("ACTION MATRIX exploit:", action_matrix)
+            # print("ACTION MATRIX exploit:", action_matrix)
             return action_matrix

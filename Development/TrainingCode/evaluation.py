@@ -13,12 +13,14 @@ import numpy as np
 
 import misc
 
+import visualizer
+
 # Load the trained model
-trained_model = tf.keras.models.load_model("RL_Honeypot_trained_model_temp.keras")
+trained_model = tf.keras.models.load_model("RL_Honeypot_trained_model_temp.keras", custom_objects={'loss': DoubleDeepQLearning.ddqn_loss_fn})
 
 # Load the NTPG and HTPG dictionaries
-ntpg = misc.create_dictionary_ntpg("ntpg_eval.csv")
-htpg = misc.create_dictionary_htpg("htpg_eval.csv")
+ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_eval.csv")
+htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg_eval.csv")
 
 # Load the topology param from TPGs
 deception_nodes = misc.get_deception_nodes()
@@ -48,6 +50,14 @@ eval_steps = []
 gamma = 0.9
 # Epsilon parameter for the epsilon-greedy approach
 epsilon = 0.1
+
+# VISUALIZATION #
+# Extract nodes from the ntpg dictionary
+your_nodes_list = list(ntpg.keys())
+
+# Extract edges from the ntpg dictionary
+your_edges_list = [(node, edge[0]) for node in ntpg for edge in ntpg[node]]
+# VISUALIZATION #
 
 # Create the model
 ddqn_agent = DoubleDeepQLearning(eval_env, gamma, epsilon, eval_episodes, normal_nodes, total_permutations)

@@ -15,9 +15,8 @@ from gym import spaces
 import numpy as np
 import os
 
-import misc
 import random
-import csv
+
 
 
 #  rule đặt honeypot: vị trí đặt ko được trùng với node đang có kẻ tấn công và node nicr  
@@ -210,8 +209,8 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # If all checks pass, return True
         return True
 
-    
-    def attacker_move_step(self):
+
+    def __attacker_move_step(self):
         """Simulates one step of the attacker's move based on the NTPG and HTPG.
            Updates the state vector with the new attacked node.
         """
@@ -221,16 +220,6 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         current_node_index = list(self._ntpg.keys()).index(current_node)
         print("Current node index:", current_node_index)
 
-        # Prepare data for CSV
-        data = {
-            'current_node': current_node,
-            'current_node_index': current_node_index,
-            'EPSS_of_next_node': None,
-            'next_node': None,
-            'EPSS_of_connected_nodes': None,
-            
-        }
-
         # Check if the current node has possible routes
         # print("NTPG:", self._ntpg)
         print("current_node:", current_node)
@@ -239,6 +228,10 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
             self._state[current_node_index] = 1
             print("Prepare to find the next node to attack")
 
+            # A NTPG sample will contain three parts
+            # (IP address, user prob, root prob)
+            # Thus our population will be the list of all IP address
+            # and the weight will be the average of user prob and root prob
             print("Possible routes from the current node:", self._ntpg.get(current_node))
             pop=[route[0] for route in self._ntpg.get(current_node)]
             wei=[(route[1] + route[2])/2 for route in self._ntpg.get(current_node)]
@@ -248,25 +241,37 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
             
             next_node = random.choices(
                 population=pop, # the list to pick stuff out from in this case the ip of the next possible nodes
-                weights=wei, # AVG OF BOTH ROOT AND USER
+                # THIS ONE I FOUDN IT
+                # WEIGHT SHOULD BE AVG OF BOTH ROOT AND USER
+                # TODO: make this easier to read
+                weights=wei,
+                # THIS ONE I FOUDN IT
                 k=1 # number of sample to pick from population
             )[0]
 
-            data['EPSS_of_connected_nodes'] = [(route[1] + route[2])/2 for route in self._ntpg.get(current_node)]
 
             self._current_attacker_node = next_node
             print("Next node to attempt attack:", next_node)
-            data['next_node'] = next_node
+            print("DO NOT TOUCH --- DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---")
             print(self._ntpg[next_node])
-            data['EPSS_of_next_node'] = (self._ntpg[next_node][0][1] + self._ntpg[next_node][0][2])/2
+            print("DO NOT TOUCH --- DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---DO NOT TOUCH ---")
 
         else:
             print("No more possible routes, exit the loop. State vector after the attack:", self._state)
 
-        # Write data to CSV
-        with open('attacker_moves.csv', 'a', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=data.keys())
-            writer.writerow(data)
+    def __truong_attacker_move(self):
+        # Simulates the attacker's move based on Truong's fixed flow.
+
+        print("Work In Progress - WIP")
+
+        # Fix the current_node to the very first node
+
+    def __NMS_alert_based_attacker_movement(self):
+        # Receive alert from NMS and update the observation space based on the alert.
+        # API code to receive alert from NMS and digest it into the observation space and reward.
+
+        # Fix the current_node to the very first node
+        print("Work In Progress - WIP")
 
 
     def __is_nicr_attacked(self, nicr_nodes):
@@ -276,7 +281,6 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # Check if any nicr node is attacked in the state vector
         for i in nicr_nodes:
             if i < len(self._state) and self._state[i] == 1:
-                print("nicr node attacked:", i)
                 # End the episode and calculate the reward
                 self._episode_ended = True
                 return True
@@ -292,7 +296,6 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         for i in nifr_nodes:
             if i < len(self._state) and self._state[i] == 1:
                 # End the episode and calculate the reward
-                print("nifr node attacked:", i)
                 self._episode_ended = True
                 return True
         
@@ -335,103 +338,51 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
             reward = -1
             return ts.termination(np.array([self._state], dtype=np.int32), reward)
         
-
-        ######################################################################################
-        #
-        #
-        #               DEPRECATED: ATTACKER SIMULATION DO NOT NEED TO CHECK ACTION
-        #
-        #
-        ######################################################################################
         # Check if the action is valid
-        # if self.__is_action_valid(action):
-        # If yes, update the matrix for the defender's view with the action
-        ######################################################################################
-        #
-        #
-        #               DEPRECATED: ATTACKER SIMULATION DO NOT NEED TO CHECK ACTION
-        #
-        #
-        ######################################################################################
+        if self.__is_action_valid(action):
+            # If yes, update the matrix for the defender's view with the action
+            self._matrix = action
 
-
-
-        self._matrix = action
-
-        # Update the NIFR list based on the action matrix.
-        self.__update_nifr_nodes(self.nifr_nodes)
-        
-        # Simulate the attacker's move based on the NTPG and HTPG
-        self.attacker_move_step()
-        
-        # Check if the attacker has reached a nicr or a fake resource node
-        if self.__is_nicr_attacked(self.nicr_nodes):
-            # If yes, end the episode and return the termination state and reward
+            # Update the NIFR list based on the action matrix.
+            self.__update_nifr_nodes(self.nifr_nodes)
+            
+            # Simulate the attacker's move based on the NTPG and HTPG
+            self.__attacker_move_step()
+            
+            # Check if the attacker has reached a nicr or a fake resource node
+            if self.__is_nicr_attacked(self.nicr_nodes):
+                # If yes, end the episode and return the termination state and reward
+                self._episode_ended = True
+                print("Attacker reached nicr, end the episode")
+                print("Current node attacker residing in:", self._current_attacker_node)
+                print("nicr nodes:", self.nicr_nodes)
+                reward = -1
+                return ts.termination(np.array([self._state], dtype=np.int32), reward)
+            if self.__is_nifr_attacked(self.nifr_nodes):
+                # If yes, end the episode and return the termination state and reward
+                self._episode_ended = True
+                print("Attacker reached nifr, end the episode")
+                print("Current node attacker residing in:", self._current_attacker_node)
+                print("nifr nodes:", self.nifr_nodes)
+                reward = 1
+                return ts.termination(np.array([self._state], dtype=np.int32), reward)
+            else:
+                reward = 0
+                # Increment the step counter
+                self.current_step += 1
+                # If no, continue the episode and return the transition state and reward
+                return ts.transition(np.array([self._state], dtype=np.int32), reward)
+        else:
+            # If no, end the episode and return the termination state and reward
+            print("Invalid Action:", action)
+            print("Invalid action, end the episode")
             self._episode_ended = True
-            print("Attacker reached nicr, end the episode")
-            print("Current node attacker residing in:", self._current_attacker_node)
-            print("nicr nodes:", self.nicr_nodes)
             reward = -1
             return ts.termination(np.array([self._state], dtype=np.int32), reward)
-        if self.__is_nifr_attacked(self.nifr_nodes):
-            # If yes, end the episode and return the termination state and reward
-            self._episode_ended = True
-            print("Attacker reached nifr, end the episode")
-            print("Current node attacker residing in:", self._current_attacker_node)
-            print("nifr nodes:", self.nifr_nodes)
-            reward = 1
-            return ts.termination(np.array([self._state], dtype=np.int32), reward)
-        else:
-            reward = 0
-            # Increment the step counter
-            self.current_step += 1
-            # If no, continue the episode and return the transition state and reward
-            return ts.transition(np.array([self._state], dtype=np.int32), reward)
-
-
-        ######################################################################################
-        #
-        #
-        #               DEPRECATED: ATTACKER SIMULATION DO NOT NEED TO CHECK ACTION
-        #
-        #
-        ######################################################################################
-        # else:
-            # If no, end the episode and return the termination state and reward
-            # print("Invalid Action:", action)
-            # print("Invalid action, end the episode")
-            # self._episode_ended = True
-            # reward = -1
-            # return ts.termination(np.array([self._state], dtype=np.int32), reward)
-        ######################################################################################
-        #
-        #
-        #               DEPRECATED: ATTACKER SIMULATION DO NOT NEED TO CHECK ACTION
-        #
-        #
-        ######################################################################################
         
-
-
-
-
-
-# Load the NTPG and HTPG dictionaries
-ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_eval.csv")
-htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg_eval.csv")
-
-# Load the topology param from TPGs
-# deception_nodes = misc.get_deception_nodes()
-deception_nodes = 5
-normal_nodes = misc.count_nodes(ntpg)
-first_parameter = misc.calculate_first_parameter(deception_nodes, normal_nodes)
-
-# calculate the number of possible combinations
-total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
-
-# Create a new environment for evaluation
-environment = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, htpg)
-utils.validate_py_environment(environment, episodes=10)
+          
+#environment = NetworkHoneypotEnv(10, 3, 7, ntpg, htpg)
+#utils.validate_py_environment(environment, episodes=10)
 
 
 

@@ -27,10 +27,13 @@ from tf_agents.trajectories import time_step as ts
 from gym import spaces
 
 # import the environment
-from NetworkHoneypotEnv import NetworkHoneypotEnv
+# from NetworkHoneypotEnv import NetworkHoneypotEnv
+
+# import test env
+from NetworkHoneypotEnvTest01 import NetworkHoneypotEnv
 
 # import the agent
-from ddqn_agent import DoubleDeepQLearning
+from ddqn_agent_headless import DoubleDeepQLearning
 
  
 
@@ -100,7 +103,7 @@ tf_env = tf_py_environment.TFPyEnvironment(env)
 
 timestep = tf_env.reset()
 rewards = []
-numberEpisodes = 15
+numberEpisodes = 150
 
 
 # calculate the number of possible combinations
