@@ -1,0 +1,118 @@
+# Visualize the environment
+import os
+import imageio
+import matplotlib.pyplot as plt
+import networkx as nx
+
+def visualize_steps(steps, your_nodes_list, your_edges_list, output_folder, output_movie, episode):
+    G = nx.Graph()
+    G.add_nodes_from(your_nodes_list)
+    G.add_edges_from(your_edges_list)
+
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    images = []
+
+    for i, step in enumerate(steps):
+        plt.figure()
+        colors = []
+        text = ""
+        for node in G.nodes:
+            if node == step['attacker_node']:
+                if node in step['nifr_nodes']:
+                    colors.append('purple')
+                    text = "NIFR has been attacked. Defender wins."
+                elif node in step['nicr_nodes']:
+                    colors.append('yellow')
+                    text = "NICR has been attacked. Defender loses."
+                else:
+                    colors.append('red')
+            elif node in step['nifr_nodes']:
+                colors.append('blue')
+            elif node in step['nicr_nodes']:
+                colors.append('orange')  # Color for NICR node
+            else:
+                colors.append('green')
+
+        nx.draw(G, with_labels=True, node_color=colors)
+        plt.figtext(0.1, 0.02, f"Episode: {episode}", transform=plt.gca().transAxes)
+        plt.figtext(0.1, 0.04, text, transform=plt.gca().transAxes)
+        image_path = os.path.join(output_folder, f'{episode}_step_{i}.png')
+        plt.savefig(image_path)
+        images.append(imageio.imread(image_path))
+        plt.close()
+
+    imageio.mimsave(output_movie, images, duration=500)
+
+i want to visualize the evaluation at each episode like the code above, but instead of saving to image, i want the visualize process to first save all the steps, your_nodes_list, your_edges_list, 'images', 'movie.gif', episode into a csv file first, then after the csv file finish writing (all episode has been done), the visualizer function like above can run to create image from that csv file.
+
+
+
+
+
+
+# Visualize the environment
+import os
+import imageio
+import matplotlib.pyplot as plt
+import networkx as nx
+import os
+import imageio
+import networkx as nx
+import pandas as pd
+
+import matplotlib.pyplot as plt
+
+def visualize_steps(csv_file):
+    data = pd.read_csv(csv_file)
+    steps = data['steps']
+    your_nodes_list = data['your_nodes_list']
+    your_edges_list = data['your_edges_list']
+    output_folder = data['output_folder']
+    output_movie = data['output_movie']
+    episode = data['episode']
+
+    G = nx.Graph()
+    G.add_nodes_from(your_nodes_list)
+    G.add_edges_from(your_edges_list)
+
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    images = []
+
+    for i, step in enumerate(steps):
+        plt.figure()
+        colors = []
+        text = ""
+        for node in G.nodes:
+            if node == step['attacker_node']:
+                if node in step['nifr_nodes']:
+                    colors.append('purple')
+                    text = "NIFR has been attacked. Defender wins."
+                elif node in step['nicr_nodes']:
+                    colors.append('yellow')
+                    text = "NICR has been attacked. Defender loses."
+                else:
+                    colors.append('red')
+            elif node in step['nifr_nodes']:
+                colors.append('blue')
+            elif node in step['nicr_nodes']:
+                colors.append('orange')  # Color for NICR node
+            else:
+                colors.append('green')
+
+        nx.draw(G, with_labels=True, node_color=colors)
+        plt.figtext(0.1, 0.02, f"Episode: {episode}", transform=plt.gca().transAxes)
+        plt.figtext(0.1, 0.04, text, transform=plt.gca().transAxes)
+        image_path = os.path.join(output_folder, f'{episode}_step_{i}.png')
+        plt.savefig(image_path)
+        images.append(imageio.imread(image_path))
+        plt.close()
+
+    imageio.mimsave(output_movie, images, duration=500)
+
+
+
+make this code output a csv to be use in the visualiztion function above. steps should be episode_steps, your_nodes_list and your_edges_list already have variable of the same name above, output_folder and output_movie is your choice since they're just name, episode is the _ in the for _ in range eval_episode

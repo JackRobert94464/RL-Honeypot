@@ -1,0 +1,56 @@
+Pending main tasks to date:
+
+    Tim cach thay the input cho hai cai network thanh ba ma tran (hoac nhieu hon)
+
+    Thay the cai input (chac mat kha kha thoi gian)
+
+    Ap hai model con lai vao
+
+    Train -> xuat ket qua -> thong ke lai
+
+    cho truong lam code xong tich hop vao
+
+
+
+Hoan thanh not cang som cang tot: 
+
+    train with no gradient - done
+
+    The tf.no_gradient() function is used in TensorFlow to specify operations for which gradients 
+    should not be computed during backpropagation. This can be useful in scenarios where you have parts 
+    of your computation graph that don't require gradients, which can potentially speed up the computation 
+    by skipping unnecessary gradient computations. In the context of your code, 
+    it seems you're using a Keras model for training your DQN agent, which internally uses TensorFlow. 
+    However, I don't see any explicit TensorFlow operations in your code snippet. 
+    Instead, you're mostly using high-level Keras functions and classes. 
+    If you were to use TensorFlow operations directly, 
+    you could potentially benefit from tf.no_gradient() in specific parts of your computation where gradients are not needed. 
+    For example, if you have some custom operations or loss functions implemented using TensorFlow operations, 
+    you could use tf.no_gradient() to indicate that gradients for those operations should not be computed.
+
+    => hau het code su dung ham Keras bac cao, ko co cac tac vu tinh toan gradient chi tiet
+    => ko can su dung no_gradient
+
+    ghi nhan state vao csv roi moi xuat hinh -> nhanh hon xuat hinh tai tung state
+
+    => Done. Thuc hien ghi nhan cua evaluation. ghi nhan tung buoc cua state vao file csv roi xuat hinh + gif tu csv
+
+
+
+
+Tiep tuc thuc hien toi truoc khi bao cao:
+
+    Tim cach thay the input cho hai cai network thanh ba ma tran (hoac nhieu hon)
+    
+
+    Thay the cai input (chac mat kha kha thoi gian)
+
+    Tinh cac ti le FN FP TN TP ?
+    => Hoc tang cuong khong su dung cac ti le nay
+    => ap dung vao he thong NMS cua Truong nhu tham so uncertainty
+
+Kho khan + thac mac:
+
+    Moi model chi chay duoc voi 1 so node nhat dinh => can qua nhieu model cho cac tinh huong khac nhau?
+
+    Lam the nao de chi su dung 1 model du doan duoc nhieu so luong node (mang neuron)?

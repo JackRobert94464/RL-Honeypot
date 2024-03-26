@@ -295,20 +295,20 @@ class DoubleDeepQLearning:
 
             # visualize_steps(steps, your_nodes_list, your_edges_list, 'images', f'movie_{episode}.gif', episode)
             
-            print("Nodes list: ", your_nodes_list)
-            print("Edges list: ", your_edges_list)
-            print("STEPS:", steps)
+            # print("Nodes list: ", your_nodes_list)
+            # print("Edges list: ", your_edges_list)
+            # print("STEPS:", steps)
 
-            data = data._append({'attacker_node': steps[-1]['attacker_node'], 
-                                'nifr_nodes': steps[-1]['nifr_nodes'], 
-                                'nicr_nodes': steps[-1]['nicr_nodes'], 
-                                'nodes': your_nodes_list, 
-                                'edges': your_edges_list, 
-                                'episode': episode}, ignore_index=True)
+            # data = data._append({'attacker_node': steps[-1]['attacker_node'], 
+            #                    'nifr_nodes': steps[-1]['nifr_nodes'], 
+            #                    'nicr_nodes': steps[-1]['nicr_nodes'], 
+            #                    'nodes': your_nodes_list, 
+            #                   'edges': your_edges_list, 
+            #                  'episode': episode}, ignore_index=True)
 
-            steps = []
+            # steps = []
 
-        data.to_csv('sim_graph.csv', index=False)
+        # data.to_csv('sim_graph.csv', index=False)
 
         print("Sum of rewards {}".format(np.sum(rewardsEpisode)))        
         self.sumRewardsEpisode.append(np.sum(rewardsEpisode)) 

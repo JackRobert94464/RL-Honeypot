@@ -15,7 +15,7 @@ from gym import spaces
 import numpy as np
 import os
 
-
+import random
 
 
 #  rule đặt honeypot: vị trí đặt ko được trùng với node đang có kẻ tấn công và node nicr  
@@ -211,33 +211,39 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
 
     def __attacker_move_step(self):
         """Simulates one step of the attacker's move based on the NTPG and HTPG.
-        Updates the state vector with the new attacked node.
+           Updates the state vector with the new attacked node.
         """
+
         # Get the current node information
         current_node = self._current_attacker_node
         current_node_index = list(self._ntpg.keys()).index(current_node)
         print("Current node index:", current_node_index)
-        # os.system("pause")
+
 
         # Check if the current node has possible routes
-        print("NTPG:", self._ntpg)
+        # print("NTPG:", self._ntpg)
         print("current_node:", current_node)
-        print("NTPG OF CURRENT NODE:" , self._ntpg.get(current_node)[0]) if self._ntpg.get(current_node) else print("there is no NTPG for this node, something is wrong")
-        # os.system("pause")
         if self._ntpg.get(current_node):
-            # Iterate over the possible routes from the current node
-            for route in self._ntpg.get(current_node):
-                next_node = route[0]
-                attack_chance = route[1]  # Use the chance to attack the node
-                if np.random.random() <= attack_chance:
-                    self._state[current_node_index] = 1
-                    print("Attacked node:", current_node)
-                    break  # Attack successful, exit the loop
+            print("Attacking current node:", current_node)
+            self._state[current_node_index] = 1
+            print("Prepare to find the next node to attack")
 
-            # Move to the next node based on HTPG probability
-            next_node = np.random.choice([route[0] for route in self._ntpg.get(current_node)])  # Fix: Specify a 1-dimensional array
+            print("Possible routes from the current node:", self._ntpg.get(current_node))
+            pop=[route[0] for route in self._ntpg.get(current_node)]
+            wei=[(route[1] + route[2])/2 for route in self._ntpg.get(current_node)]
+
+            print("Population:", pop)
+            print("Weights:", wei)
+            
+            next_node = random.choices(
+                population=pop, # the list to pick stuff out from in this case the ip of the next possible nodes
+                weights=wei, # AVG OF BOTH ROOT AND USER
+                k=1 # number of sample to pick from population
+            )[0]
+
             self._current_attacker_node = next_node
             print("Next node to attempt attack:", next_node)
+            print(self._ntpg[next_node])
 
         else:
             print("No more possible routes, exit the loop. State vector after the attack:", self._state)

@@ -42,7 +42,7 @@ import keras
 
 import pandas as pd
  
-from visualizer import visualize_steps
+from visualizer import visualize_steps_manual
 
 # Outline the difference from cartpole:
 # Policy
@@ -91,12 +91,29 @@ class DoubleDeepQLearning:
 
         print(env)
 
+        # DIMENSION INITIALIZATION
+
         # state dimension 
         self.stateDimension = env.K
         print("STATE DIMENSION --- AGENT TRAINING",self.stateDimension)
+        
         # action dimension k!/(k-m)! (07/12/2023 - different permutation problem)
         self.actionDimension = factorial(env.K) / factorial(env.K - env.M)
         print("ACTION DIMENSION --- AGENT TRAINING",self.actionDimension)
+
+        # epss dimension
+        # epss = ma tran EPSS size K*K 
+        # => tinh trung binh epss cua tung canh => tao ma tran nxn => tai moi vi tri (k, l) cua ma tran => epss(k, l) = trung binh epss cua canh (k, l)
+        self.epssDimension = env.K * env.K
+        print("EPSS DIMENSION --- AGENT TRAINING",self.epssDimension)
+
+        # ntpg dimension
+        # ntpg = ma tran ntpg size K*K
+        # => tao ma tran nxn => tai moi vi tri (k, l) cua ma tran => ntpg(k, l) = 1 neu co canh tu k den l, nguoc lai = 0
+        self.ntpgDimension = env.K * env.K
+        print("NTPG DIMENSION --- AGENT TRAINING",self.ntpgDimension)
+
+
         # this is the maximum size of the replay buffer
         self.replayBufferSize=300
         # this is the size of the training batch that is randomly sampled from the replay buffer
@@ -209,6 +226,7 @@ class DoubleDeepQLearning:
         model.add(Dense(64, activation='relu'))
         model.add(Dense(self.actionDimension, activation='linear'))
         
+        
         # use mean squared error as the loss function
         # original used a custom loss one, but for this case im not sure
         model.compile(loss=DoubleDeepQLearning.ddqn_loss_fn, optimizer=RMSprop(), metrics = ['accuracy'])
@@ -283,6 +301,9 @@ class DoubleDeepQLearning:
                 print("Patroling until either nicr or nifr got attacked - end episode")
 
                 # select the action based on the epsilon-greedy approach
+
+                # Fix this to change the state to not only the observation but additional epss and ntpg matrices - 27/03/2024
+
                 print("observed state: ",currentState.observation)
                 action = self.selectAction(currentState.observation.reshape(1, -1), episode)
                 print("Action selected: ",action)
@@ -346,10 +367,16 @@ class DoubleDeepQLearning:
                 # stateCount = stateCount + 1
 
             # Visualize the steps
-            # visualize_steps(steps, your_nodes_list, your_edges_list, 'images', 'movie.gif', episode)
+            print("Your edges list: ", your_edges_list)
+            # import os
+            # os.system("pause")
+            # print("steps: ", steps)
+            # import os
+            # os.system("pause")
+            # visualize_steps_manual(steps, your_nodes_list, your_edges_list, 'images', 'movie.gif', episode)
 
             # Append the data to the DataFrame
-            data = data.append({'steps': steps, 'nodes': your_nodes_list, 'edges': your_edges_list, 'episode': episode}, ignore_index=True)
+            # data = data.append({'steps': steps, 'nodes': your_nodes_list, 'edges': your_edges_list, 'episode': episode}, ignore_index=True)
             
 
             print("------------------------- END LOOP HERE -------------------------")

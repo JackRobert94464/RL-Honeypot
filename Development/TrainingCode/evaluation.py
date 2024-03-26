@@ -13,7 +13,7 @@ import numpy as np
 
 import misc
 
-import visualizer
+from visualizer import visualize_steps
 
 # Load the trained model
 trained_model = tf.keras.models.load_model("RL_Honeypot_trained_model_temp.keras", custom_objects={'loss': DoubleDeepQLearning.ddqn_loss_fn})
@@ -62,22 +62,33 @@ your_edges_list = [(node, edge[0]) for node in ntpg for edge in ntpg[node]]
 # Create the model
 ddqn_agent = DoubleDeepQLearning(eval_env, gamma, epsilon, eval_episodes, normal_nodes, total_permutations)
 
-for _ in range(eval_episodes):
+# Create a DataFrame to store the visualization data
+visualization_data = pd.DataFrame(columns=['episode', 'steps', 'step_entities'])
+
+for episode in range(eval_episodes):
     episode_reward = 0
     episode_steps = 0
 
     print("------------------------------------------------------------------------------------------------------------------------")
-    print("Evaluating episode number: ", eval_episodes)
+    print("Evaluating episode number: ", episode)
     print("------------------------------------------------------------------------------------------------------------------------")
+
+    # Create a temporary list to hold the step entities
+    steps_entity = []
 
     # Run the evaluation episode
     while not eval_time_step.is_last():
+
         # Get the action from the trained model
-        action = ddqn_agent.selectActionEval(eval_time_step.observation, _, trained_model)
+        action = ddqn_agent.selectActionEval(eval_time_step.observation, episode, trained_model)
         print("ACTION SELECTED:", action)
         # Take a step in the environment
         eval_time_step = eval_env.step(action)
         print("EVAL TIME STEP:", eval_time_step)
+
+        steps_entity.append({'attacker_node': eval_env._current_attacker_node, 
+                              'nifr_nodes': [list(eval_env._ntpg.keys())[node_index-1] for node_index in eval_env.nifr_nodes], 
+                              'nicr_nodes': [list(eval_env._ntpg.keys())[node_index-1] for node_index in eval_env.nicr_nodes],})
 
         # Update the episode reward and steps
         episode_reward += eval_time_step.reward
@@ -85,12 +96,25 @@ for _ in range(eval_episodes):
         episode_steps += 1
         print("EPISODE STEPS:", episode_steps)
 
+        # Append the evaluation data to the visualization DataFrame
+        visualization_data = visualization_data._append({'episode': episode, 'steps': episode_steps, 'step_entities': steps_entity}, ignore_index=True)
+
+        # clearing the step entity list after each step
+        steps_entity = []
+
     # Append the episode reward and steps to the evaluation lists
     eval_rewards.append(episode_reward)
     eval_steps.append(episode_steps)
 
     # Reset the environment for the next episode
     eval_time_step = eval_env.reset()
+
+
+# Save the visualization data to a CSV file
+visualization_data.to_csv('visualization_data.csv', index=False)
+
+# Visualize the steps
+visualize_steps(your_nodes_list, your_edges_list, 'visualization_data.csv')
 
 # Calculate the average reward and steps per episode
 avg_eval_reward = np.mean(eval_rewards)

@@ -30,7 +30,7 @@ from gym import spaces
 # from NetworkHoneypotEnv import NetworkHoneypotEnv
 
 # import test env
-from NetworkHoneypotEnvTest01 import NetworkHoneypotEnv
+from NetworkHoneypotEnv import NetworkHoneypotEnv
 
 # import the agent
 from ddqn_agent_headless import DoubleDeepQLearning
