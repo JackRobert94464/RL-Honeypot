@@ -41,7 +41,7 @@ Hoan thanh not cang som cang tot:
 Tiep tuc thuc hien toi truoc khi bao cao:
 
     Tim cach thay the input cho hai cai network thanh ba ma tran (hoac nhieu hon)
-    
+    => 26/03 Da design duoc so do tam thoi cua network moi bang code (ddqn_network_test_3), chua biet truyen input vao nhu the nao
 
     Thay the cai input (chac mat kha kha thoi gian)
 
@@ -54,3 +54,7 @@ Kho khan + thac mac:
     Moi model chi chay duoc voi 1 so node nhat dinh => can qua nhieu model cho cac tinh huong khac nhau?
 
     Lam the nao de chi su dung 1 model du doan duoc nhieu so luong node (mang neuron)?
+
+    Dau ra qua lon (10 node K và 5 node M cho ra 30240 to hop hanh dong co the thuc hien)=> can thu nho lai
+
+    => Lam the nao de toi uu cach luu tru va truy xuat hanh dong trong bang Q-values (DDQN)
