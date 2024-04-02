@@ -1,4 +1,4 @@
-mang 10 node 3 honeypot (Dat cang it cang tot - bai toan phan bo honeypot tren tai nguyen gioi han)
+mang 10 node 3 honeypot (Dat cang it cang tot - bai toan phan bo honeypot tren tai nguyen gioi han) ->  Giai quyet vu out of bound for axis
 
 => PPO co the giai quyet van de action space lon
 

@@ -81,54 +81,63 @@ htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg.csv")
 
 
 
-deception_nodes = misc.random_deception_amount(ntpg)
-normal_nodes = misc.count_nodes(ntpg)
-first_parameter = misc.calculate_first_parameter(deception_nodes, normal_nodes)
 
-print("First parameter:", first_parameter)
-print("Deception nodes:", deception_nodes)
+normal_nodes = misc.count_nodes(ntpg)
+
 print("Normal nodes:", normal_nodes)
 
 # os.system("pause")
 
-env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, htpg)
+# Loop over deception nodes from 1 to normal_nodes/2
+for i in range(1, normal_nodes//2 + 1):
 
-# os.system("pause")
-# exit(0)
+        deception_nodes = i
+        # Rest of your code here
+
+        first_parameter = misc.calculate_first_parameter(deception_nodes, normal_nodes)
+
+        print("First parameter:", first_parameter)
+        # print("Deception nodes:", deception_nodes)
+
+        # Create the environment
+        env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, htpg)
+
+        # os.system("pause")
+        # exit(0)
 
 
-# Create the environment. Since it was built using PyEnvironment, we need to wrap it in a TFEnvironment to use with TF-Agents
-tf_env = tf_py_environment.TFPyEnvironment(env)
+        # Create the environment. Since it was built using PyEnvironment, we need to wrap it in a TFEnvironment to use with TF-Agents
+        tf_env = tf_py_environment.TFPyEnvironment(env)
 
 
-timestep = tf_env.reset()
-rewards = []
-numberEpisodes = 150
+        timestep = tf_env.reset()
+        rewards = []
+        numberEpisodes = 500
 
 
-# calculate the number of possible combinations
-total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
+        # calculate the number of possible combinations
+        total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
 
-# create an object
-LearningQDeep=DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations)
-# run the learning process
-LearningQDeep.trainingEpisodes()
-# get the obtained rewards in every episode
-LearningQDeep.sumRewardsEpisode
+        # create an object
+        LearningQDeep=DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations)
+        # run the learning process
+        LearningQDeep.trainingEpisodes()
+        # get the obtained rewards in every episode
+        LearningQDeep.sumRewardsEpisode
 
-print(rewards)
+        print(rewards)
 
-# num_steps = np.sum(steps)
-# avg_length = np.mean(steps)
-# avg_reward = np.mean(rewards)
-# max_reward = np.max(rewards)
-# max_length = np.max(steps)
+        # num_steps = np.sum(steps)
+        # avg_length = np.mean(steps)
+        # avg_reward = np.mean(rewards)
+        # max_reward = np.max(rewards)
+        # max_length = np.max(steps)
 
-# print('num_episodes:', numberEpisodes, 'num_steps:', num_steps)
-# print('avg_length', avg_length)
-# print('max_length', max_length)
-# print('avg_length', avg_length, 'avg_reward:', avg_reward)
-# print('max_length', max_length, 'max_reward:', max_reward)
+        # print('num_episodes:', numberEpisodes, 'num_steps:', num_steps)
+        # print('avg_length', avg_length)
+        # print('max_length', max_length)
+        # print('avg_length', avg_length, 'avg_reward:', avg_reward)
+        # print('max_length', max_length, 'max_reward:', max_reward)
 
 
 

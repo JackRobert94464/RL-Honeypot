@@ -124,6 +124,8 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # 20/12/2023 - fixed example, will be change later 
         # TODO: Dynamically locate this entrypoint
         self._current_attacker_node = list(ntpg.keys())[2]
+        print("Initial Entrypoint:", self._current_attacker_node)
+        # os.system('pause')
 
         #print(self.get_info())
 
@@ -188,6 +190,8 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
     def __is_action_valid(self, action):
         # Check if the action is a valid matrix of size m*k with values 0 or 1
         # Return True if the action is valid, False otherwise
+        if action is None:
+            return False
         
         # Check if the action has the correct shape
         if action.shape != (self.M, self.K):

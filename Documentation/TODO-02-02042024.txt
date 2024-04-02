@@ -1,0 +1,43 @@
+Pending main tasks to date:
+
+    Tim cach thay the input cho hai cai network thanh ba ma tran (hoac nhieu hon)
+
+    Thay the cai input (chac mat kha kha thoi gian)
+
+    Ap hai model con lai vao
+
+    Train -> xuat ket qua -> thong ke lai
+
+    cho truong lam code xong tich hop vao
+
+    Luu mot ban attacker cu (random) de thuc hien so sanh voi attacker moi (weighted random)
+
+
+
+Hoan thanh not cang som cang tot: 
+
+    mang 10 node 3 honeypot (Dat cang it cang tot - bai toan phan bo honeypot tren tai nguyen gioi han) ->  Giai quyet vu out of bound for axis
+
+    - Luu y: CO DINH ENTRYPOINT (Da co dinh)
+
+    => Phat hien 1: neu huan luyen mang network voi so decoy thap hon, qua trinh evaluation co the dien ra bth ma ko bi out of bound
+
+    => Can huan luyen cho mang neuron voi cac truong hop decoy it
+
+    Tinh dsp trong 2 TH: random attacker voi random weight attacker
+
+
+
+
+
+
+Tiep tuc thuc hien toi truoc khi bao cao:
+
+    => PPO co the giai quyet van de action space lon
+
+    gioi han vi tri entrypoint cua attacker
+    
+
+Kho khan + thac mac:
+
+    

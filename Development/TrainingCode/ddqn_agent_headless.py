@@ -98,13 +98,13 @@ class DoubleDeepQLearning:
         self.actionDimension = factorial(env.K) / factorial(env.K - env.M)
         # print("ACTION DIMENSION --- AGENT TRAINING",self.actionDimension)
         # this is the maximum size of the replay buffer
-        self.replayBufferSize=300
+        self.replayBufferSize=500
         # this is the size of the training batch that is randomly sampled from the replay buffer
-        self.batchReplayBufferSize=100
+        self.batchReplayBufferSize=200
 
         # number of training episodes it takes to update the target network parameters
         # that is, every updateTargetNetworkPeriod we update the target network parameters
-        self.updateTargetNetworkPeriod=10
+        self.updateTargetNetworkPeriod=5
 
         # this is the counter for updating the target network 
         # if this counter exceeds (updateTargetNetworkPeriod-1) we update the network 
@@ -518,7 +518,7 @@ class DoubleDeepQLearning:
 
         # Epsilon-greedy approach
         randomValue = np.random.random()
-        if episode > 200:
+        if episode > 20:
             self.epsilon = 0.999 * self.epsilon
 
             if randomValue < self.epsilon:

@@ -82,13 +82,17 @@ for episode in range(eval_episodes):
         # Get the action from the trained model
         action = ddqn_agent.selectActionEval(eval_time_step.observation, episode, trained_model)
         print("ACTION SELECTED:", action)
+        # Check if the action is None
+        if action is None:
+            print("No action selected. Skipping this step.")
+            
         # Take a step in the environment
         eval_time_step = eval_env.step(action)
         print("EVAL TIME STEP:", eval_time_step)
 
         steps_entity.append({'attacker_node': eval_env._current_attacker_node, 
-                              'nifr_nodes': [list(eval_env._ntpg.keys())[node_index-1] for node_index in eval_env.nifr_nodes], 
-                              'nicr_nodes': [list(eval_env._ntpg.keys())[node_index-1] for node_index in eval_env.nicr_nodes],})
+                      'nifr_nodes': [list(eval_env._ntpg.keys())[node_index-1] for node_index in eval_env.nifr_nodes], 
+                      'nicr_nodes': [list(eval_env._ntpg.keys())[node_index-1] for node_index in eval_env.nicr_nodes],})
 
         # Update the episode reward and steps
         episode_reward += eval_time_step.reward

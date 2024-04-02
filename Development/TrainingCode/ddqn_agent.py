@@ -383,7 +383,7 @@ class DoubleDeepQLearning:
 
 
         # Save the DataFrame to a CSV file
-        data.to_csv('sim_graph.csv', index=False)
+        # data.to_csv('sim_graph.csv', index=False)
 
 
         # tbh i dont even know if summing reward here is neccessary
@@ -429,6 +429,7 @@ class DoubleDeepQLearning:
         else:
             print("STATE TO PREDICT:", state)
             Qvalues = self.mainNetwork.predict(state)
+            print("Size of Q-values:", Qvalues.shape)
             print("QVALUES:", Qvalues)
 
             # Get the index of the maximum Q-value
@@ -442,6 +443,10 @@ class DoubleDeepQLearning:
             return action_matrix
 
     def index_to_action(self, index):
+        # Check if the index is within the range of possible actions
+        if index >= self.env.K ** self.env.M:
+            raise ValueError(f"Index {index} is out of bounds for total possible actions {self.env.K ** self.env.M}")
+
         # Initialize the action matrix with zeros
         action_matrix = np.zeros((self.env.M, self.env.K), dtype=np.int32)
         print("action matrix to be indexed:", action_matrix)
@@ -457,8 +462,6 @@ class DoubleDeepQLearning:
 
         print("index to action matrix:", action_matrix)
         return action_matrix
-
-            # return action_matrix
 
     ###########################################################################
     #   END - selectAction function
@@ -594,7 +597,7 @@ class DoubleDeepQLearning:
 
         # Epsilon-greedy approach
         randomValue = np.random.random()
-        if episode > 200:
+        if episode > 20:
             self.epsilon = 0.999 * self.epsilon
 
             if randomValue < self.epsilon:
@@ -610,6 +613,7 @@ class DoubleDeepQLearning:
         else:
             print("STATE TO PREDICT:", state)
             Qvalues = model.predict(state)
+            print("Size of Q-values:", Qvalues.shape)
             print("QVALUES:", Qvalues)
 
             # Get the index of the maximum Q-value
