@@ -22,7 +22,7 @@ Hoan thanh not cang som cang tot:
 
     => Phat hien 1: neu huan luyen mang network voi so decoy thap hon, qua trinh evaluation co the dien ra bth ma ko bi out of bound
 
-    => Can huan luyen cho mang neuron voi cac truong hop decoy it
+    => Can huan luyen cho mang neuron voi cac truong hop decoy it -> Dang tien hanh huan luyen tu 1 decoy -> K/2 decoy
 
     Tinh dsp trong 2 TH: random attacker voi random weight attacker
 
@@ -35,7 +35,7 @@ Tiep tuc thuc hien toi truoc khi bao cao:
 
     => PPO co the giai quyet van de action space lon
 
-    gioi han vi tri entrypoint cua attacker
+    
     
 
 Kho khan + thac mac:

@@ -16,7 +16,7 @@ import misc
 from visualizer import visualize_steps
 
 # Load the trained model
-trained_model = tf.keras.models.load_model("RL_Honeypot_trained_model_temp.keras", custom_objects={'loss': DoubleDeepQLearning.ddqn_loss_fn})
+trained_model = tf.keras.models.load_model(".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_weighted_attacker_1to5_decoy.keras", custom_objects={'loss': DoubleDeepQLearning.ddqn_loss_fn})
 
 # Load the NTPG and HTPG dictionaries
 ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_eval.csv")
