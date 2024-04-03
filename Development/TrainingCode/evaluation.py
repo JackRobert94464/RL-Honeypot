@@ -12,15 +12,24 @@ import tensorflow as tf
 import numpy as np
 
 import misc
+import os
 
 from visualizer import visualize_steps
+import ddqn_dsp_visualizer
 
 # Load the trained model
-trained_model = tf.keras.models.load_model(".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_weighted_attacker_1to5_decoy.keras", custom_objects={'loss': DoubleDeepQLearning.ddqn_loss_fn})
+if os.name == 'nt':  # If the operating system is Windows
+    trained_model = tf.keras.models.load_model(".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_weighted_attacker_1to5_decoy_win.keras", custom_objects={'loss': DoubleDeepQLearning.ddqn_loss_fn})
+else:  # For other operating systems like Linux
+    trained_model = tf.keras.models.load_model("./TrainedModel/weighted_random_attacker/RL_Honeypot_weighted_attacker_1to5_decoy_linux.keras", custom_objects={'loss': DoubleDeepQLearning.ddqn_loss_fn})
 
 # Load the NTPG and HTPG dictionaries
-ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_eval.csv")
-htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg_eval.csv")
+if os.name == 'nt':  # If the operating system is Windows
+    ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_eval.csv")
+    htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg_eval.csv")
+else:  # For other operating systems like Linux
+    ntpg = misc.create_dictionary_ntpg("./Development/TPG-Data/ntpg_eval.csv")
+    htpg = misc.create_dictionary_htpg("./Development/TPG-Data/htpg_eval.csv")
 
 # Load the topology param from TPGs
 deception_nodes = misc.get_deception_nodes()
@@ -65,6 +74,16 @@ ddqn_agent = DoubleDeepQLearning(eval_env, gamma, epsilon, eval_episodes, normal
 # Create a DataFrame to store the visualization data
 visualization_data = pd.DataFrame(columns=['episode', 'steps', 'step_entities'])
 
+# Create a list to store step count every 50 episodes
+step_globalcounter = []
+
+# Create a list to store dsp every 50 episodes
+dsp_globalcounter = []
+
+step_counter = 0
+episodeWon = 0
+
+
 for episode in range(eval_episodes):
     episode_reward = 0
     episode_steps = 0
@@ -106,12 +125,41 @@ for episode in range(eval_episodes):
         # clearing the step entity list after each step
         steps_entity = []
 
+    if episode_reward > 0:
+        episodeWon += 1
+
+    # add the step count to the global step counter
+    step_counter += episode_steps
+    
+    
+    
+    # if episode is a multiple of 50, append step count and calculate dsp
+    if episode % 2 == 0:
+        step_globalcounter.append(step_counter)
+        print("episode Won: ", episodeWon)
+        print("episode: ", episode)
+        dsp = episodeWon / (episode+1)
+        print("Defense Success Probability: ", dsp)
+        
+        # os.system("pause")
+        dsp_globalcounter.append(dsp)
+    
+    
+    
+    
+
     # Append the episode reward and steps to the evaluation lists
     eval_rewards.append(episode_reward)
     eval_steps.append(episode_steps)
 
     # Reset the environment for the next episode
     eval_time_step = eval_env.reset()
+
+
+
+# Visualize the Defense Success Probability (DSP) of our method
+ddqn_dsp_visualizer.ddqn_dsp_visual(step_globalcounter, dsp_globalcounter)
+
 
 
 # Save the visualization data to a CSV file
@@ -146,6 +194,14 @@ print("Total Steps:", np.sum(eval_steps))
 print("Steps per Episode:", eval_steps)
 print("Average Reward per Episode:", avg_eval_reward)
 print("Average Steps per Episode:", avg_eval_steps)
+
+# Calculate the Defense Success Probability (DSP)
+num_successful_defense = sum(reward > 0 for reward in eval_rewards)
+dsp = (num_successful_defense / eval_episodes)
+
+print("Defense Success Probability (DSP):", dsp)
+
+
 
 
 # Plot the rewards and steps per episode

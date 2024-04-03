@@ -330,13 +330,39 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # Check if the maximum number of steps has been reached
         if self.current_step >= self.maxSteps:
             # If yes, end the episode and return the termination state and reward
-            print("Maximum number of steps reached, end the episode, agent lose")
-            self._episode_ended = True
             reward = -1
-            return ts.termination(np.array([self._state], dtype=np.int32), reward)
+            print("Maximum number of steps reached, end the episode, agent lose")
+            
+            return ts.termination(np.array([self._state], dtype=np.int32), reward=reward)
+            self._episode_ended = True
+        
+        # Check if the attacker has reached a nicr or a fake resource node
+        if self.__is_nicr_attacked(self.nicr_nodes):
+            # If yes, end the episode and return the termination state and reward
+            reward = -1
+            
+            print("Attacker reached nicr, end the episode")
+            print("Current node attacker residing in:", self._current_attacker_node)
+            print("nicr nodes:", self.nicr_nodes)
+            return ts.termination(np.array([self._state], dtype=np.int32), reward=reward)
+            self._episode_ended = True
+            
+        if self.__is_nifr_attacked(self.nifr_nodes):
+            # If yes, end the episode and return the termination state and reward
+            reward = 1
+            
+            print("Attacker reached nifr, end the episode")
+            print("Current node attacker residing in:", self._current_attacker_node)
+            print("nifr nodes:", self.nifr_nodes)
+            return ts.termination(np.array([self._state], dtype=np.int32), reward=1)
+            self._episode_ended = True
         
         # Check if the action is valid
         if self.__is_action_valid(action):
+            
+            # 04/04/2024 - Move the two end conditions to the top of the step function
+            # The result actions start to get more variance, which i think is positive changes
+            
             # If yes, update the matrix for the defender's view with the action
             self._matrix = action
 
@@ -346,36 +372,19 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
             # Simulate the attacker's move based on the NTPG and HTPG
             self.__attacker_move_step()
             
-            # Check if the attacker has reached a nicr or a fake resource node
-            if self.__is_nicr_attacked(self.nicr_nodes):
-                # If yes, end the episode and return the termination state and reward
-                self._episode_ended = True
-                print("Attacker reached nicr, end the episode")
-                print("Current node attacker residing in:", self._current_attacker_node)
-                print("nicr nodes:", self.nicr_nodes)
-                reward = -1
-                return ts.termination(np.array([self._state], dtype=np.int32), reward)
-            if self.__is_nifr_attacked(self.nifr_nodes):
-                # If yes, end the episode and return the termination state and reward
-                self._episode_ended = True
-                print("Attacker reached nifr, end the episode")
-                print("Current node attacker residing in:", self._current_attacker_node)
-                print("nifr nodes:", self.nifr_nodes)
-                reward = 1
-                return ts.termination(np.array([self._state], dtype=np.int32), reward)
-            else:
-                reward = 0
-                # Increment the step counter
-                self.current_step += 1
-                # If no, continue the episode and return the transition state and reward
-                return ts.transition(np.array([self._state], dtype=np.int32), reward)
+            reward = 0
+            # Increment the step counter
+            self.current_step += 1
+            # If no, continue the episode and return the transition state and reward
+            return ts.transition(np.array([self._state], dtype=np.int32), reward=0)
         else:
             # If no, end the episode and return the termination state and reward
+            reward = -1
             print("Invalid Action:", action)
             print("Invalid action, end the episode")
+            
+            return ts.termination(np.array([self._state], dtype=np.int32), reward=reward)
             self._episode_ended = True
-            reward = -1
-            return ts.termination(np.array([self._state], dtype=np.int32), reward)
         
           
 #environment = NetworkHoneypotEnv(10, 3, 7, ntpg, htpg)

@@ -26,6 +26,13 @@ Hoan thanh not cang som cang tot:
 
     Tinh dsp trong 2 TH: random attacker voi random weight attacker
 
+    => lam truoc 1 so do dsp: eval cho no chay n step roi dung lai => dat moc limit
+    => cu khoang 50 episode trich so step + tinh diem dsp cho 50 episode do = so episode co reward > 1 / tong so episode
+    => so step | dsp tai step do
+
+    => Phan FNR FPR se cho Truong hoan thanh not mang, sau do trien khai va so sanh giua cac FNR va FPR khac nhau
+    
+
 
 
 

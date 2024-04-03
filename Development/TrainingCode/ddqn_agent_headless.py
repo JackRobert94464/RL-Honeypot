@@ -9,7 +9,7 @@
 # print("------------------------------------------------------------------------------------------------------------------------")
 
 
-
+import os
 
 
 
@@ -98,9 +98,9 @@ class DoubleDeepQLearning:
         self.actionDimension = factorial(env.K) / factorial(env.K - env.M)
         # print("ACTION DIMENSION --- AGENT TRAINING",self.actionDimension)
         # this is the maximum size of the replay buffer
-        self.replayBufferSize=500
+        self.replayBufferSize=80
         # this is the size of the training batch that is randomly sampled from the replay buffer
-        self.batchReplayBufferSize=200
+        self.batchReplayBufferSize=20
 
         # number of training episodes it takes to update the target network parameters
         # that is, every updateTargetNetworkPeriod we update the target network parameters
@@ -114,12 +114,26 @@ class DoubleDeepQLearning:
 
         # this sum is used to store the sum of rewards obtained during each training episode
         self.sumRewardsEpisode=[]
+        
+        # number of episode won
+        # TODO: replace this later
+        self.episodeWon = 0
 
         # replay buffer
         self.replayBuffer=deque(maxlen=self.replayBufferSize)
 
         # initialize visit(s,a)
         self.visitCounts = 0
+        
+        # initialize step counter
+        # Counter for the number of steps each episode takes
+        self.step_counter = 0
+        
+        # Create a list to store step count every 50 episodes
+        self.step_globalcounter = []
+
+        # Create a list to store dsp every 50 episodes
+        self.dsp_globalcounter = []
 
         # this list is used in the cost function to select certain entries of the 
         # predicted and true sample matrices in order to form the loss
@@ -253,14 +267,22 @@ class DoubleDeepQLearning:
 
             # list that store rewards in each episode to keep track of convergence
             rewardsEpisode=[]
+            
+            # reset the step count for the new episode
+            step_count = 0
 
             print("------------------------------------------------------------------------------------------------------------------------")
             print("Simulating episode number: ",episode)
             print("------------------------------------------------------------------------------------------------------------------------")
 
-            print("Current state: ", currentState.observation)
 
             while not self.env.is_last():
+                          
+                print("Current state: ", currentState.observation)
+                print("Current state reward: ", currentState.reward)
+                # os.system("pause")
+                    
+                
                 action = self.selectAction(currentState.observation.reshape(1, -1), episode)
                 print("Action selected: ",action)
 
@@ -269,10 +291,18 @@ class DoubleDeepQLearning:
                               'nifr_nodes': [list(self.env._ntpg.keys())[node_index-1] for node_index in self.env.nifr_nodes], 
                               'nicr_nodes': [list(self.env._ntpg.keys())[node_index-1] for node_index in self.env.nicr_nodes],})
 
-                (discount, nextStateObservation, reward, terminalState) = (currentState.discount, nextState.observation, currentState.reward, currentState.is_last())
+                # be careful: reward here have to be the reward of the next state because the reward of the current state is already obtained
+                # This result in the reward of, e.g, pre-final state is 0 while in fact the code gonna stop because it find that final state is already the next step
+                (discount, nextStateObservation, reward, terminalState) = (currentState.discount, nextState.observation, nextState.reward, self.env.is_last())
+                           
 
                 print("------------------- REWARD OF THIS ACTION --------------------------: ",reward)
                 rewardsEpisode.append(reward)
+                if reward == 1:
+                    self.episodeWon += 1
+
+                # increment the step count
+                step_count += 1
 
                 if terminalState:
                     print("Terminal state reached, end episode")
@@ -293,29 +323,65 @@ class DoubleDeepQLearning:
                  
                 currentState=nextState
 
-            # visualize_steps(steps, your_nodes_list, your_edges_list, 'images', f'movie_{episode}.gif', episode)
-            
-            # print("Nodes list: ", your_nodes_list)
-            # print("Edges list: ", your_edges_list)
-            # print("STEPS:", steps)
+            # add the step count to the global step counter
+            self.step_counter += step_count
 
-            # data = data._append({'attacker_node': steps[-1]['attacker_node'], 
-            #                    'nifr_nodes': steps[-1]['nifr_nodes'], 
-            #                    'nicr_nodes': steps[-1]['nicr_nodes'], 
-            #                    'nodes': your_nodes_list, 
-            #                   'edges': your_edges_list, 
-            #                  'episode': episode}, ignore_index=True)
+            # if episode is a multiple of 50, append step count and calculate dsp
+            if episode % 2 == 0:
+                self.step_globalcounter.append(self.getStepCount())
+                print("episode Won: ", self.episodeWon)
+                print("episode: ", episode)
+                dsp = self.episodeWon / (episode+1)
+                print("Defense Success Probability: ", dsp)
+                
+                # os.system("pause")
+                self.dsp_globalcounter.append(dsp)
+                
 
-            # steps = []
-
-        # data.to_csv('sim_graph.csv', index=False)
 
         print("Sum of rewards {}".format(np.sum(rewardsEpisode)))        
         self.sumRewardsEpisode.append(np.sum(rewardsEpisode)) 
 
+
                
     ###########################################################################
     #   END - trainingEpisodes function
+    ###########################################################################
+    
+    ###########################################################################
+    #   START - step counting function for calculating dsp
+    #   Status: Active
+    ###########################################################################
+    
+    def getStepCount(self):
+        return self.step_counter
+    
+    ###########################################################################
+    #   END - step counting function for calculating dsp
+    ###########################################################################
+    
+    ###########################################################################
+    #   START - step_globalcounter retrieval function for calculating dsp
+    #   Status: Active
+    ###########################################################################
+    
+    def getGlobalStepCount(self):
+        return self.step_globalcounter
+    
+    ###########################################################################
+    #   END - step counting function for calculating dsp
+    ###########################################################################
+    
+    ###########################################################################
+    #   START - dsp_globalcounter retrieval function for calculating dsp
+    #   Status: Active
+    ###########################################################################
+    
+    def getGlobalDSPCount(self):
+        return self.dsp_globalcounter
+    
+    ###########################################################################
+    #   END - step counting function for calculating dsp
     ###########################################################################
 
     ###########################################################################
@@ -491,6 +557,7 @@ class DoubleDeepQLearning:
                 # copy the weights to targetNetwork
                 self.targetNetwork.set_weights(self.mainNetwork.get_weights())        
                 print("Target network updated!")
+                # os.system("pause")
                 print("Counter value {}".format(self.counterUpdateTargetNetwork))
                 # reset the counter
                 self.counterUpdateTargetNetwork=0
