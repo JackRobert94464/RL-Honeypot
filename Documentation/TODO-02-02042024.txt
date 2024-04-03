@@ -26,6 +26,8 @@ Hoan thanh not cang som cang tot:
 
     Tinh dsp trong 2 TH: random attacker voi random weight attacker
 
+    => lam truoc 1 so do dsp: luyen cho no chay n step roi dung lai => dat moc limit
+
 
 
 

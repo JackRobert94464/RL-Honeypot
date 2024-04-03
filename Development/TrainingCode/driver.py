@@ -74,9 +74,12 @@ htpg = {'192.168.1.3': [('Apache', 'CVE-2014-6271', 0.9756, ('192.168.4.3', 'Roo
 '''
 
 
-ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg.csv")
-# os.system("pause")
-htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg.csv")
+if os.name == 'nt':  # If the operating system is Windows
+        ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg.csv")
+        htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg.csv")
+else:  # For other operating systems like Linux
+        ntpg = misc.create_dictionary_ntpg("./Development/TPG-Data/ntpg.csv")
+        htpg = misc.create_dictionary_htpg("./Development/TPG-Data/htpg.csv")
 
 
 
@@ -138,14 +141,16 @@ for i in range(1, normal_nodes//2 + 1):
         # print('max_length', max_length)
         # print('avg_length', avg_length, 'avg_reward:', avg_reward)
         # print('max_length', max_length, 'max_reward:', max_reward)
-
+        
+        
+        # save the model, this is important, since it takes long time to train the model 
+        # and we will need model in another file to visualize the trained model performance
+        LearningQDeep.mainNetwork.save("RL_Honeypot_trained_model_temp.keras")
 
 
 #  summarize the model
 LearningQDeep.mainNetwork.summary()
-# save the model, this is important, since it takes long time to train the model 
-# and we will need model in another file to visualize the trained model performance
-LearningQDeep.mainNetwork.save("RL_Honeypot_trained_model_temp.keras")
+
 
 
 

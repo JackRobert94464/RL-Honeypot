@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import numpy as np
 
+import os
+
 import misc
 
 from visualizer import visualize_steps
@@ -19,8 +21,16 @@ from visualizer import visualize_steps
 trained_model = tf.keras.models.load_model("RL_Honeypot_trained_model_temp.keras", custom_objects={'loss': DoubleDeepQLearning.ddqn_loss_fn})
 
 # Load the NTPG and HTPG dictionaries
-ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_eval.csv")
-htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg_eval.csv")
+if os.name == 'nt':  # If the operating system is Windows
+        ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_eval.csv")
+        htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg_eval.csv")
+else:  # For other operating systems like Linux
+        ntpg = misc.create_dictionary_ntpg("./Development/TPG-Data/ntpg_eval.csv")
+        htpg = misc.create_dictionary_htpg("./Development/TPG-Data/htpg_eval.csv")
+
+
+
+
 
 # Load the topology param from TPGs
 deception_nodes = misc.get_deception_nodes()
