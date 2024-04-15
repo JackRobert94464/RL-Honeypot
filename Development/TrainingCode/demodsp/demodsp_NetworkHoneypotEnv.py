@@ -92,7 +92,7 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # Define a list of numbers
         my_list = list(range(1, K+1))
 
-        # Generate all possible two-element combinations
+        # Generate all possible M-element combinations
         # Convert the resulting iterator to a list
         combinations = list(itertools.combinations(my_list, M))
 
@@ -489,7 +489,7 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
           
 
 
-'''
+
 #environment = NetworkHoneypotEnv(10, 3, 7, ntpg, htpg)
 #utils.validate_py_environment(environment, episodes=10)
 # Load the NTPG and HTPG dictionaries
@@ -500,8 +500,8 @@ if os.name == 'nt':  # If the operating system is Windows
     ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg.csv")
     htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg.csv")
 else:  # For other operating systems like Linux
-    ntpg = misc.create_dictionary_ntpg("./Development/TPG-Data/ntpg_eval.csv")
-    htpg = misc.create_dictionary_htpg("./Development/TPG-Data/htpg_eval.csv")
+    ntpg = misc.create_dictionary_ntpg("./Development/TPG-Data/ntpg.csv")
+    htpg = misc.create_dictionary_htpg("./Development/TPG-Data/htpg.csv")
 
 # Load the topology param from TPGs
 deception_nodes = misc.get_deception_nodes()
@@ -519,7 +519,8 @@ print(eval_env)
 if eval_env is not None:
     utils.validate_py_environment(eval_env, episodes=10)
 
-'''
+
+
 
 
 

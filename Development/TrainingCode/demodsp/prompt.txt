@@ -1,0 +1,71 @@
+this is my idea for a static deployment policy of decoy nodes
+
+Static policy: 21 scenarios =>  the size of the action space is 21. 
+=> Static policy = nCr => la bo tri tung action rieng le trong action space xong cho chay 50 episode eval
+=> Xong danh gia coi static policy nao la dsp cao nhat
+
+this is my idea for a dynamic random deployment policy of decoy nodes
+Random allocation: 10 scenarios, basically like the exploration phase of ddqn without the episode < 3
+
+this is a snippet of a action selection code based on the ddqn algo:
+###########################################################################
+    #   START - selectAction & mapping Q-values to action matrix function
+    #   Status: Active
+    #   https://stackoverflow.com/questions/30821071/how-to-use-numpy-random-choice-in-a-list-of-tuples
+    ###########################################################################
+    
+    def selectAction(self, state, episode):
+        
+        # Epsilon-greedy approach
+        randomValue = np.random.random()
+        if episode > 20:
+            self.epsilon = 0.999 * self.epsilon
+        
+        # Exploration phase
+        if episode < 3:
+            action_space_values = list(self.env.action_space().values())        
+            random_action = random.choice(action_space_values)
+            action = np.array(random_action, dtype=np.int32)
+            return action
+
+        # Exploitation phase
+        if randomValue < self.epsilon:
+            '''
+            Legacy
+            action = np.zeros((self.env.M, self.env.K))
+            for i in range(self.env.M):
+                action[i, np.random.randint(0, self.env.K)] = 1
+                # print("Deploying honeypot number", i, "in normal nodes:", action)
+            action = action.astype(np.int32)
+            # print("ACTION MATRIX exploit:", action)
+            return action
+            '''
+            action_space_values = list(self.env.action_space().values())
+            random_action = random.choice(action_space_values)
+            action = np.array(random_action, dtype=np.int32)
+            return action
+
+        else:
+            # print("STATE TO PREDICT:", state)
+            Qvalues = self.mainNetwork.predict(state)
+
+            # Get the index of the maximum Q-value
+            max_index = np.argmax(Qvalues)
+
+            # Map the index to an action matrix
+            action_matrix = self.index_to_action(max_index)
+
+            return action_matrix
+
+
+    def index_to_action(self, index):
+        
+        action_matrix = self.env.action_space()[index]
+
+        return action_matrix
+
+
+Note: apparently i have a self.env.action_space() which would return a dict that is the action space that 
+gonna look like {1:(2,3,4), 2:(3,4,5),...} the value of the dict is the doable actions (where to put decoy nodes)
+
+now based on my idea, how do i write a static policy  and dynamic random policy action selection function?

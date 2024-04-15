@@ -40,12 +40,16 @@ from math import factorial
 
 import keras
  
-from visualizer import visualize_steps
+from Development.TrainingCode.visualizer import visualize_steps
 
 import pandas as pd
 import time
 
 import random
+import threading
+import subprocess
+
+
 
 # Outline the difference from cartpole:
 # Policy
@@ -142,15 +146,24 @@ class DoubleDeepQLearning:
         
         # Create a list to store step count every 50 episodes
         self.step_globalcounter = []
+        
+        # Create a list to store international step count
+        self.step_internationalcounter = []
 
         # Create a list to store dsp every 50 episodes
         self.dsp_globalcounter = []
+        
+        # Create a list to store received evaluated dsp
+        self.eval_dsp = []
         
         # Clock Counter for time taken
         self.clock_counter = 0
         
         # Create a list to store time taken for training
         self.time_taken = []
+        
+        # Create a list to store time taken for each x000 steps while training
+        self.international_time_taken = []
 
         # this list is used in the cost function to select certain entries of the 
         # predicted and true sample matrices in order to form the loss
@@ -256,7 +269,7 @@ class DoubleDeepQLearning:
 
     ###########################################################################
     #   START - trainingEpisodes function
-    #   Status: Faulty Logic (552) - something wrong about the loop (fixed)
+    #   Status: Active
     ###########################################################################
     
     def trainingEpisodes(self):
@@ -354,9 +367,12 @@ class DoubleDeepQLearning:
 
             # add the step count to the global step counter
             self.step_counter += step_count
-
+            
+            '''
+            Legacy
             # if episode is a multiple of 50, append step count and calculate dsp
             if episode % 2 == 0:
+                
                 self.step_globalcounter.append(self.getStepCount())
                 print("episode Won: ", self.episodeWon)
                 print("episode: ", episode)
@@ -368,7 +384,43 @@ class DoubleDeepQLearning:
                 
                 # os.system("pause")
                 self.dsp_globalcounter.append(dsp)
+            '''
+            
                 
+            # if step_counter reach 2500, 5000, 7500, 10000, 20000, 30000
+            # TODO: make a list to store the limit
+            # For long training
+            if self.step_counter == 500 or self.step_counter == 1000 or self.step_counter == 1500 or self.step_counter == 2000 or self.step_counter == 2500 or self.step_counter == 3000:
+            # For short testing
+            # if self.step_counter == 25 or self.step_counter == 50 or self.step_counter == 75 or self.step_counter == 100 or self.step_counter == 200 or self.step_counter == 300:
+                
+                # Start a new subprocess to run evaldspdemo synchronously
+                process = subprocess.Popen(["E:\\DevStuff\\RL-Honeypot\\Scripts\\python.exe", "./Development/TrainingCode/demodsp/evaldspdemo.py"])
+                
+                # Wait for the evaluation script to finish and the file to be written
+                print("Waiting for Validation")
+                process.wait()
+
+                # Read the DSP score from the file
+                with open('dsp_score_temp.txt', 'r') as file:
+                    dsp_score = float(file.read().strip())
+                    self.eval_dsp.append(dsp_score)
+
+                
+                    
+                print("Received DSP from Evaluation: ", self.eval_dsp)
+                
+                                  
+                # Saving dsp and step_counter to international lists
+                self.step_internationalcounter.append(self.step_counter)
+                
+                # Add the current clock counter value to the time taken list
+                self.international_time_taken.append(self.clock_counter)
+                
+                
+        print("List of step at which to evaluate: ", self.step_internationalcounter)
+        print("List of retrieved DSP from evaluation: ", self.eval_dsp)  
+        # os.system("pause")      
 
         print("Sum of rewards {}".format(np.sum(rewardsEpisode)))        
         self.sumRewardsEpisode.append(np.sum(rewardsEpisode)) 
@@ -378,6 +430,43 @@ class DoubleDeepQLearning:
     ###########################################################################
     #   END - trainingEpisodes function
     ###########################################################################
+    
+    
+    
+    
+    
+    def getStepInternationalCounter(self):
+        return self.step_internationalcounter
+
+    def getEvalDSP(self):
+        return self.eval_dsp
+    
+    
+    
+    def getInternationalTimeTaken(self):
+        return self.international_time_taken
+    
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    ###########################################################################
+    #   START - Receive DSP from evaldspdemo function
+    #   Status: Active
+    ###########################################################################
+    def appendEvalDSP(self, eval_dsp):
+        self.eval_dsp.append(eval_dsp)
+    ###########################################################################
+    #   END - Receive DSP from evaldspdemo function
+    ###########################################################################
+    
+    
     
     ###########################################################################
     #   START - step counting function for calculating dsp
@@ -598,7 +687,6 @@ class DoubleDeepQLearning:
                 
                 
                 
-                
                 # this actually does not matter since we do not use all the entries in the cost function
                 outputNetwork[index]=QcurrentStateMainNetwork[index]
                 # print("Output network index: ",outputNetwork)
@@ -607,7 +695,7 @@ class DoubleDeepQLearning:
                 # print("Output network: ",outputNetwork)
              
             # here, we train the network
-            self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size = self.batchReplayBufferSize, verbose=1, epochs=100)
+            self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size = self.batchReplayBufferSize, verbose=0, epochs=100)
             print("Main network trained!")
              
             # after updateTargetNetworkPeriod training sessions, update the coefficients 
@@ -668,3 +756,39 @@ class DoubleDeepQLearning:
 
             # print("ACTION MATRIX exploit:", action_matrix)
             return action_matrix
+        
+        
+        
+    # TODO: change this into a general agent that can do both static and dynamic deployment
+    # and also do select action for all ddqn, sarsa and ppo    
+    # After the test, seperate each policy into its own file (loai bo nhung tham so init k
+    # hong can thiet)
+        
+    '''
+    Statically selecting action based on provided actionIndex
+    '''    
+    def selectActionStatic(self, actionIndex):
+        
+        # print("----------------------------------------------------------------------------------------------------------------------------------------------------")
+        # print("---------------------------------------- EVALUATING THE TRAINED MAIN NETWORK VIA STATIC DEPLOYMENT -------------------------------------------------")
+        # print("----------------------------------------------------------------------------------------------------------------------------------------------------")
+
+        # Exploration phase
+        action_space_values = list(self.env.action_space().values())
+        action = action_space_values[actionIndex]
+        action = np.array(action, dtype=np.int32)
+        return action
+        
+    '''
+    Randomly pick an action from the action space
+    '''    
+    def selectActionDynamicRandom(self):
+        # print("------------------------------------------------------------------------------------------------------------------------------")
+        # print("---------------------------------------- EVALUATING THE TRAINED MAIN NETWORK -------------------------------------------------")
+        # print("------------------------------------------------------------------------------------------------------------------------------")
+        
+        # Exploration phase
+        action_space_values = list(self.env.action_space().values())
+        random_action = random.choice(action_space_values)
+        action = np.array(random_action, dtype=np.int32)
+        return action

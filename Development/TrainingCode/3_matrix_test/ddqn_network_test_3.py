@@ -2,10 +2,12 @@ from keras.layers import Input, Dense, Concatenate
 from keras.models import Model
 from keras.optimizers import RMSprop
 
-import visualkeras
+# import visualkeras
 
-from ddqn_agent import DoubleDeepQLearning
+from ddqn_agent_3x_multi_input import DoubleDeepQLearning
+
 import misc
+import keras
 
 # observable = trang thai quan sat duoc (default input)
 # epss = ma tran EPSS size nxn 
@@ -22,6 +24,57 @@ class Network:
         self.epss_dimension = epss_dimension
         self.ntpg_dimension = ntpg_dimension
         self.action_dimension = action_dimension
+        
+        
+    ###########################################################################
+    # START - function for defining the loss (cost) function
+    # FIX THIS ASAP
+    # Status: FIX THIS ASAP
+    # INPUTS: 
+    #
+    # y_true - matrix of dimension (self.batchReplayBufferSize,2) - this is the target 
+    # y_pred - matrix of dimension (self.batchReplayBufferSize,2) - this is predicted by the network
+    # 
+    # - this function will select certain row entries from y_true and y_pred to form the output 
+    # the selection is performed on the basis of the action indices in the list  self.actionsAppend
+    # - this function is used in createNetwork(self) to create the network
+    #
+    # OUTPUT: 
+    #    
+    # - loss - watch out here, this is a vector of (self.batchReplayBufferSize,1), 
+    # with each entry being the squared error between the entries of y_true and y_pred
+    # later on, the tensor flow will compute the scalar out of this vector (mean squared error)
+    ###########################################################################    
+    
+    @keras.saving.register_keras_serializable()
+    def ddqn_loss_fn(y_true, y_pred):
+        # print("LOSS FUNCTION - Y_TRUE:", y_true)
+        s1, s2 = y_true.shape
+        # print("LOSS FUNCTION - S1 AND S2:", s1, s2)
+        # print("LOSS FUNCTION - ACTIONS APPEND:", actionsAppend)
+
+        # count the amount of actions in actionsAppend
+        countact = len(actionsAppend)
+        # print("LOSS FUNCTION - COUNTACT:", countact)
+
+
+        # Calculate the number of actions
+        num_actions = len(actionsAppend[0])
+
+        # Reshape indices to have shape (batch_size * num_actions, 2)
+        indices = np.zeros(shape=(s1 * num_actions, 2))
+        indices[:, 0] = np.repeat(np.arange(s1), num_actions)
+        indices[:, 1] = np.tile(np.arange(num_actions), s1)
+
+
+        loss = keras.losses.mean_squared_error(keras.backend.gather(y_true, indices=indices.astype(int)),
+                                            keras.backend.gather(y_pred, indices=indices.astype(int)))
+        return loss
+
+    ###########################################################################
+    #   END - of function my_loss_fn
+    ###########################################################################    
+
 
     def createNetwork(self):
         # Define input layers for each type of input data
@@ -56,7 +109,10 @@ class Network:
         print("Created network:", model.summary())
         
         return model
+    
+    
 
+'''
 
 # Load the NTPG and HTPG dictionaries
 ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_eval.csv")
@@ -80,4 +136,8 @@ action_dimension = total_permutations
 network = Network(observable_dimension, epss_dimension, ntpg_dimension, action_dimension)
 model = network.createNetwork()
 model.save("trio-net.keras")
-visualkeras.layered_view(model, legend=True).show()
+
+# visualkeras.layered_view(model, legend=True).show()
+'''
+
+

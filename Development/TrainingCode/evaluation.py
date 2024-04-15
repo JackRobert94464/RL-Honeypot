@@ -4,7 +4,7 @@
 
 # Import the environment 
 from NetworkHoneypotEnv import NetworkHoneypotEnv
-from ddqn_agent import DoubleDeepQLearning
+from ddqn_agent_headless import DoubleDeepQLearning
 
 import pandas as pd
 import matplotlib.pyplot as plt

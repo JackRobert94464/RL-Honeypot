@@ -1,0 +1,45 @@
+06/04/2024
+idea: tao mot cai action space ben trong NetworkHoneypotEnv la mot cai ndarray chua tat ca
+may cai hanh dong gen ra theo y tuong cua thay
+=> tao env moi => code cua thay gen ra tat ca hanh dong co the thuc hien => luu vao NetworkHoneypotEnv nhu mot ndarray luon (giong Env cua gym)
+=> phai dinh nghia lai action trong NetworkHoneypotEnv
+
+cong viec ngay mai:
+- thuc hien idea o tren: sua lai action trong NetworkHoneypotEnv
+- lam tiep phan sarsa
+- neu duoc coi thu may cai static + random deployment policy
+
+
+
+Ket luan 06/04
+da hoan thanh chuyen doi action space => co the ap dung vao cac model khac
+dat ra lai cau hoi: voi moi so luong decoy duoc cap la mot model khac nhau, do action space khac nhau hoan toan
+=> can qua nhieu model? khong the train 3 decoy va setup tren 2 decoy duoc
+=> Da tim ra ly do bi out of bound: do khi train tu 1 node do len, action space se banh rong ra dan dan 
+=> nen khi train toi K/2 node thi action space -> output network size qua lon cho 1 node
+=> output network se predict hanh dong thu 210 (gia su) ma action space cua 1 node chi la khoang 20 - 21 (gia su)
+=> out of bound
+Giai phap: train chay nguoc lai tu K/2 ve 1 =>  output network size thu nho dan cho den 1 node
+
+=> Toc do chay cua action moi nhanh gap doi ma tran K*M cu (code cu tren linux VM1)
+
+-----------------------------------------------
+08-09/04 hiatus
+-----------------------------------------------
+
+Chay evaluation tai tung so step nhat dinh de xuat ra dsp chu ko di theo episode (2000, 5000, 10000, 20000)
+=> code driver keo theo code eval chay
+
+CONG VIEC NGAY MAI 10/04/2024
+
+Chay 30000+ steps (9000 - 10000 episodes): ddqn
+Random allocation: 10 scenarios
+Static policy: 21 scenarios =>  the size of the action space is 21. 
+=> Static policy = nCr => la bo tri tung action rieng le trong action space xong cho chay 50 episode eval
+=> Xong danh gia coi static policy nao la dsp cao nhat
+
+XEM XET CHAY 10000 EPISODE TREN MAY linux
+
+
+=> Qua eval lam truoc 3 cai loop 50 ep cho 3 loai policy ddqn + static + randyn
+=> Da hoan thanh, xuat duoc so do dsp cho static + randyn va traning time + dsp cho ddqn

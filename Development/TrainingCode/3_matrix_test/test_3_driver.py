@@ -30,10 +30,10 @@ from gym import spaces
 # from NetworkHoneypotEnv import NetworkHoneypotEnv
 
 # import test env
-from NetworkHoneypotEnv import NetworkHoneypotEnv
+from test_3_NetworkHoneypotEnv import NetworkHoneypotEnv
 
 # import the agent
-from ddqn_agent_headless import DoubleDeepQLearning
+from ddqn_agent_3x_multi_input import DoubleDeepQLearning
 
  
 
@@ -163,7 +163,7 @@ tf_env = tf_py_environment.TFPyEnvironment(env)
 
 timestep = tf_env.reset()
 rewards = []
-numberEpisodes = 4000
+numberEpisodes = 100
 
 # calculate the number of possible combinations
 total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
@@ -201,6 +201,6 @@ LearningQDeep.mainNetwork.summary()
 # save the model, this is important, since it takes long time to train the model 
 # and we will need model in another file to visualize the trained model performance
 if os.name == 'nt':  # If the operating system is Windows
-        LearningQDeep.mainNetwork.save(".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_weighted_attacker_1to5_decoy_win_ver4k.keras")
+        LearningQDeep.mainNetwork.save(".\\Development\\TrainingCode\\3_matrix_test\\test_3_decoy_win.keras")
 else:  # For other operating systems like Linux
         LearningQDeep.mainNetwork.save("./TrainedModel/weighted_random_attacker/RL_Honeypot_weighted_attacker_1to5_decoy_linux.keras")

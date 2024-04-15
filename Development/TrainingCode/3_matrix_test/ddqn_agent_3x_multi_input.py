@@ -21,9 +21,11 @@ import os
 # import the necessary libraries
 import numpy as np
 import random
-from keras.layers import Dense
+
 from keras.layers import InputLayer
 from keras.models import Sequential
+from keras.layers import Input, Dense, Concatenate
+from keras.models import Model
 
 # Trying different optimizers
 from keras.optimizers import RMSprop
@@ -40,12 +42,24 @@ from math import factorial
 
 import keras
  
-from visualizer import visualize_steps
 
 import pandas as pd
 import time
 
 import random
+
+
+
+# Import the neural network
+# import ddqn_network_test_3
+
+# Import the input matrices creating function
+import test_3_field_01_epss_matrix
+import test_3_field_02_ntpg_matrix
+
+
+
+
 
 # Outline the difference from cartpole:
 # Policy
@@ -94,6 +108,9 @@ class DoubleDeepQLearning:
 
         # print(env)
 
+        
+        # -------------------------- Define the dimensions --------------------------
+        
         # state dimension 
         self.stateDimension = env.K
         # print("STATE DIMENSION --- AGENT TRAINING",self.stateDimension)
@@ -104,6 +121,22 @@ class DoubleDeepQLearning:
         # => Tinh to hop C(K,M) = k!/((k-m)!*m!) = 7!/(5!*2!) = 21
 
         self.actionDimension = factorial(env.K) / (factorial(env.K - env.M) * factorial(env.M))
+        
+        self.epssDimension = env.K * env.K
+        
+        self.ntpgDimension = env.K * env.K
+        
+        # -------------------------- Define the dimensions --------------------------
+        
+        
+        # -------------------------- The Input Matrices --------------------------
+        
+        self.epssMatrix = test_3_field_01_epss_matrix.ntpg_to_epss_matrix(env.get_ntpg())
+        self.connectionMatrix = test_3_field_02_ntpg_matrix.ntpg_to_connection_matrix(env.get_ntpg())
+        
+        # -------------------------- The Input Matrices --------------------------
+        
+        
         
         
         
@@ -155,7 +188,10 @@ class DoubleDeepQLearning:
         # this list is used in the cost function to select certain entries of the 
         # predicted and true sample matrices in order to form the loss
         # self.actionsAppend=[]
-
+        
+        '''
+        Legacy
+        
         # this is the main network
         # create network
         self.mainNetwork=self.createNetwork()
@@ -163,16 +199,29 @@ class DoubleDeepQLearning:
         # this is the target network
         # create network
         self.targetNetwork=self.createNetwork()
+        '''
+        
+        self.mainNetwork = self.createNetwork()
+        
+        self.targetNetwork = self.createNetwork()
+        
 
+        
+        
         # copy the initial weights to targetNetwork
         self.targetNetwork.set_weights(self.mainNetwork.get_weights())
+        
+        
 
      
     ###########################################################################
     #   END - __init__ function
     ###########################################################################
         
-    ###########################################################################
+    
+     
+     
+     ###########################################################################
     # START - function for defining the loss (cost) function
     # FIX THIS ASAP
     # Status: FIX THIS ASAP
@@ -219,13 +268,54 @@ class DoubleDeepQLearning:
 
     ###########################################################################
     #   END - of function my_loss_fn
-    ###########################################################################
+    ###########################################################################    
 
+
+    def createNetwork(self):
+        # Define input layers for each type of input data
+        
+        observable_input = Input(shape=(self.stateDimension,))
+        epss_input = Input(shape=(self.epssDimension,))
+        ntpg_input = Input(shape=(self.ntpgDimension,))
+        
+        # Branch 1: Process observable matrix
+        observable_branch = Dense(64, activation='relu')(observable_input)
+        
+        # Branch 2: Process EPSS matrix
+        epss_branch = Dense(64, activation='relu')(epss_input)
+        
+        # Branch 3: Process ntpg penetration graph
+        ntpg_branch = Dense(64, activation='relu')(ntpg_input)
+        
+        # Concatenate the outputs of all branches
+        concatenated = Concatenate()([observable_branch, epss_branch, ntpg_branch])
+        
+        # Intermediate dense layer
+        concatenated = Dense(64, activation='relu')(concatenated)
+        
+        # Output layer
+        output = Dense(self.actionDimension, activation='linear')(concatenated)
+        
+        # Create model
+        model = Model(inputs=[observable_input, epss_input, ntpg_input], outputs=output)
+        
+        # Compile model
+        model.compile(loss=DoubleDeepQLearning.ddqn_loss_fn, optimizer=RMSprop(), metrics=['accuracy'])
+        
+        print("Created network:", model.summary())
+        
+        return model
+     
+     
+     
+     
     
 
     ###########################################################################
     #   START - createNetwork function
     ###########################################################################
+    '''
+    Legacy: a simple network with 2 hidden layers of 100 units each and ReLU activation
     
     def createNetwork(self):
         # create a neural network with two hidden layers of 100 units each and ReLU activation (must fix!)
@@ -249,6 +339,8 @@ class DoubleDeepQLearning:
         print("Created network:", model.summary())
         # os.system("pause")
         return model
+    '''
+    
 
     ###########################################################################
     #   END - createNetwork function
@@ -466,7 +558,8 @@ class DoubleDeepQLearning:
 
         else:
             # print("STATE TO PREDICT:", state)
-            Qvalues = self.mainNetwork.predict(state)
+            Qvalues = self.mainNetwork.predict([np.array(state), np.array(self.epssMatrix), np.array(self.connectionMatrix)])
+
 
             # Get the index of the maximum Q-value
             max_index = np.argmax(Qvalues)

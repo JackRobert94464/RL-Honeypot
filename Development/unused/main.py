@@ -1,3 +1,4 @@
+'''
 # import the class
 import HoneypotDDQN
 # classical gym 
@@ -148,7 +149,7 @@ print('max_length', max_length)
 #env = gym.wrappers.RecordVideo(env, 'stored_video',step_trigger = lambda x: x == 1, video_length=video_length)
 # env = gym.wrappers.RecordVideo(env, 'stored_video_ddqn', video_length=video_length)
  
- 
+'''
 # since the initial state is not a terminal state, set this flag to false
 # terminalState=False
 '''while not terminalState:
@@ -163,5 +164,6 @@ print('max_length', max_length)
     # sum the rewards
     sumObtainedRewards+=currentReward
 '''
-env.reset()
-env.close()
+# env.reset()
+# env.close()
+

@@ -1,0 +1,35 @@
+Lam tiep 3 mang matrix
+Luu y: giu nguyen epss du ntpg danh so 0 => dai dien cho epss escalate privilege
+Khong su dung lop Dense do dense la mang 1 chieu (tim cach chuyen qua convolutional neural network)
+
+
+
+
+Cong viec toi T3:
+- Chuyen doi phan train-dsp-eval thanh 1 ham => dua ham vao code chinh
+- Thuc hien deploy/fix mang network 3 matrix moi vao mo hinh
+- Viet bao cao cong viec tien do + du kien tuong lai (lay may cai todo de viet + de cuong)
+
+
+=> Tim cach tao input cho epss matrix va ntpg matrix truoc
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Cong viec du kien tuong lai
+- Tiep tuc nghien cuu + thiet ke hai mo hinh SARSA + PPO
+- Tim cach thuc hien inference tren he thong de dua he thong sang giai doan deployment

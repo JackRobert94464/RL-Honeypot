@@ -30,10 +30,10 @@ from gym import spaces
 # from NetworkHoneypotEnv import NetworkHoneypotEnv
 
 # import test env
-from NetworkHoneypotEnv import NetworkHoneypotEnv
+from Development.TrainingCode.demodsp.demodsp_NetworkHoneypotEnv import NetworkHoneypotEnv
 
 # import the agent
-from ddqn_agent_headless import DoubleDeepQLearning
+from Development.TrainingCode.demodsp.demodsp_ddqn_agent_headless import DoubleDeepQLearning
 
  
 
@@ -70,78 +70,6 @@ print("Normal nodes:", normal_nodes)
 
 # os.system("pause")
 
-# Loop over deception nodes from 1 to normal_nodes/2
-
-
-'''
-For loop for long training
-The training will start from giving the agent only 1 deception node and increase the number of deception nodes by 1 in each iteration.
-The training will stop when the number of deception nodes is equal to half of the number of normal nodes.
-'''
-'''
-for i in range(normal_nodes//2 + 1, 0, -1):
-        deception_nodes = i
-        # Rest of your code here
-
-        first_parameter = misc.calculate_first_parameter(deception_nodes, normal_nodes)
-
-        print("First parameter:", first_parameter)
-        # print("Deception nodes:", deception_nodes)
-
-        # Create the environment
-        env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, htpg)
-
-        # Create the environment. Since it was built using PyEnvironment, we need to wrap it in a TFEnvironment to use with TF-Agents
-        tf_env = tf_py_environment.TFPyEnvironment(env)
-
-
-        timestep = tf_env.reset()
-        rewards = []
-        numberEpisodes = 500
-
-
-        # calculate the number of possible combinations
-        total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
-
-        # create an object
-        LearningQDeep=DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations)
-        # run the learning process
-        LearningQDeep.trainingEpisodes()
-        # get the obtained rewards in every episode
-        LearningQDeep.sumRewardsEpisode
-
-        print(rewards)
-        
-        
-        
-
-        # DSP graphing function
-
-        import ddqn_dsp_visualizer
-
-        print("Total steps: ", LearningQDeep.getGlobalStepCount())
-        print("Total DSP: ", LearningQDeep.getGlobalDSPCount())
-
-        # Visualize the Defense Success Probability (DSP) of our method
-        ddqn_dsp_visualizer.ddqn_dsp_visual(LearningQDeep.getGlobalStepCount(), LearningQDeep.getGlobalDSPCount())
-
-
-        # Visualize the training time taken of our method
-        ddqn_trainingtime_visualizer.ddqn_dsp_visual(LearningQDeep.getGlobalStepCount(), LearningQDeep.getGlobalTimeTaken())
-        
-        
-
-        #  summarize the model
-        LearningQDeep.mainNetwork.summary()
-        # save the model, this is important, since it takes long time to train the model 
-        # and we will need model in another file to visualize the trained model performance
-        if os.name == 'nt':  # If the operating system is Windows
-                LearningQDeep.mainNetwork.save(".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_weighted_attacker_1to5_decoy_win.keras")
-        else:  # For other operating systems like Linux
-                LearningQDeep.mainNetwork.save("./TrainedModel/weighted_random_attacker/RL_Honeypot_weighted_attacker_1to5_decoy_linux.keras")
-
-
-'''
 
 
 '''
@@ -163,7 +91,7 @@ tf_env = tf_py_environment.TFPyEnvironment(env)
 
 timestep = tf_env.reset()
 rewards = []
-numberEpisodes = 4000
+numberEpisodes = 100
 
 # calculate the number of possible combinations
 total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
@@ -184,11 +112,11 @@ print("Total Time: ", LearningQDeep.getGlobalTimeTaken())
 
 
 # Visualize the Defense Success Probability (DSP) of our method
-ddqn_dsp_visualizer.ddqn_dsp_visual(LearningQDeep.getGlobalStepCount(), LearningQDeep.getGlobalDSPCount())
+ddqn_dsp_visualizer.ddqn_dsp_visual(LearningQDeep.getStepInternationalCounter(), LearningQDeep.getEvalDSP())
 
 
 # Visualize the training time taken of our method
-ddqn_trainingtime_visualizer.ddqn_dsp_visual(LearningQDeep.getGlobalStepCount(), LearningQDeep.getGlobalTimeTaken())
+ddqn_trainingtime_visualizer.ddqn_dsp_visual(LearningQDeep.getStepInternationalCounter(), LearningQDeep.getInternationalTimeTaken())
 
 
 # get the obtained rewards in every episode
@@ -201,6 +129,6 @@ LearningQDeep.mainNetwork.summary()
 # save the model, this is important, since it takes long time to train the model 
 # and we will need model in another file to visualize the trained model performance
 if os.name == 'nt':  # If the operating system is Windows
-        LearningQDeep.mainNetwork.save(".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_weighted_attacker_1to5_decoy_win_ver4k.keras")
+        LearningQDeep.mainNetwork.save(".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_weighted_attacker_1to5_decoy_win.keras")
 else:  # For other operating systems like Linux
         LearningQDeep.mainNetwork.save("./TrainedModel/weighted_random_attacker/RL_Honeypot_weighted_attacker_1to5_decoy_linux.keras")
