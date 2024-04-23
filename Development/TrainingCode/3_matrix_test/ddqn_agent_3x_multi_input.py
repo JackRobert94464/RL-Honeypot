@@ -307,8 +307,6 @@ class DoubleDeepQLearning:
         return model
      
      
-     
-     
     
 
     ###########################################################################
@@ -557,8 +555,13 @@ class DoubleDeepQLearning:
             return action
 
         else:
+            state_flattened = state.flatten()
+            Qvalues = self.mainNetwork.predict([state_flattened, np.array(self.epssMatrix).flatten(), np.array(self.connectionMatrix).flatten()])
+
+
+
             # print("STATE TO PREDICT:", state)
-            Qvalues = self.mainNetwork.predict([np.array(state), np.array(self.epssMatrix), np.array(self.connectionMatrix)])
+            # Qvalues = self.mainNetwork.predict([np.array(state), np.array(self.epssMatrix), np.array(self.connectionMatrix)])
 
 
             # Get the index of the maximum Q-value
