@@ -9,4 +9,8 @@ images/*
 cvelist/*
 Development/TPG-Data/allitems.csv
 /eval_output
+trio-net-conv.keras
+trio-net-conv-ltsm.keras
+trio-net.keras
 *.pyc
+trio-net.keras

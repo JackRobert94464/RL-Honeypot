@@ -201,6 +201,6 @@ LearningQDeep.mainNetwork.summary()
 # save the model, this is important, since it takes long time to train the model 
 # and we will need model in another file to visualize the trained model performance
 if os.name == 'nt':  # If the operating system is Windows
-        LearningQDeep.mainNetwork.save(".\\Development\\TrainingCode\\3_matrix_test\\test_3_decoy_win.keras")
+        LearningQDeep.mainNetwork.save(".\\Development\\TrainingCode\\3_matrix_test\\test_3_conv_decoy_win.keras")
 else:  # For other operating systems like Linux
         LearningQDeep.mainNetwork.save("./TrainedModel/weighted_random_attacker/RL_Honeypot_weighted_attacker_1to5_decoy_linux.keras")

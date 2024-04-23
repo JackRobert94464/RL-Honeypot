@@ -5,24 +5,24 @@ import csv
 import random
 
 # Define the path of the cve description csv file
-cve_file = "300-entries-epss.csv"
+cve_file = "Development\\TPG-Data\\300-entries-epss.csv"
 
 # Define the path of the epss csv file
-epss_file = "epss_scores-2024-02-25.csv"
+epss_file = "Development\\TPG-Data\\epss_scores-2024-02-25.csv"
 
 # Define the path of the output csv file for the Node TPG
-ntpg_file = "ntpg.csv"
+ntpg_file = "Development\\TPG-Data\\ntpg_big.csv"
 
 # Define the path of the output csv file for the Host TPG
-htpg_file = "htpg.csv"
+htpg_file = "Development\\TPG-Data\\htpg_big.csv"
 
 # Define the minimum and maximum number of nodes in the network
-min_nodes = 10
-max_nodes = 10
+min_nodes = 50
+max_nodes = 50
 
 # Define the minimum and maximum number of CVEs per connection
-min_cves = 2
-max_cves = 4
+min_cves = 1
+max_cves = 10
 
 # Define a list to store the CVEs and their EPSS scores
 cve_list = []
