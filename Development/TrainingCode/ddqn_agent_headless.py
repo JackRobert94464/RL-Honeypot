@@ -540,7 +540,7 @@ class DoubleDeepQLearning:
             # sample a batch from the replay buffer
             randomSampleBatch=random.sample(self.replayBuffer, self.batchReplayBufferSize)
             # print("Random sample batch chosen: ",randomSampleBatch)
-             
+
             # here we form current state batch 
             # and next state batch
             # they are used as inputs for prediction

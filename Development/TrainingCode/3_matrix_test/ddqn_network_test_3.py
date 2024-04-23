@@ -67,6 +67,50 @@ class Network:
         
         return model
     
+    # https://datascience.stackexchange.com/questions/32455/which-convolution-should-i-use-conv2d-or-conv1d
+    def createNetwork1DConvPrimitve(self):
+        # Define input layers for each type of input data
+        observable_input = Input(shape=(self.stateDimension,))
+        epss_input = Input(shape=(self.stateDimension, 1))
+        ntpg_input = Input(shape=(self.stateDimension, 1))
+
+        # Branch 1: Process observable matrix
+        observable_branch_1 = Dense(64, activation='relu')(observable_input)
+        observable_branch_2 = Dense(64, activation='relu')(observable_branch_1)
+        observable_branch_3 = Dense(self.stateDimension, activation='relu')(observable_branch_2)
+
+        # Branch 2: Process EPSS matrix
+        epss_conv_1 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(epss_input)
+        epss_pool_1 = keras.layers.MaxPooling1D(pool_size=1)(epss_conv_1)
+        epss_flatten = keras.layers.Flatten()(epss_pool_1)
+
+
+        # Branch 3: Process ntpg penetration graph
+        ntpg_conv_1 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(ntpg_input)
+        ntpg_pool_1 = keras.layers.MaxPooling1D(pool_size=1)(ntpg_conv_1)
+        ntpg_flatten = keras.layers.Flatten()(ntpg_pool_1)
+
+
+        # Concatenate the outputs of all branches
+        concatenated = Concatenate()([observable_branch_3, epss_flatten, ntpg_flatten])
+
+        hidden_1 = Dense(self.stateDimension, activation='relu')(concatenated)
+
+        # Interpreting the concatenated data
+        # hidden_1 = Dense(self.stateDimension, activation='relu')(concatenated)
+        # hidden_2 = Dense(self.stateDimension, activation='relu')(hidden_1)
+        # hidden_3 = Dense(self.stateDimension, activation='relu')(hidden_2)
+        output = Dense(self.actionDimension, activation='softmax')(hidden_1)
+
+        # Create model
+        model = Model(inputs=[observable_input, epss_input, ntpg_input], outputs=output)
+
+        # Compile model
+        model.compile(loss=DoubleDeepQLearning.ddqn_loss_fn, optimizer=RMSprop(), metrics=['accuracy'])
+        print("Created network:", model.summary())
+        os.system("pause")
+        return model
+    
     
     # For low number of nodes, conv network have the same amount of filter as the input shape
     def createConvNetwork_lowperf(self):

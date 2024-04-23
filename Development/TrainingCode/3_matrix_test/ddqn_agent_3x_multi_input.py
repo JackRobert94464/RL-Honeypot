@@ -48,6 +48,8 @@ import time
 
 import random
 
+import tensorflow as tf
+
 
 
 # Import the neural network
@@ -271,39 +273,53 @@ class DoubleDeepQLearning:
     ###########################################################################    
 
 
+    # https://datascience.stackexchange.com/questions/97518/valueerror-data-cardinality-is-ambiguous-in-model-ensemble-with-2-different-i
+    # https://datascience.stackexchange.com/questions/32455/which-convolution-should-i-use-conv2d-or-conv1d
+
     def createNetwork(self):
         # Define input layers for each type of input data
-        
         observable_input = Input(shape=(self.stateDimension,))
-        epss_input = Input(shape=(self.epssDimension,))
-        ntpg_input = Input(shape=(self.ntpgDimension,))
-        
+        epss_input = Input(shape=(self.stateDimension, 1))
+        ntpg_input = Input(shape=(self.stateDimension, 1))
+
         # Branch 1: Process observable matrix
-        observable_branch = Dense(64, activation='relu')(observable_input)
-        
+        observable_branch_1 = Dense(64, activation='relu')(observable_input)
+        observable_branch_2 = Dense(64, activation='relu')(observable_branch_1)
+        observable_branch_3 = Dense(self.stateDimension, activation='relu')(observable_branch_2)
+
         # Branch 2: Process EPSS matrix
-        epss_branch = Dense(64, activation='relu')(epss_input)
-        
+        epss_conv_1 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(epss_input)
+        epss_pool_1 = tf.keras.layers.MaxPooling1D(pool_size=1)(epss_conv_1)
+        epss_conv_2 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(epss_pool_1)
+        epss_pool_2 = tf.keras.layers.MaxPooling1D(pool_size=1)(epss_conv_2)
+        epss_flatten = keras.layers.Flatten()(epss_pool_2)
+
+
         # Branch 3: Process ntpg penetration graph
-        ntpg_branch = Dense(64, activation='relu')(ntpg_input)
-        
+        ntpg_conv_1 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(ntpg_input)
+        ntpg_pool_1 = tf.keras.layers.MaxPooling1D(pool_size=1)(ntpg_conv_1)
+        ntpg_conv_2 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(ntpg_pool_1)
+        ntpg_pool_2 = tf.keras.layers.MaxPooling1D(pool_size=1)(ntpg_conv_2)
+        ntpg_flatten = keras.layers.Flatten()(ntpg_pool_2)
+
+
         # Concatenate the outputs of all branches
-        concatenated = Concatenate()([observable_branch, epss_branch, ntpg_branch])
-        
-        # Intermediate dense layer
-        concatenated = Dense(64, activation='relu')(concatenated)
-        
-        # Output layer
-        output = Dense(self.actionDimension, activation='linear')(concatenated)
-        
+        concatenated = Concatenate()([observable_branch_3, epss_flatten, ntpg_flatten])
+
+
+        # Interpreting the concatenated data
+        hidden_1 = Dense(self.stateDimension * self.stateDimension, activation='relu')(concatenated)
+        hidden_2 = Dense(self.stateDimension * self.stateDimension, activation='relu')(hidden_1)
+        hidden_3 = Dense(self.stateDimension, activation='relu')(hidden_2)
+        output = Dense(self.actionDimension, activation='softmax')(hidden_3)
+
         # Create model
         model = Model(inputs=[observable_input, epss_input, ntpg_input], outputs=output)
-        
+
         # Compile model
         model.compile(loss=DoubleDeepQLearning.ddqn_loss_fn, optimizer=RMSprop(), metrics=['accuracy'])
-        
         print("Created network:", model.summary())
-        
+        os.system("pause")
         return model
      
      
@@ -434,9 +450,15 @@ class DoubleDeepQLearning:
 
                 print("Next state: ", nextState)
 
-                self.replayBuffer.append((currentState.observation, action, reward, nextStateObservation, terminalState))
+                # add all the inputs to the replay buffer
+                print("TYPE OF CURRENT STATE: ", type(currentState.observation))
+                # os.system("pause")
+                currentObservation = [currentState.observation, self.epssMatrix, self.connectionMatrix]
+
+                self.replayBuffer.append((np.array(currentState.observation), np.array(self.epssMatrix), np.array(self.connectionMatrix), action, reward, nextStateObservation, terminalState))
 
                 self.trainNetwork()
+                
                 print("------------------- NETWORKS TRAINED -------------------")
 
                 self.visitCounts = self.visitCounts + 1
@@ -557,8 +579,33 @@ class DoubleDeepQLearning:
             return action
 
         else:
+
+            # Reshape the state to match the expected input shape
+            state = state.reshape(1, -1)
+
+            # Convert the matrices to numpy arrays
+            epss_matrix = np.array(self.epssMatrix)
+            ntpg_matrix = np.array(self.connectionMatrix)
+
+            # Check if the matrices have a nested list structure
+            if len(epss_matrix.shape) > 2:
+                epss_matrix = np.stack(epss_matrix)
+            if len(ntpg_matrix.shape) > 2:
+                ntpg_matrix = np.stack(ntpg_matrix)
+
+            # Expand the dimensions of the state to match the batch size of the other inputs
+            state = np.repeat(state, epss_matrix.shape[0], axis=0)
+
+            # Make sure the shapes of the inputs match
+            epss_input = np.expand_dims(epss_matrix, axis=-1)
+            ntpg_input = np.expand_dims(ntpg_matrix, axis=-1)
+
+            Qvalues = self.mainNetwork.predict([state, epss_input, ntpg_input])
+
+
+
             # print("STATE TO PREDICT:", state)
-            Qvalues = self.mainNetwork.predict([np.array(state), np.array(self.epssMatrix), np.array(self.connectionMatrix)])
+            # Qvalues = self.mainNetwork.predict([np.array(state), np.array(self.epssMatrix), np.array(self.connectionMatrix)])
 
 
             # Get the index of the maximum Q-value
@@ -624,98 +671,44 @@ class DoubleDeepQLearning:
         # print("------------------------------------------------------------------------------------------------------------------------------")
 
  
-        # if the replay buffer has at least batchReplayBufferSize elements,
-        # then train the model 
-        # otherwise wait until the size of the elements exceeds batchReplayBufferSize
-        if (len(self.replayBuffer)>self.batchReplayBufferSize):
-             
- 
-            # sample a batch from the replay buffer
-            randomSampleBatch=random.sample(self.replayBuffer, self.batchReplayBufferSize)
-            # print("Random sample batch chosen: ",randomSampleBatch)
-             
-            # here we form current state batch 
-            # and next state batch
-            # they are used as inputs for prediction
-            currentStateBatch=np.zeros(shape=(self.batchReplayBufferSize,self.nodecount))
-            # print("Current state batch: ",currentStateBatch)
-
-            nextStateBatch=np.zeros(shape=(self.batchReplayBufferSize,self.nodecount))      
-            # print("Next state batch: ",nextStateBatch)      
-            # this will enumerate the tuple entries of the randomSampleBatch
-            # index will loop through the number of tuples
-            for index,tupleS in enumerate(randomSampleBatch):
-                # print("Sample batch no. ",index)
-                # print("Current state of sample batch: ",tupleS[0])
-                # first entry of the tuple is the current state
-                currentStateBatch[index,:]=tupleS[0]
-
-                # fourth entry of the tuple is the next state
-                # print("Next state of sample batch: ",tupleS[3])
-                nextStateBatch[index,:]=tupleS[3]
-             
-            # here, use the target network to predict Q-values 
-            QnextStateTargetNetwork=self.targetNetwork.predict(nextStateBatch)
-            # print("QnextStateTargetNetwork: ",QnextStateTargetNetwork)
-            # here, use the main network to predict Q-values 
-            QcurrentStateMainNetwork=self.mainNetwork.predict(currentStateBatch)
-            # print("QcurrentStateMainNetwork: ",QcurrentStateMainNetwork)
-             
-            # now, we form batches for training
-            # input for training
-            inputNetwork=currentStateBatch
-            # print("Input network: ",inputNetwork)
-            # output for training
-            outputNetwork=np.zeros(shape=(self.batchReplayBufferSize,int(self.totalpermutation)))
-            # print("Output network: ",outputNetwork)
-             
-            # this list will contain the actions that are selected from the batch 
-            # this list is used in my_loss_fn to define the loss-function
-            # self.actionsAppend=[]            
-            for index,(currentState,action,reward,nextState,terminated) in enumerate(randomSampleBatch):
-                 
-                # if the next state is the terminal state
-                if terminated:
-                    # print("Next state is the terminal state")
-                    # print("y: ",reward)
-                    y=reward                  
-                # if the next state if not the terminal state    
-                else:
-                    # print("Next state is not the terminal state")
-                    # print("y: ",reward+self.gamma*np.max(QnextStateTargetNetwork[index]))
-                    y=reward+self.gamma*np.max(QnextStateTargetNetwork[index])
-                 
-                # this is necessary for defining the cost function
-                actionsAppend.append(action)
-                # print("Actions after append: ",actionsAppend)
+        def trainNetwork(self):
+            if len(self.replayBuffer) > self.batchReplayBufferSize:
                 
+                randomSampleBatch = random.sample(self.replayBuffer, self.batchReplayBufferSize)
                 
+                currentStateBatch = np.zeros(shape=(self.batchReplayBufferSize, self.nodecount))
+                epsBatch = np.zeros(shape=(self.batchReplayBufferSize, self.nodecount, self.nodecount))
+                ntpgBatch = np.zeros(shape=(self.batchReplayBufferSize, self.nodecount, self.nodecount))
+                nextStateBatch = np.zeros(shape=(self.batchReplayBufferSize, self.nodecount))
                 
+                for index, (currentState, epsMatrix, ntpgMatrix, action, reward, nextState, terminated) in enumerate(randomSampleBatch):
+                    currentStateBatch[index, :] = currentState
+                    epsBatch[index, :, :] = epsMatrix
+                    ntpgBatch[index, :, :] = ntpgMatrix
+                    nextStateBatch[index, :] = nextState
                 
-                # this actually does not matter since we do not use all the entries in the cost function
-                outputNetwork[index]=QcurrentStateMainNetwork[index]
-                # print("Output network index: ",outputNetwork)
-                # this is what matters
-                outputNetwork[index,action]=y
-                # print("Output network: ",outputNetwork)
-             
-            # here, we train the network
-            self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size = self.batchReplayBufferSize, verbose=1, epochs=100)
-            print("Main network trained!")
-             
-            # after updateTargetNetworkPeriod training sessions, update the coefficients 
-            # of the target network
-            # increase the counter for training the target network
-            self.counterUpdateTargetNetwork+=1 
-            print("Counter value {}".format(self.counterUpdateTargetNetwork))
-            if (self.counterUpdateTargetNetwork>(self.updateTargetNetworkPeriod-1)):
-                # copy the weights to targetNetwork
-                self.targetNetwork.set_weights(self.mainNetwork.get_weights())        
-                print("Target network updated!")
-                # os.system("pause")
+                QnextStateTargetNetwork = self.targetNetwork.predict([nextStateBatch, epsBatch, ntpgBatch])
+                QcurrentStateMainNetwork = self.mainNetwork.predict([currentStateBatch, epsBatch, ntpgBatch])
+                
+                inputNetwork = [currentStateBatch, epsBatch, ntpgBatch]
+                outputNetwork = np.zeros(shape=(self.batchReplayBufferSize, int(self.totalpermutation)))
+                
+                for index, (currentState, epsMatrix, ntpgMatrix, action, reward, nextState, terminated) in enumerate(randomSampleBatch):
+                    y = reward + self.gamma * np.max(QnextStateTargetNetwork[index])
+                    outputNetwork[index] = QcurrentStateMainNetwork[index]
+                    outputNetwork[index, action] = y
+                
+                self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size=self.batchReplayBufferSize, verbose=1, epochs=100)
+                print("Main network trained!")
+                
+                self.counterUpdateTargetNetwork += 1
                 print("Counter value {}".format(self.counterUpdateTargetNetwork))
-                # reset the counter
-                self.counterUpdateTargetNetwork=0
+                if self.counterUpdateTargetNetwork > (self.updateTargetNetworkPeriod - 1):
+                    self.targetNetwork.set_weights(self.mainNetwork.get_weights())
+                    print("Target network updated!")
+                    print("Counter value {}".format(self.counterUpdateTargetNetwork))
+                    self.counterUpdateTargetNetwork = 0
+
 
     ###########################################################################
     #   END - trainNetwork function
