@@ -30,10 +30,10 @@ from gym import spaces
 # from NetworkHoneypotEnv import NetworkHoneypotEnv
 
 # import test env
-from NetworkHoneypotEnv import NetworkHoneypotEnv
+from NetworkHoneypotEnv_fnrfpr import NetworkHoneypotEnv
 
 # import the agent
-from ddqn_agent_headless import DoubleDeepQLearning
+from ddqn_agent_headless_fnrfpr import DoubleDeepQLearning
 
  
 
@@ -53,7 +53,9 @@ gamma = 0.9
 # Epsilon parameter for the epsilon-greedy approach
 epsilon = 0.1
 
-
+# FNR and FPR values
+fnr = 0.20
+fpr = 0.14
 
 
 if os.name == 'nt':  # If the operating system is Windows
@@ -165,13 +167,13 @@ tf_env = tf_py_environment.TFPyEnvironment(env)
 
 timestep = tf_env.reset()
 rewards = []
-numberEpisodes = 4000
+numberEpisodes = 100
 
 # calculate the number of possible combinations
 total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
 
 # create an object
-LearningQDeep=DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations)
+LearningQDeep=DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations, fnr, fpr)
 # run the learning process
 LearningQDeep.trainingEpisodes()
 
@@ -186,7 +188,12 @@ print("Total Time: ", LearningQDeep.getGlobalTimeTaken())
 
 
 # Visualize the Defense Success Probability (DSP) of our method
+# Save the global step count and global DSP count to a text file
+with open(f"result_fnr{fnr}_fpr{fpr}.txt", "w") as file:
+        file.write(f"Global Step Count: {LearningQDeep.getGlobalStepCount()}\n")
+        file.write(f"Global DSP Count: {LearningQDeep.getGlobalDSPCount()}\n")
 ddqn_dsp_visualizer.ddqn_dsp_visual(LearningQDeep.getGlobalStepCount(), LearningQDeep.getGlobalDSPCount())
+
 
 
 # Visualize the training time taken of our method
@@ -203,6 +210,6 @@ LearningQDeep.mainNetwork.summary()
 # save the model, this is important, since it takes long time to train the model 
 # and we will need model in another file to visualize the trained model performance
 if os.name == 'nt':  # If the operating system is Windows
-        LearningQDeep.mainNetwork.save(f".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_weighted_attacker_1to5_decoy_win_ver{numberEpisodes}.keras")
+        LearningQDeep.mainNetwork.save(f".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_weighted_attacker_1to5_decoy_win_ver{numberEpisodes}_fnrfpr_{fnr}{fpr}.keras")
 else:  # For other operating systems like Linux
         LearningQDeep.mainNetwork.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_weighted_attacker_1to5_decoy_linux_ver{numberEpisodes}.keras")

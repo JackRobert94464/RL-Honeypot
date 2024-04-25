@@ -70,14 +70,14 @@ class Network:
     # https://datascience.stackexchange.com/questions/32455/which-convolution-should-i-use-conv2d-or-conv1d
     def createNetwork1DConvPrimitve(self):
         # Define input layers for each type of input data
-        observable_input = Input(shape=(self.stateDimension,))
-        epss_input = Input(shape=(self.stateDimension, 1))
-        ntpg_input = Input(shape=(self.stateDimension, 1))
+        observable_input = Input(shape=(self.observable_dimension,))
+        epss_input = Input(shape=(self.observable_dimension, 1))
+        ntpg_input = Input(shape=(self.observable_dimension, 1))
 
         # Branch 1: Process observable matrix
         observable_branch_1 = Dense(64, activation='relu')(observable_input)
         observable_branch_2 = Dense(64, activation='relu')(observable_branch_1)
-        observable_branch_3 = Dense(self.stateDimension, activation='relu')(observable_branch_2)
+        observable_branch_3 = Dense(self.observable_dimension, activation='relu')(observable_branch_2)
 
         # Branch 2: Process EPSS matrix
         epss_conv_1 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(epss_input)
@@ -94,13 +94,13 @@ class Network:
         # Concatenate the outputs of all branches
         concatenated = Concatenate()([observable_branch_3, epss_flatten, ntpg_flatten])
 
-        hidden_1 = Dense(self.stateDimension, activation='relu')(concatenated)
+        hidden_1 = Dense(self.observable_dimension, activation='relu')(concatenated)
 
         # Interpreting the concatenated data
-        # hidden_1 = Dense(self.stateDimension, activation='relu')(concatenated)
-        # hidden_2 = Dense(self.stateDimension, activation='relu')(hidden_1)
-        # hidden_3 = Dense(self.stateDimension, activation='relu')(hidden_2)
-        output = Dense(self.actionDimension, activation='softmax')(hidden_1)
+        # hidden_1 = Dense(self.observable_dimension, activation='relu')(concatenated)
+        # hidden_2 = Dense(self.observable_dimension, activation='relu')(hidden_1)
+        # hidden_3 = Dense(self.observable_dimension, activation='relu')(hidden_2)
+        output = Dense(self.action_dimension, activation='softmax')(hidden_1)
 
         # Create model
         model = Model(inputs=[observable_input, epss_input, ntpg_input], outputs=output)
@@ -108,7 +108,52 @@ class Network:
         # Compile model
         model.compile(loss=DoubleDeepQLearning.ddqn_loss_fn, optimizer=RMSprop(), metrics=['accuracy'])
         print("Created network:", model.summary())
-        os.system("pause")
+        return model
+    
+
+    def createNetwork1DConvTrainingV2(self):
+        # Define input layers for each type of input data
+        observable_input = Input(shape=(self.observable_dimension,))
+        epss_input = Input(shape=(self.observable_dimension, 1))
+        ntpg_input = Input(shape=(self.observable_dimension, 1))
+
+        # Branch 1: Process observable matrix
+        observable_branch_1 = Dense(64, activation='relu')(observable_input)
+        observable_branch_2 = Dense(64, activation='relu')(observable_branch_1)
+        observable_branch_3 = Dense(self.observable_dimension, activation='relu')(observable_branch_2)
+
+        # Branch 2: Process EPSS matrix
+        epss_conv_1 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(epss_input)
+        epss_pool_1 = keras.layers.MaxPooling1D(pool_size=1)(epss_conv_1)
+        epss_conv_2 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(epss_pool_1)
+        epss_pool_2 = keras.layers.MaxPooling1D(pool_size=1)(epss_conv_2)
+        epss_flatten = keras.layers.Flatten()(epss_pool_2)
+
+
+        # Branch 3: Process ntpg penetration graph
+        ntpg_conv_1 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(ntpg_input)
+        ntpg_pool_1 = keras.layers.MaxPooling1D(pool_size=1)(ntpg_conv_1)
+        ntpg_conv_2 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(ntpg_pool_1)
+        ntpg_pool_2 = keras.layers.MaxPooling1D(pool_size=1)(ntpg_conv_2)
+        ntpg_flatten = keras.layers.Flatten()(ntpg_pool_2)
+
+
+        # Concatenate the outputs of all branches
+        concatenated = Concatenate()([observable_branch_3, epss_flatten, ntpg_flatten])
+
+
+        # Interpreting the concatenated data
+        hidden_1 = Dense(self.observable_dimension * self.observable_dimension, activation='relu')(concatenated)
+        hidden_2 = Dense(self.observable_dimension * self.observable_dimension, activation='relu')(hidden_1)
+        hidden_3 = Dense(self.observable_dimension, activation='relu')(hidden_2)
+        output = Dense(self.action_dimension, activation='softmax')(hidden_3)
+
+        # Create model
+        model = Model(inputs=[observable_input, epss_input, ntpg_input], outputs=output)
+
+        # Compile model
+        model.compile(loss=DoubleDeepQLearning.ddqn_loss_fn, optimizer=RMSprop(), metrics=['accuracy'])
+        print("Created network:", model.summary())
         return model
     
     
@@ -309,8 +354,8 @@ action_dimension = total_permutations
 
 # Create the network
 network = Network(observable_dimension, epss_dimension, ntpg_dimension, epss_edge_count, ntpg_edge_count, action_dimension)
-model = network.createConvNetwork_hiperf()
-model.save("trio-net-conv-ltsm.keras")
+model = network.createNetwork1DConvTrainingV2()
+model.save("trio-net-conv1d-v2.keras")
 
 # visualkeras.layered_view(model, legend=True).show()
 

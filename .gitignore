@@ -14,3 +14,4 @@ trio-net-conv-ltsm.keras
 trio-net.keras
 *.pyc
 trio-net.keras
+*.keras

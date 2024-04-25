@@ -19,6 +19,10 @@ import random
 import itertools
 
 
+
+
+
+
 #  rule đặt honeypot: vị trí đặt ko được trùng với node đang có kẻ tấn công và node nicr  
 
 
@@ -165,6 +169,8 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # os.system('pause')
 
         #print(self.get_info())
+
+        
 
 
     def action_spec(self):
@@ -319,6 +325,7 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         else:
             print("No more possible routes, exit the loop. State vector after the attack:", self._state)
 
+        
 
         # Update the NIFR list based on the action matrix
         self.__update_nifr_nodes(self.nifr_nodes)
