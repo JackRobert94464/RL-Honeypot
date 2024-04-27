@@ -1,0 +1,11 @@
+Xem lai mang conv1d tai sao lai la ,1 + lam fnr/fpr cua truong
+
+26/04 => conv1d tam xong, chuyen sang thuc hien trien khai weighted fnr/fpr
+
+27/04 => Hoan thanh fnr/fpr
+
+Luu y su dung template sau cho nhung thay doi core quan trong (co the implement vao main va dung o cac test case khac):
+
+# Note: implement to main and other modules as well
+
+Luu y tao moi hoan toan moi truong moi (autoenvgenerator.py) de reset cac model tu dau (training se bat dau tu 0 thay vi 1)

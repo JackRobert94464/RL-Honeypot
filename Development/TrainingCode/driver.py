@@ -152,6 +152,8 @@ Short training for testing out the dsp graphing function
 For debugging purpose, uncomment this
 '''
 
+
+
 deception_nodes = 2 # Change this to the number of deception nodes you want to test
 
 first_parameter = misc.calculate_first_parameter(deception_nodes, normal_nodes)
@@ -165,7 +167,7 @@ tf_env = tf_py_environment.TFPyEnvironment(env)
 
 timestep = tf_env.reset()
 rewards = []
-numberEpisodes = 4000
+numberEpisodes = 20
 
 # calculate the number of possible combinations
 total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
@@ -174,6 +176,12 @@ total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
 LearningQDeep=DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations)
 # run the learning process
 LearningQDeep.trainingEpisodes()
+
+
+
+
+
+# -------------- DSP + Training Time Visualization --------------
 
 import ddqn_dsp_visualizer
 import ddqn_trainingtime_visualizer
@@ -192,6 +200,9 @@ ddqn_dsp_visualizer.ddqn_dsp_visual(LearningQDeep.getGlobalStepCount(), Learning
 # Visualize the training time taken of our method
 ddqn_trainingtime_visualizer.ddqn_dsp_visual(LearningQDeep.getGlobalStepCount(), LearningQDeep.getGlobalTimeTaken())
 
+# -------------- DSP + Training Time Visualization --------------
+
+# -------------- Model Summary + Save --------------
 
 # get the obtained rewards in every episode
 LearningQDeep.sumRewardsEpisode
@@ -206,3 +217,5 @@ if os.name == 'nt':  # If the operating system is Windows
         LearningQDeep.mainNetwork.save(f".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_weighted_attacker_1to5_decoy_win_ver{numberEpisodes}.keras")
 else:  # For other operating systems like Linux
         LearningQDeep.mainNetwork.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_weighted_attacker_1to5_decoy_linux_ver{numberEpisodes}.keras")
+
+# -------------- Model Summary + Save --------------

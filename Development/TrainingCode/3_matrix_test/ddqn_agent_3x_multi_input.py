@@ -60,7 +60,7 @@ import test_3_field_01_epss_matrix
 import test_3_field_02_ntpg_matrix
 
 
-
+import math
 
 
 # Outline the difference from cartpole:
@@ -273,19 +273,44 @@ class DoubleDeepQLearning:
     ###########################################################################    
 
 
+    ###########################################################################
+    #   START - createNetwork function
+    ###########################################################################
+
     # https://datascience.stackexchange.com/questions/97518/valueerror-data-cardinality-is-ambiguous-in-model-ensemble-with-2-different-i
     # https://datascience.stackexchange.com/questions/32455/which-convolution-should-i-use-conv2d-or-conv1d
 
     def createNetwork(self):
         # Define input layers for each type of input data
-        observable_input = Input(shape=(self.stateDimension,))
-        epss_input = Input(shape=(self.stateDimension, 1))
-        ntpg_input = Input(shape=(self.stateDimension, 1))
+        observable_input = Input(shape=(self.stateDimension,1))
+        epss_input = Input(shape=(self.stateDimension, self.stateDimension))
+        ntpg_input = Input(shape=(self.stateDimension, self.stateDimension))
 
         # Branch 1: Process observable matrix
-        observable_branch_1 = Dense(64, activation='relu')(observable_input)
-        observable_branch_2 = Dense(64, activation='relu')(observable_branch_1)
-        observable_branch_3 = Dense(self.stateDimension, activation='relu')(observable_branch_2)
+        
+        observable_features = int(math.sqrt(self.stateDimension))
+        
+        
+        # TODO: Branch 1 will use LSTM for memorizing the observable matrix
+        # Branch 1: Process observable matrix (using LSTM)
+        observable_branch_lstm = keras.layers.LSTM(observable_features, activation='relu')(observable_input)
+        
+        # First interpretation model
+        observable_branch_1 = Dense(observable_features, activation='relu')(observable_branch_lstm)
+        
+        # Second interpretation model
+        observable_branch_21 = Dense(observable_features, activation='relu')(observable_branch_lstm)
+        observable_branch_22 = Dense(observable_features * 2, activation='relu')(observable_branch_21)
+        observable_branch_23 = Dense(observable_features, activation='relu')(observable_branch_22)
+        
+        # Merge the two interpretation models
+        observable_concatenated = Concatenate()([observable_branch_1, observable_branch_23])
+        
+        # output
+        observable_output = Dense(self.stateDimension, activation='relu')(observable_concatenated)
+
+
+        
 
         # Branch 2: Process EPSS matrix
         epss_conv_1 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(epss_input)
@@ -304,9 +329,10 @@ class DoubleDeepQLearning:
 
 
         # Concatenate the outputs of all branches
-        concatenated = Concatenate()([observable_branch_3, epss_flatten, ntpg_flatten])
+        concatenated = Concatenate()([observable_output, epss_flatten, ntpg_flatten])
 
-
+        
+        # Giu nguyen cac lop nay de cho cac model sau nay
         # Interpreting the concatenated data
         hidden_1 = Dense(self.stateDimension * self.stateDimension, activation='relu')(concatenated)
         hidden_2 = Dense(self.stateDimension * self.stateDimension, activation='relu')(hidden_1)
@@ -319,44 +345,8 @@ class DoubleDeepQLearning:
         # Compile model
         model.compile(loss=DoubleDeepQLearning.ddqn_loss_fn, optimizer=RMSprop(), metrics=['accuracy'])
         print("Created network:", model.summary())
-        os.system("pause")
-        return model
-     
-     
-     
-     
-    
-
-    ###########################################################################
-    #   START - createNetwork function
-    ###########################################################################
-    '''
-    Legacy: a simple network with 2 hidden layers of 100 units each and ReLU activation
-    
-    def createNetwork(self):
-        # create a neural network with two hidden layers of 100 units each and ReLU activation (must fix!)
-        # the final layer is a dense layer with k!/(k-m)! units, one for each possible deployment combination
-        model = Sequential()
-
-        model.add(InputLayer(input_shape=self.stateDimension))
-
-        
-        model.add(Dense(64, activation='relu'))
-        # model.add(Dense(128, activation='relu'))
-        model.add(Dense(64, activation='relu'))
-        
-        # Thay doi lop dau ra thanh softmax de giai quyet so luong dau ra khong xac dinh
-        model.add(Dense(self.actionDimension, activation='softmax'))
-        
-        # use mean squared error as the loss function
-        # original used a custom loss one, but for this case im not sure
-        
-        model.compile(loss=DoubleDeepQLearning.ddqn_loss_fn, optimizer=RMSprop(), metrics = ['accuracy'])
-        print("Created network:", model.summary())
         # os.system("pause")
         return model
-    '''
-    
 
     ###########################################################################
     #   END - createNetwork function
@@ -563,16 +553,6 @@ class DoubleDeepQLearning:
 
         # Exploitation phase
         if randomValue < self.epsilon:
-            '''
-            Legacy
-            action = np.zeros((self.env.M, self.env.K))
-            for i in range(self.env.M):
-                action[i, np.random.randint(0, self.env.K)] = 1
-                # print("Deploying honeypot number", i, "in normal nodes:", action)
-            action = action.astype(np.int32)
-            # print("ACTION MATRIX exploit:", action)
-            return action
-            '''
             action_space_values = list(self.env.action_space().values())
             random_action = random.choice(action_space_values)
             action = np.array(random_action, dtype=np.int32)
@@ -585,7 +565,12 @@ class DoubleDeepQLearning:
 
             # Convert the matrices to numpy arrays
             epss_matrix = np.array(self.epssMatrix)
+            # print("EPSS MATRIX:", epss_matrix)
+            
             ntpg_matrix = np.array(self.connectionMatrix)
+            # print("NTPG MATRIX:", ntpg_matrix)
+
+            
 
             # Check if the matrices have a nested list structure
             if len(epss_matrix.shape) > 2:
@@ -594,14 +579,26 @@ class DoubleDeepQLearning:
                 ntpg_matrix = np.stack(ntpg_matrix)
 
             # Expand the dimensions of the state to match the batch size of the other inputs
-            state = np.repeat(state, epss_matrix.shape[0], axis=0)
+            # state = np.repeat(state, epss_matrix.shape[0], axis=0)
+            # print("STATE:", state)
+            
 
             # Make sure the shapes of the inputs match
             epss_input = np.expand_dims(epss_matrix, axis=-1)
+            # print("EPSS INPUT:", epss_input)
+
             ntpg_input = np.expand_dims(ntpg_matrix, axis=-1)
+            # print("NTPG INPUT:", ntpg_input)
 
-            Qvalues = self.mainNetwork.predict([state, epss_input, ntpg_input])
+            epss_input_reshaped = np.array(epss_input).reshape(-1, self.stateDimension, self.stateDimension)
+            ntpg_input_reshaped = np.array(ntpg_input).reshape(-1, self.stateDimension, self.stateDimension)
 
+            # print("EPSS INPUT RESHAPED:", epss_input_reshaped)
+            # print("NTPG INPUT RESHAPED:", ntpg_input_reshaped)
+
+            # os.system("pause")
+
+            Qvalues = self.mainNetwork.predict([state, epss_input_reshaped, ntpg_input_reshaped])
 
 
             # print("STATE TO PREDICT:", state)
@@ -698,7 +695,7 @@ class DoubleDeepQLearning:
                     outputNetwork[index] = QcurrentStateMainNetwork[index]
                     outputNetwork[index, action] = y
                 
-                self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size=self.batchReplayBufferSize, verbose=1, epochs=100)
+                self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size=self.batchReplayBufferSize, verbose=0, epochs=200)
                 print("Main network trained!")
                 
                 self.counterUpdateTargetNetwork += 1

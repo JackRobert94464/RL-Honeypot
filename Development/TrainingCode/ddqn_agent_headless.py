@@ -74,6 +74,10 @@ class DoubleDeepQLearning:
     
       
     def __init__(self,env,gamma,epsilon,numberEpisodes,nodecount,totalpermutation):
+
+        # clear all the previous sessions
+        keras.backend.clear_session()
+
         self.env=env
         self.gamma=gamma
         self.epsilon=epsilon
@@ -597,7 +601,12 @@ class DoubleDeepQLearning:
                 # print("Actions after append: ",actionsAppend)
                 
                 
-                
+                # 27/04/2024 - Fixed the index out of bound by skipping the sample
+                # Note: implement to main and other modules as well
+                if action[0] >= self.totalpermutation:
+                    print(f"Warning: Invalid action {action} for index {index}. Skipping this sample.")
+                    continue
+
                 
                 # this actually does not matter since we do not use all the entries in the cost function
                 outputNetwork[index]=QcurrentStateMainNetwork[index]

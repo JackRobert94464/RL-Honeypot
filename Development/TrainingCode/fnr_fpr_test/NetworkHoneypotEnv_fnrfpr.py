@@ -53,6 +53,23 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
     def tpgs_converter(self, ntpg, htpg):
         return ntpg, htpg        
     
+    def calculate_average(self, values):
+        # Calculate the average of a list of values
+        return sum(values) / len(values)
+
+    def process_epss_for_fnrfpr(self, ntpg):
+        for ip, tuples in ntpg.items():
+            averages = []
+            for tpl in tuples:
+                # Extract the second and third elements of the tuple
+                val1, val2 = tpl[1], tpl[2]
+                # Calculate the average of the two values
+                avg = self.calculate_average([val1, val2])
+                averages.append(avg)
+            # Calculate the average of averages for this IP
+            ip_avg = self.calculate_average(averages)
+            self._epss_score_all.append(ip_avg)
+
 
 
     def __init__(self, N, M, K, ntpg, htpg):
@@ -167,11 +184,18 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         self._current_attacker_node = list(ntpg.keys())[2]
         print("Initial Entrypoint:", self._current_attacker_node)
         # os.system('pause')
+        
+        # An array to keep all of the epss scores of all the nodes based on the ntpg (average between root and user)
+        self._epss_score_all = []
+        self.process_epss_for_fnrfpr(ntpg)
+        # print("EPSS Score:", self._epss_score)
+        # os.system('pause')
 
         #print(self.get_info())
 
-        
-
+    
+    def epss_score_all(self):
+        return self._epss_score_all
 
     def action_spec(self):
         return self._action_spec
@@ -309,8 +333,13 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
             pop=[route[0] for route in self._ntpg.get(current_node)]
             wei=[(route[1] + route[2])/2 for route in self._ntpg.get(current_node)]
 
+            
+            
+
             print("Population:", pop)
             print("Weights:", wei)
+
+            # os.system('pause')
             
             next_node = random.choices(
                 population=pop, # the list to pick stuff out from in this case the ip of the next possible nodes
@@ -472,11 +501,15 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # Simulate the attacker's move based on the NTPG and HTPG
         self.__attacker_move_step()
         
-        reward = 0
+        
         # Increment the step counter
         self.current_step += 1
-        # If no, continue the episode and return the transition state and reward
-        return ts.transition(np.array([self._state], dtype=np.int32), reward=0)
+
+
+        # If no NICR or NIFR is attacked, continue the episode with a small negative reward
+        # Note: implement to main and other modules as well
+        reward = -0.1
+        return ts.transition(np.array([self._state], dtype=np.int32), reward=reward)
         
         
 
@@ -495,7 +528,6 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         
         
           
-
 
 '''
 #environment = NetworkHoneypotEnv(10, 3, 7, ntpg, htpg)
@@ -528,6 +560,9 @@ if eval_env is not None:
     utils.validate_py_environment(eval_env, episodes=10)
 
 '''
+
+
+
 
 
 

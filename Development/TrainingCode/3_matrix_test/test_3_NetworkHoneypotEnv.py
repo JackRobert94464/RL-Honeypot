@@ -464,11 +464,13 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
         # Simulate the attacker's move based on the NTPG and HTPG
         self.__attacker_move_step()
         
-        reward = 0
         # Increment the step counter
         self.current_step += 1
-        # If no, continue the episode and return the transition state and reward
-        return ts.transition(np.array([self._state], dtype=np.int32), reward=0)
+
+        # If no NICR or NIFR is attacked, continue the episode with a small negative reward
+        # Note: implement to main and other modules as well
+        reward = -0.1
+        return ts.transition(np.array([self._state], dtype=np.int32), reward=reward)
         
         
 

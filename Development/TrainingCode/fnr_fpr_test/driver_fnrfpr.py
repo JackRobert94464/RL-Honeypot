@@ -154,7 +154,7 @@ Short training for testing out the dsp graphing function
 For debugging purpose, uncomment this
 '''
 
-deception_nodes = 2 # Change this to the number of deception nodes you want to test
+deception_nodes = 1 # Change this to the number of deception nodes you want to test
 
 first_parameter = misc.calculate_first_parameter(deception_nodes, normal_nodes)
 

@@ -49,7 +49,7 @@ import random
 
 
 # import FNR FPR simulation code
-from fnr_fpr_test.fnrfpr_v2 import simulate_alert_training
+from fnrfpr_calc import simulate_alert_training
 
 
 # Outline the difference from cartpole:
@@ -79,6 +79,11 @@ class DoubleDeepQLearning:
     
       
     def __init__(self,env,gamma,epsilon,numberEpisodes,nodecount,totalpermutation,fnr,fpr):
+
+
+        # clear all the previous sessions
+        keras.backend.clear_session()
+
         self.env=env
         self.gamma=gamma
         self.epsilon=epsilon
@@ -319,7 +324,7 @@ class DoubleDeepQLearning:
 
                 #24/04/2024 - Applying the False Negative and False Positive Rates into the state vector
 
-                alerted_observation = simulate_alert_training(currentState.observation.reshape(1, -1)[0], self._fnr, self._fpr)
+                alerted_observation = simulate_alert_training(currentState.observation.reshape(1, -1)[0], self._fnr, self._fpr, self.env.epss_score_all())
                 print("State vector after applying FNR and FPR:", alerted_observation)
                 
                 # os.system('pause')
@@ -622,15 +627,18 @@ class DoubleDeepQLearning:
                 # this is necessary for defining the cost function
                 actionsAppend.append(action)
                 # print("Actions after append: ",actionsAppend)
-                
-                
-                
-                
+
+                # 27/04/2024 - Fixed the index out of bound by skipping the sample
+                # Note: implement to main and other modules as well
+                if action[0] >= self.totalpermutation:
+                    print(f"Warning: Invalid action {action} for index {index}. Skipping this sample.")
+                    continue
+
                 # this actually does not matter since we do not use all the entries in the cost function
-                outputNetwork[index]=QcurrentStateMainNetwork[index]
+                outputNetwork[index] = QcurrentStateMainNetwork[index]
                 # print("Output network index: ",outputNetwork)
                 # this is what matters
-                outputNetwork[index,action]=y
+                outputNetwork[index, action] = y
                 # print("Output network: ",outputNetwork)
              
             # here, we train the network

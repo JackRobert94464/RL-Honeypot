@@ -4,7 +4,44 @@
 
 # CONTRUCTION ZONE
 
+'''
+Legacy: a simple network with 2 hidden layers of 100 units each and ReLU activation
 
+def createNetwork(self):
+    # create a neural network with two hidden layers of 100 units each and ReLU activation (must fix!)
+    # the final layer is a dense layer with k!/(k-m)! units, one for each possible deployment combination
+    model = Sequential()
+
+    model.add(InputLayer(input_shape=self.stateDimension))
+
+    
+    model.add(Dense(64, activation='relu'))
+    # model.add(Dense(128, activation='relu'))
+    model.add(Dense(64, activation='relu'))
+    
+    # Thay doi lop dau ra thanh softmax de giai quyet so luong dau ra khong xac dinh
+    model.add(Dense(self.actionDimension, activation='softmax'))
+    
+    # use mean squared error as the loss function
+    # original used a custom loss one, but for this case im not sure
+    
+    model.compile(loss=DoubleDeepQLearning.ddqn_loss_fn, optimizer=RMSprop(), metrics = ['accuracy'])
+    print("Created network:", model.summary())
+    # os.system("pause")
+    return model
+'''
+
+
+'''
+Legacy
+action = np.zeros((self.env.M, self.env.K))
+for i in range(self.env.M):
+    action[i, np.random.randint(0, self.env.K)] = 1
+    # print("Deploying honeypot number", i, "in normal nodes:", action)
+action = action.astype(np.int32)
+# print("ACTION MATRIX exploit:", action)
+return action
+'''
 
 '''
 ntpg = {'192.168.1.3': [('192.168.4.3', 0,0.9756),('192.168.3.3', 0.9746,0),('192.168.2.3', 0,0.9756)],
