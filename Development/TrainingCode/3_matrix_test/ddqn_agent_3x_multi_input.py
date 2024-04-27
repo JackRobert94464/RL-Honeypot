@@ -738,9 +738,49 @@ class DoubleDeepQLearning:
 
         # Exploitation phase
         else:
+            # Reshape the state to match the expected input shape
+            state = state.reshape(1, -1)
+
+            # Convert the matrices to numpy arrays
+            epss_matrix = np.array(self.epssMatrix)
+            # print("EPSS MATRIX:", epss_matrix)
+            
+            ntpg_matrix = np.array(self.connectionMatrix)
+            # print("NTPG MATRIX:", ntpg_matrix)
+
+            
+
+            # Check if the matrices have a nested list structure
+            if len(epss_matrix.shape) > 2:
+                epss_matrix = np.stack(epss_matrix)
+            if len(ntpg_matrix.shape) > 2:
+                ntpg_matrix = np.stack(ntpg_matrix)
+
+            # Expand the dimensions of the state to match the batch size of the other inputs
+            # state = np.repeat(state, epss_matrix.shape[0], axis=0)
+            # print("STATE:", state)
+            
+
+            # Make sure the shapes of the inputs match
+            epss_input = np.expand_dims(epss_matrix, axis=-1)
+            # print("EPSS INPUT:", epss_input)
+
+            ntpg_input = np.expand_dims(ntpg_matrix, axis=-1)
+            # print("NTPG INPUT:", ntpg_input)
+
+            epss_input_reshaped = np.array(epss_input).reshape(-1, self.stateDimension, self.stateDimension)
+            ntpg_input_reshaped = np.array(ntpg_input).reshape(-1, self.stateDimension, self.stateDimension)
+
+            # print("EPSS INPUT RESHAPED:", epss_input_reshaped)
+            # print("NTPG INPUT RESHAPED:", ntpg_input_reshaped)
+
+            # os.system("pause")
+
+            Qvalues = self.mainNetwork.predict([state, epss_input_reshaped, ntpg_input_reshaped])
+
+
             # print("STATE TO PREDICT:", state)
-            Qvalues = model.predict(state)
-            # print("QVALUES:", Qvalues)
+            # Qvalues = self.mainNetwork.predict([np.array(state), np.array(self.epssMatrix), np.array(self.connectionMatrix)])
 
             # Get the index of the maximum Q-value
             max_index = np.argmax(Qvalues)
