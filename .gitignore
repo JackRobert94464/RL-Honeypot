@@ -15,3 +15,8 @@ trio-net.keras
 *.pyc
 trio-net.keras
 *.keras
+Development/TPG-Data/HTPG.csv
+Development/TPG-Data/NTPG.csv
+*.pyc
+*.pyc
+pyvenv.cfg

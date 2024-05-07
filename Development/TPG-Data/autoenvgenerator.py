@@ -11,18 +11,18 @@ cve_file = "Development\\TPG-Data\\300-entries-epss.csv"
 epss_file = "Development\\TPG-Data\\epss_scores-2024-02-25.csv"
 
 # Define the path of the output csv file for the Node TPG
-ntpg_file = "Development\\TPG-Data\\ntpg_eval.csv"
+ntpg_file = "Development\\TPG-Data\\ntpg_mini.csv"
 
 # Define the path of the output csv file for the Host TPG
-htpg_file = "Development\\TPG-Data\\htpg_eval.csv"
+htpg_file = "Development\\TPG-Data\\htpg_mini.csv"
 
 # Define the minimum and maximum number of nodes in the network
-min_nodes = 20
-max_nodes = 20
+min_nodes = 5
+max_nodes = 10
 
 # Define the minimum and maximum number of CVEs per connection
-min_cves = 7
-max_cves = 10
+min_cves = 2
+max_cves = 4
 
 # Define a list to store the CVEs and their EPSS scores
 cve_list = []

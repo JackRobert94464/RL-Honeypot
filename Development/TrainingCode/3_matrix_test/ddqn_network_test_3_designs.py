@@ -31,8 +31,10 @@ class Network:
     
         
 
+    
+    
 
-    def createNetwork(self):
+    def createNetworkBasic(self):
         # Define input layers for each type of input data
         observable_input = Input(shape=(self.observable_dimension,))
         epss_input = Input(shape=(self.epss_dimension,))
@@ -68,7 +70,7 @@ class Network:
         return model
     
     # https://datascience.stackexchange.com/questions/32455/which-convolution-should-i-use-conv2d-or-conv1d
-    def createNetwork1DConvPrimitve(self):
+    def createNetworkConv1D_v1(self):
         # Define input layers for each type of input data
         observable_input = Input(shape=(self.observable_dimension,))
         epss_input = Input(shape=(self.observable_dimension, 1))
@@ -110,8 +112,9 @@ class Network:
         print("Created network:", model.summary())
         return model
     
+    
 
-    def createNetwork1DConvTrainingV2(self):
+    def createNetwork1DConv_DuoConv_V2(self):
         # Define input layers for each type of input data
         observable_input = Input(shape=(self.observable_dimension,))
         epss_input = Input(shape=(self.observable_dimension, 1))
@@ -155,6 +158,79 @@ class Network:
         model.compile(loss=DoubleDeepQLearning.ddqn_loss_fn, optimizer=RMSprop(), metrics=['accuracy'])
         print("Created network:", model.summary())
         return model
+    
+    
+    # Conv1D network for high number of nodes
+    # Enhanced with memory capabilities LSTM
+    def createNetworkConv1D_LTSM_v3(self):
+        # Define input layers for each type of input data
+        observable_input = Input(shape=(self.stateDimension,1))
+        epss_input = Input(shape=(self.stateDimension, self.stateDimension))
+        ntpg_input = Input(shape=(self.stateDimension, self.stateDimension))
+
+        # Branch 1: Process observable matrix
+        
+        observable_features = int(math.sqrt(self.stateDimension))
+        
+        
+        # TODO: Branch 1 will use LSTM for memorizing the observable matrix
+        # Branch 1: Process observable matrix (using LSTM)
+        observable_branch_lstm = keras.layers.LSTM(observable_features, activation='relu')(observable_input)
+        
+        # First interpretation model
+        observable_branch_1 = Dense(observable_features, activation='relu')(observable_branch_lstm)
+        
+        # Second interpretation model
+        observable_branch_21 = Dense(observable_features, activation='relu')(observable_branch_lstm)
+        observable_branch_22 = Dense(observable_features * 2, activation='relu')(observable_branch_21)
+        observable_branch_23 = Dense(observable_features, activation='relu')(observable_branch_22)
+        
+        # Merge the two interpretation models
+        observable_concatenated = Concatenate()([observable_branch_1, observable_branch_23])
+        
+        # output
+        observable_output = Dense(self.stateDimension, activation='relu')(observable_concatenated)
+
+
+        
+
+        # Branch 2: Process EPSS matrix
+        epss_conv_1 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(epss_input)
+        epss_pool_1 = tf.keras.layers.MaxPooling1D(pool_size=1)(epss_conv_1)
+        epss_conv_2 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(epss_pool_1)
+        epss_pool_2 = tf.keras.layers.MaxPooling1D(pool_size=1)(epss_conv_2)
+        epss_flatten = keras.layers.Flatten()(epss_pool_2)
+
+
+        # Branch 3: Process ntpg penetration graph
+        ntpg_conv_1 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(ntpg_input)
+        ntpg_pool_1 = tf.keras.layers.MaxPooling1D(pool_size=1)(ntpg_conv_1)
+        ntpg_conv_2 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(ntpg_pool_1)
+        ntpg_pool_2 = tf.keras.layers.MaxPooling1D(pool_size=1)(ntpg_conv_2)
+        ntpg_flatten = keras.layers.Flatten()(ntpg_pool_2)
+
+
+        # Concatenate the outputs of all branches
+        concatenated = Concatenate()([observable_output, epss_flatten, ntpg_flatten])
+
+        
+        # Giu nguyen cac lop nay de cho cac model sau nay
+        # Interpreting the concatenated data
+        hidden_1 = Dense(self.stateDimension * self.stateDimension, activation='relu')(concatenated)
+        hidden_2 = Dense(self.stateDimension * self.stateDimension, activation='relu')(hidden_1)
+        hidden_3 = Dense(self.stateDimension, activation='relu')(hidden_2)
+        output = Dense(self.actionDimension, activation='softmax')(hidden_3)
+
+        # Create model
+        model = Model(inputs=[observable_input, epss_input, ntpg_input], outputs=output)
+
+        # Compile model
+        model.compile(loss=DoubleDeepQLearning.ddqn_loss_fn, optimizer=RMSprop(), metrics=['accuracy'])
+        print("Created network:", model.summary())
+        # os.system("pause")
+        return model
+    
+    
     
     
     # For low number of nodes, conv network have the same amount of filter as the input shape

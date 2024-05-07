@@ -18,11 +18,11 @@ from sarsa_agent import SarsaLearning
 
 # Load the NTPG and HTPG dictionaries
 if os.name == 'nt':  # If the operating system is Windows
-    ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg.csv")
-    htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg.csv")
+    ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_mini.csv")
+    htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg_mini.csv")
 else:  # For other operating systems like Linux
-    ntpg = misc.create_dictionary_ntpg("./Development/TPG-Data/ntpg_eval.csv")
-    htpg = misc.create_dictionary_htpg("./Development/TPG-Data/htpg_eval.csv")
+    ntpg = misc.create_dictionary_ntpg("./Development/TPG-Data/ntpg_eval_mini.csv")
+    htpg = misc.create_dictionary_htpg("./Development/TPG-Data/htpg_eval_mini.csv")
 
 # Load the topology param from TPGs
 normal_nodes = misc.count_nodes(ntpg)

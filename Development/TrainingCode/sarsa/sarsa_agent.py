@@ -59,14 +59,14 @@ class SarsaLearning:
             action = np.array(random_action, dtype=np.int32)
             return action
         else:
-            print("State: ", state)
-            print("BIG BAD Q: ", self.Q)
+            # print("State: ", state)
+            # print("BIG BAD Q: ", self.Q)
 
             observation_flat = state.observation[0]
 
             state_index = int("".join(str(int(x)) for x in observation_flat), 2)
-            print("State index: ", state_index)
-            os.system("pause")
+            # print("State index: ", state_index)
+            # os.system("pause")
 
             max_index = np.argmax(self.Q[state_index, :])
             action = self.index_to_action(max_index)
@@ -78,11 +78,31 @@ class SarsaLearning:
 
         return action_matrix
 
-    #Function to learn the Q-value
-    def updateQvalues(self, state, state2, reward, action, action2):
+    # Function to learn the Q-value
+    def updateQvalues(self, state1, action1, reward, state2, action2, done):
+        # Assuming state is represented by the 'observation' and action is a tuple
+        state = self.getStateIndex(state1.observation)  # Convert observation to index
+        print("State 2: ", state2)
+        state2 = self.getStateIndex(state2.observation)  # Convert observation to index
+        action = self.getActionIndex(action1)  # Convert action tuple to index
+
+        # Extract action2 index only if not done
+        action2 = self.getActionIndex(action2) if not done else 0
+
         predict = self.Q[state, action]
-        target = reward + self.gamma * self.Q[state2, action2]
-        self.Q[state, action] = self.Q[state, action] + self.alpha * (target - predict)
+        target = reward + self.gamma * self.Q[state2, action2] * (not done)  # Multiply by (not done) to handle terminal state
+        self.Q[state, action] += self.alpha * (target - predict)
+
+    # Helper function to convert observation to a single index
+    def getStateIndex(self, observation):
+        # Flatten the observation array and convert to tuple for indexing
+        return tuple(observation.flatten())
+
+    # Helper function to convert action tuple to a single index
+    def getActionIndex(self, action):
+        # Convert action tuple to a single number or index
+        return action[0] * self.num_action_space + action[1]  # Example conversion, adjust based on action space size
+
         
     def trainingEpisodes(self):
         
@@ -101,20 +121,24 @@ class SarsaLearning:
                 # self.env.render()
                 
                 #Getting the next state
-                state2, reward, done, info = self.env.step(action1)
-
+                state2 = self.env.step(action1)
                 
-                print("ACTUAL STEP: ", self.env.step(action1))
+                print("State 1 observation: ", state1)
+                print("Action 1: ", action1)
+                
+                (discount, state2Observation, reward, terminalState) = (state1.discount, state2.observation, state2.reward, self.env.is_last())
+                # (discount, nextStateObservation, reward, terminalState) = (currentState.discount, nextState.observation, nextState.reward, self.env.is_last())
                 print("State 2: ", state2)
+                print("State 2 observation: ", state2Observation)
                 print("Reward: ", reward)
-                print("Done: ", done)
-                print("Info: ", info)
+                print("Done: ", terminalState)
+                print("Discount: ", discount)
 
                 #Choosing the next action
                 action2 = self.selectAction(state2)
                 
                 #Learning the Q-value
-                self.updateQvalues(state1, state2, reward, action1, action2)
+                self.updateQvalues(state1, state2, reward, action1, action2, terminalState)
 
                 state1 = state2
                 action1 = action2
@@ -126,7 +150,7 @@ class SarsaLearning:
                 rewardsEpisode.append(reward)
                 
                 #If at the end of learning process
-                if done:
+                if terminalState:
                     break
 
         print("Sum of rewards {}".format(np.sum(rewardsEpisode)))        

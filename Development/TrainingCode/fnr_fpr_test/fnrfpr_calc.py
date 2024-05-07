@@ -48,11 +48,9 @@ def simulate_alert_training(true_state, fnr, fpr, epss_score):
 
         index += 1
 
-    
     alerted_nodes = np.array(alerted_nodes)
 
     return alerted_nodes
-
 
 
 '''
