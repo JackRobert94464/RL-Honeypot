@@ -59,8 +59,8 @@ fpr = 0.14
 
 
 if os.name == 'nt':  # If the operating system is Windows
-        ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg.csv")
-        htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg.csv")
+        ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_big.csv")
+        htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg_big.csv")
 else:  # For other operating systems like Linux
         ntpg = misc.create_dictionary_ntpg("./Development/TPG-Data/ntpg.csv")
         htpg = misc.create_dictionary_htpg("./Development/TPG-Data/htpg.csv")

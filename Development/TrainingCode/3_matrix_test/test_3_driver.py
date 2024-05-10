@@ -33,7 +33,7 @@ from gym import spaces
 from test_3_NetworkHoneypotEnv import NetworkHoneypotEnv
 
 # import the agent
-from ddqn_agent_3x_multi_input import DoubleDeepQLearning
+from ddqn_agent_3x_simple_state import DoubleDeepQLearning
 
  
 
@@ -55,8 +55,8 @@ epsilon = 0.1
 
 
 if os.name == 'nt':  # If the operating system is Windows
-        ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg.csv")
-        htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg.csv")
+        ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_big.csv")
+        htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg_big.csv")
 else:  # For other operating systems like Linux
         ntpg = misc.create_dictionary_ntpg("./Development/TPG-Data/ntpg.csv")
         htpg = misc.create_dictionary_htpg("./Development/TPG-Data/htpg.csv")

@@ -18,8 +18,8 @@ from sarsa_agent import SarsaLearning
 
 # Load the NTPG and HTPG dictionaries
 if os.name == 'nt':  # If the operating system is Windows
-    ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_mini.csv")
-    htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg_mini.csv")
+    ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_big.csv")
+    htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg_big.csv")
 else:  # For other operating systems like Linux
     ntpg = misc.create_dictionary_ntpg("./Development/TPG-Data/ntpg_eval_mini.csv")
     htpg = misc.create_dictionary_htpg("./Development/TPG-Data/htpg_eval_mini.csv")
@@ -59,9 +59,56 @@ gamma = 0.9
 # create an object
 SarsaAgent=SarsaLearning(env, epsilon, numberEpisodes, max_steps, alpha, gamma, total_permutations)
 # run the learning process
-SarsaAgent.trainingEpisodes()
+# SarsaAgent.trainingEpisodes()
 
 # ---------------- Agent Creation Block ----------------     
+
+
+
+
+
+# ---------------- Training Block ----------------
+for ep in range (numberEpisodes):
+    SarsaAgent.trainingSingleEpisode()
+    # if episode is a multiple of 50, append step count and calculate dsp
+    if ep % 50 == 0:
+
+        SarsaAgent.evaluateModel()
+
+
+        SarsaAgent.step_globalcounter.append(SarsaAgent.getStepCount())
+        
+        # Add the current clock counter value to the time taken list
+        SarsaAgent.time_taken.append(SarsaAgent.clock_counter)
+        
+# ---------------- Training Block ----------------
+
+
+
+
+
+
+
+# -------------- DSP + Training Time Visualization --------------
+
+import sarsa_dsp_visualizer
+import sarsa_trainingtime_visualizer
+
+
+print("Total steps: ", SarsaAgent.getGlobalStepCount())
+print("Total DSP: ", SarsaAgent.getGlobalDSPCount())
+print("Total Time: ", SarsaAgent.getGlobalTimeTaken())
+
+
+
+# Visualize the Defense Success Probability (DSP) of our method
+sarsa_dsp_visualizer.sarsa_dsp_visual(SarsaAgent.getGlobalStepCount(), SarsaAgent.getGlobalDSPCount())
+
+
+# Visualize the training time taken of our method
+sarsa_trainingtime_visualizer.sarsa_dsp_visual(SarsaAgent.getGlobalStepCount(), SarsaAgent.getGlobalTimeTaken())
+
+# -------------- DSP + Training Time Visualization --------------
 
 
 # -------------- Model Summary + Save --------------
@@ -72,3 +119,10 @@ rewards = SarsaAgent.sumRewardsEpisode
 print(rewards)
 
 # -------------- Model Summary + Save --------------
+
+# -------------- Model Evaluation --------------
+
+# Evaluate the model
+print("Total evaluation rewards: ", SarsaAgent.evaluateModel())
+
+# -------------- Model Evaluation --------------

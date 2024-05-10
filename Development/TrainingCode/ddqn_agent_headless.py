@@ -140,7 +140,7 @@ class DoubleDeepQLearning:
         # initialize visit(s,a)
         self.visitCounts = 0
         
-        # initialize step counter
+        # initialize step counter (time/dsp)
         # Counter for the number of steps each episode takes
         self.step_counter = 0
         

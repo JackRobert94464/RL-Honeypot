@@ -324,7 +324,7 @@ class DoubleDeepQLearning:
 
                 #24/04/2024 - Applying the False Negative and False Positive Rates into the state vector
 
-                alerted_observation = simulate_alert_training(currentState.observation.reshape(1, -1)[0], self._fnr, self._fpr, self.env.epss_score_all())
+                alerted_observation = simulate_alert_training(currentState.observation.reshape(1, -1)[0], self._fnr, self._fpr)
                 print("State vector after applying FNR and FPR:", alerted_observation)
                 
                 # os.system('pause')

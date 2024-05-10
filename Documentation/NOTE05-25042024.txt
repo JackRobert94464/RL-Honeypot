@@ -9,3 +9,4 @@ Luu y su dung template sau cho nhung thay doi core quan trong (co the implement 
 # Note: implement to main and other modules as well
 
 Luu y tao moi hoan toan moi truong moi (autoenvgenerator.py) de reset cac model tu dau (training se bat dau tu 0 thay vi 1)
+

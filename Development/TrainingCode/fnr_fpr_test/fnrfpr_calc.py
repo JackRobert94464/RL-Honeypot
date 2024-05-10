@@ -2,7 +2,8 @@ import random
 import numpy as np
 
 # Create a function to simulate the error
-def simulate_error(value, fn_rate, fp_rate, tp_rate, tn_rate):
+# This one is more accurate
+def simulate_error_v1(value, fn_rate, fp_rate, tp_rate, tn_rate):
     if value == 0:
         # For true negatives
         tn_prob = tn_rate / (tn_rate + fp_rate)
@@ -13,8 +14,25 @@ def simulate_error(value, fn_rate, fp_rate, tp_rate, tn_rate):
         tp_prob = tp_rate / (tp_rate + fn_rate)
         fn_prob = fn_rate / (tp_rate + fn_rate)
         return np.random.choice([1, 0], p=[tp_prob, fn_prob])
+    
 
-def simulate_alert_training(true_state, fnr, fpr, epss_score):
+
+
+'''
+next_node = random.choices(
+                population=pop, # the list to pick stuff out from in this case the ip of the next possible nodes
+                weights=wei, # AVG OF BOTH ROOT AND USER
+                k=1 # number of sample to pick from population
+            )[0]
+'''
+
+
+
+def simulate_error_v2(value, fn_rate, fp_rate, tp_rate, tn_rate):
+    return random.choices(population=[0, 1], weights=[tn_rate + fp_rate, fn_rate + tp_rate], k=1)[0]
+
+
+def simulate_alert_training(true_state, fnr, fpr):
     """
     Simulates alerts raised during training on nodes by introducing False Negative and False Positive Rates.
 
@@ -35,8 +53,14 @@ def simulate_alert_training(true_state, fnr, fpr, epss_score):
 
     for value in attacked_nodes:
 
-        attack_rate = epss_score[index]
-        non_attack_rate = 1 - epss_score[index]
+        # attack_rate = epss_score[index]
+        # non_attack_rate = 1 - epss_score[index]
+
+        # 10/5/2024 - Attack rate is a static probability of whether the attacker "will" attack or not
+        # EPSS is the probability that a vulnerability will be exploited
+
+        attack_rate = 0.7
+        non_attack_rate = 1 - attack_rate
 
         # FN, FP, TP, TN rates
         fn_rate = fnr * attack_rate
@@ -44,7 +68,8 @@ def simulate_alert_training(true_state, fnr, fpr, epss_score):
         tp_rate = (1 - fnr) * attack_rate
         tn_rate = (1 - fpr) * non_attack_rate
 
-        alerted_nodes.append(simulate_error(value, fn_rate, fp_rate, tp_rate, tn_rate))
+        # alerted_nodes.append(simulate_error(value, fn_rate, fp_rate, tp_rate, tn_rate))
+        alerted_nodes.append(simulate_error_v2(value, fn_rate, fp_rate, tp_rate, tn_rate))
 
         index += 1
 
@@ -54,11 +79,12 @@ def simulate_alert_training(true_state, fnr, fpr, epss_score):
 
 
 '''
+
+'''
+
 # Example usage
 # Input array
 input_array = np.array([0, 0, 1, 0, 0, 1, 0])
 
 print("Input array:", input_array)
-print("Output array with simulated errors:", simulate_alert_training(input_array, 0.15, 0.1, 0.93389))
-'''
-
+print("Output array with simulated errors:", simulate_alert_training(input_array, 0.05, 0.02))

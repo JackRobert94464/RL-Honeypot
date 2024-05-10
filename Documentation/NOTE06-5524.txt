@@ -1,0 +1,13 @@
+07/05/2024 - Tam hoan thanh co ban thuat toan SarsaAgent
+SARSA su dung DQN de thao tac voi khong gian action/state lon
+Tuy nhien ban chat cua SARSA va DDQN khac nhau vi:
+
+Doi voi SARSA (State-Action-Reward-State-Action), hanh dong tiep theo (a') duoc chon bang chinh policy dang duoc danh gia va cai thien
+(thuong la e-greedy), vi vay thuat toan nay la thuat toan phu thuoc policy (on-policy)
+
+Doi voi DQN thuan (ma DDQN su dung), hanh dong tiep theo duoc chon dua tren greedy policy dua vao Q-network, tuy nhien Q-network nay duoc
+cap nhat dua tren gia tri Q toi da cua hanh dong ke tiep (max(a') Q(s',a')) bat ke policy nao dang dua vao. Vi vay day la phuong phap ko phu thuoc policy 
+(off-policy) vi chien thuat greedy policy dung de update Q-values co the khac voi chien thuat ma agent dang theo duoi 
+
+=> Nhu vay SARSA dua tren DQN se thuc hien chon ca hai hanh dong (a) va (a') dua tren cung 1 policy (o day chon e-greedy) va cap nhat 
+mang neural dua tren trang thai thay doi quan sat duoc (s, a, r, s', a')

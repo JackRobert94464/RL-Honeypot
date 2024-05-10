@@ -8,7 +8,7 @@ import random
 cve_file = "Development\\TPG-Data\\300-entries-epss.csv"
 
 # Define the path of the epss csv file
-epss_file = "Development\\TPG-Data\\epss_scores-2024-02-25.csv"
+epss_file = "Development\\TPG-Data\\epss_scores-2024-05-06.csv"
 
 # Define the path of the output csv file for the Node TPG
 ntpg_file = "Development\\TPG-Data\\ntpg_mini.csv"

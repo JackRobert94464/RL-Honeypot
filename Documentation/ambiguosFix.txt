@@ -1,0 +1,61 @@
+## You
+Current Q-values:  [[ 0.01616756  0.00135277 -0.00053682  0.00092345  0.00517148 -0.00037918
+0.00130174  0.0044989   0.00443326 -0.00286122  0.00282347  0.00049961
+0.00214555  0.00332872 -0.00542036]]
+Next Q-values:  [[ 0.02770751  0.02654432  0.05884065  0.00284196  0.19029592  0.0678257
+0.0079218   0.11056445  0.0360338   0.07574178  0.10573623 -0.13420884
+0.0110517  -0.00856916 -0.0997889 ]]
+Action 1:  [1 6]
+Action 2:  (1, 2)
+Action space:  {0: (1, 2), 1: (1, 3), 2: (1, 4), 3: (1, 5), 4: (1, 6), 5: (2, 3), 6: (2, 4), 7: (2, 5), 8: (2, 6), 9: (3, 4), 10: (3, 5), 11: (3, 6), 12: (4, 5), 13: (4, 6), 14: (5, 6)}
+Traceback (most recent call last):
+File "F:\Nextcloud\Hoc\School\NCKH-KhoaLuan\RL-Honeypot\Development\TrainingCode\sarsa\sarsa_driver.py", line 62, in <module>
+SarsaAgent.trainingEpisodes()
+File "F:\Nextcloud\Hoc\School\NCKH-KhoaLuan\RL-Honeypot\Development\TrainingCode\sarsa\sarsa_agent.py", line 178, in trainingEpisodes
+self.updateQvalues(state1, action1, reward, state2, action2, terminalState)
+File "F:\Nextcloud\Hoc\School\NCKH-KhoaLuan\RL-Honeypot\Development\TrainingCode\sarsa\sarsa_agent.py", line 126, in updateQvalues
+action_index = list(self.env.action_space().keys())[list(self.env.action_space().values()).index(action1)]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()
+this is the code
+Function to learn the Q-value# SARSA update rule with function approximation
+def updateQvalues(self, state1, action1, reward, state2, action2, done):
+    # Reshape the observations to fit the neural network input
+    state = state1.observation.reshape(1, -1)
+    state2 = state2.observation.reshape(1, -1)
+    
+    # Get Q-values for the current state and the next state
+    current_q_values = self.q_network.predict(state)
+    next_q_values = self.q_network.predict(state2)
+
+    print("Current Q-values: ", current_q_values)
+    print("Next Q-values: ", next_q_values)
+    print("Action 1: ", action1)
+    print("Action 2: ", action2)
+    print("Action space: ", self.env.action_space())
+    
+    # Find the index of the action1 and action2 in the action space
+    action_index = list(self.env.action_space().keys())[list(self.env.action_space().values()).index(action1)]
+    action2_index = list(self.env.action_space().keys())[list(self.env.action_space().values()).index(action2)] if not done else 0
+    
+    # SARSA target uses the Q-value of the next state-action pair
+    target = reward + self.gamma * next_q_values[0][action2_index] * (1 - int(done))
+    
+    # Update the Q-values
+    target_vector = current_q_values.copy()
+    target_vector[0][action_index] = target
+    
+    # Train the network with the state as input and target vector as desired output
+    self.q_network.model.fit(state, target_vector, epochs=1, verbose=0)
+what happened?
+## Copilot
+The error you're encountering is due to the way you're trying to find the index of action1 in the action space. The action1 variable is an array, and when you use the .index() method, it expects a single element, not an array. Since action1 is an array, the method doesn't know how to handle it, hence the error message suggesting the use of .any() or .all().
+To fix this, you need to convert the action1 array into a tuple that matches the format of the actions in the action space dictionary. Here's how you can modify your code:
+
+# Convert the action1 array to a tuple
+action1_tuple = tuple(action1)
+
+# Find the index of the action1 and action2 in the action space
+action_index = list(self.env.action_space().keys())[list(self.env.action_space().values()).index(action1_tuple)]
+
+This change should resolve the ValueError you're seeing. The rest of your code for updating the Q-values seems to be correctly implementing the SARSA update rule. Remember to make a similar conversion for action2 if it's also an array.
