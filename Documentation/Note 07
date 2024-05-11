@@ -1,3 +1,4 @@
-Co dinh attack rate # EPSS (attack la quyet dinh tan cong, epss la kha nang bi tan cong)
+Co dinh attack rate # EPSS (attack la quyet dinh tan cong, epss la kha nang bi tan cong) 
+Test fnr/fpr moi voi attack rate co dinh
 Trien khai FNR/FPR cho sarsa, thuc hien 5 cases theo bai bao goc
 Thuc hien PPO, trien khai FNR/FPR cho PPO, 5 cases
