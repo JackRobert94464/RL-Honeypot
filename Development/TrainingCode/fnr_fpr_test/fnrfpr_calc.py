@@ -84,7 +84,7 @@ def simulate_alert_training(true_state, fnr, fpr):
 
 # Example usage
 # Input array
-input_array = np.array([0, 0, 1, 0, 0, 1, 0])
+# input_array = np.array([0, 0, 1, 0, 0, 1, 0])
 
-print("Input array:", input_array)
-print("Output array with simulated errors:", simulate_alert_training(input_array, 0.05, 0.02))
+# print("Input array:", input_array)
+# print("Output array with simulated errors:", simulate_alert_training(input_array, 0.05, 0.02))

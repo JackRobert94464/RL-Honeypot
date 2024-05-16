@@ -49,7 +49,7 @@ import random
 
 
 # import FNR FPR simulation code
-from fnrfpr_calc import simulate_alert_training
+from .fnrfpr_calc import simulate_alert_training
 
 
 # Outline the difference from cartpole:

@@ -167,7 +167,7 @@ tf_env = tf_py_environment.TFPyEnvironment(env)
 
 timestep = tf_env.reset()
 rewards = []
-numberEpisodes = 100
+numberEpisodes = 20000
 
 # calculate the number of possible combinations
 total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
@@ -212,4 +212,4 @@ LearningQDeep.mainNetwork.summary()
 if os.name == 'nt':  # If the operating system is Windows
         LearningQDeep.mainNetwork.save(f".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_weighted_attacker_1to5_decoy_win_ver{numberEpisodes}_fnrfpr_{fnr}{fpr}.keras")
 else:  # For other operating systems like Linux
-        LearningQDeep.mainNetwork.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_weighted_attacker_1to5_decoy_linux_ver{numberEpisodes}.keras")
+        LearningQDeep.mainNetwork.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_weighted_attacker_1to5_decoy_linux_ver{numberEpisodes}_fnrfpr_{fnr}{fpr}.keras")

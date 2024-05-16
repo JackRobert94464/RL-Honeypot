@@ -151,36 +151,122 @@ htpg = {'192.168.1.3': [('Apache', 'CVE-2014-6271', 0.9756, ('192.168.4.3', 'Roo
 # 18/02/2024 Attacker simulate code is use for training only - for production we will need to demo in some way
 
 def __attacker_move_step(self):
-        """Simulates one step of the attacker's move based on the NTPG and HTPG.
-        Updates the state vector with the new attacked node.
-        """
-        # Get the current node information
-        current_node = self._current_attacker_node
-        current_node_index = int(current_node.split('.')[-1]) - 2
+    """Simulates one step of the attacker's move based on the NTPG and HTPG.
+    Updates the state vector with the new attacked node.
+    """
+    # Get the current node information
+    current_node = self._current_attacker_node
+    current_node_index = int(current_node.split('.')[-1]) - 2
 
-        # Check if the current node has possible routes
-        print("NTPG:", self._ntpg)
-        print("current_node:", current_node)
-        print("NTPG OF CURRENT NODE:" , self._ntpg.get(current_node)[0]) if self._ntpg.get(current_node) else print("there is no NTPG for this node, something is wrong")
-        # os.system("pause")
-        if self._ntpg.get(current_node):
-            # Iterate over the possible routes from the current node
-            for route in self._ntpg.get(current_node):
-                next_node = route[0]
-                attack_chance = route[1]  # Use the chance to attack the node
-                if np.random.random() <= attack_chance:
-                    self._state[current_node_index] = 1
-                    print("Attacked node:", current_node)
-                    break  # Attack successful, exit the loop
+    # Check if the current node has possible routes
+    print("NTPG:", self._ntpg)
+    print("current_node:", current_node)
+    print("NTPG OF CURRENT NODE:" , self._ntpg.get(current_node)[0]) if self._ntpg.get(current_node) else print("there is no NTPG for this node, something is wrong")
+    # os.system("pause")
+    if self._ntpg.get(current_node):
+        # Iterate over the possible routes from the current node
+        for route in self._ntpg.get(current_node):
+            next_node = route[0]
+            attack_chance = route[1]  # Use the chance to attack the node
+            if np.random.random() <= attack_chance:
+                self._state[current_node_index] = 1
+                print("Attacked node:", current_node)
+                break  # Attack successful, exit the loop
 
-            # Move to the next node based on HTPG probability
-            next_node = np.random.choice([route[0] for route in self._ntpg.get(current_node)])  # Fix: Specify a 1-dimensional array
-            self._current_attacker_node = next_node
-            print("Next node to attempt attack:", next_node)
+        # Move to the next node based on HTPG probability
+        next_node = np.random.choice([route[0] for route in self._ntpg.get(current_node)])  # Fix: Specify a 1-dimensional array
+        self._current_attacker_node = next_node
+        print("Next node to attempt attack:", next_node)
 
-        else:
-            print("No more possible routes, exit the loop. State vector after the attack:", self._state)
+    else:
+        print("No more possible routes, exit the loop. State vector after the attack:", self._state)
 
-        # Update the NIFR list based on the action matrix
-        self.__update_nifr_nodes(self.nifr_nodes)
-        print("NIFR list after attack:", self.nifr_nodes)
+    # Update the NIFR list based on the action matrix
+    self.__update_nifr_nodes(self.nifr_nodes)
+    print("NIFR list after attack:", self.nifr_nodes)
+        
+        
+        
+'''
+Legacy code from the original code (action matrix K*M)
+
+def index_to_action(self, index):
+    # Initialize the action matrix with zeros
+    action_matrix = np.zeros((self.env.M, self.env.K), dtype=np.int32)
+    # print("action matrix to be indexed:", action_matrix)
+
+    # Convert the index to the corresponding row and column for the action matrix
+    for i in range(self.env.M):
+        # Calculate the index for the current row
+        row_index = index // (self.env.K ** (self.env.M - 1 - i))
+        index -= row_index * (self.env.K ** (self.env.M - 1 - i))
+
+        # Set the value in the action matrix
+        action_matrix[i, row_index] = 1
+
+    # print("index to action matrix:", action_matrix)
+    return action_matrix
+
+        # return action_matrix
+'''
+
+
+'''
+        legacy
+        # save the model, this is important, since it takes long time to train the model 
+        # and we will need model in another file to visualize the trained model performance
+        if os.name == 'nt':  # If the operating system is Windows
+            LearningQDeep.mainNetwork.save(f".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_weighted_attacker_1to5_decoy_win_ver{numberEpisodes}_fnrfpr_{fnr}{fpr}.keras")
+        else:  # For other operating systems like Linux
+            LearningQDeep.mainNetwork.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_weighted_attacker_1to5_decoy_linux_ver{numberEpisodes}_fnrfpr_{fnr}{fpr}.keras")
+'''
+
+
+'''
+# get the obtained rewards in every episode
+        LearningQDeep.sumRewardsEpisode
+
+        print(rewards)
+
+        # DSP graphing function
+
+        print("Total steps: ", LearningQDeep.getGlobalStepCount())
+        print("Total DSP: ", LearningQDeep.getGlobalDSPCount())
+
+        # Visualize the Defense Success Probability (DSP) of our method
+        ddqn_dsp_visualizer.ddqn_dsp_visual(LearningQDeep.getGlobalStepCount(), LearningQDeep.getGlobalDSPCount())
+
+        # Visualize the training time taken of our method
+        ddqn_trainingtime_visualizer.ddqn_dsp_visual(LearningQDeep.getGlobalStepCount(), LearningQDeep.getGlobalTimeTaken())
+'''
+
+
+'''
+import ddqn_dsp_visualizer
+    import ddqn_trainingtime_visualizer
+
+
+    print("Total steps: ", LearningQDeep.getGlobalStepCount())
+    print("Total DSP: ", LearningQDeep.getGlobalDSPCount())
+    print("Total Time: ", LearningQDeep.getGlobalTimeTaken())
+
+
+
+    # Visualize the Defense Success Probability (DSP) of our method
+    # Save the global step count and global DSP count to a text file
+    with open(f"result_fnr{fnr}_fpr{fpr}.txt", "w") as file:
+            file.write(f"Global Step Count: {LearningQDeep.getGlobalStepCount()}\n")
+            file.write(f"Global DSP Count: {LearningQDeep.getGlobalDSPCount()}\n")
+    ddqn_dsp_visualizer.ddqn_dsp_visual(LearningQDeep.getGlobalStepCount(), LearningQDeep.getGlobalDSPCount())
+
+
+
+    # Visualize the training time taken of our method
+    ddqn_trainingtime_visualizer.ddqn_dsp_visual(LearningQDeep.getGlobalStepCount(), LearningQDeep.getGlobalTimeTaken())
+
+
+    # get the obtained rewards in every episode
+    LearningQDeep.sumRewardsEpisode
+
+    print(rewards)
+'''

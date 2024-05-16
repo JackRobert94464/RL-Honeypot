@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TPG Dashboard</title>
+</head>
+<body>
+    <h1>TPG Dashboard</h1>
+    <form method="post">
+        <label for="cve_file">CVE Description CSV File:</label>
+        <input type="text" id="cve_file" name="cve_file" required><br>
+
+        <label for="epss_file">EPSS CSV File:</label>
+        <input type="text" id="epss_file" name="epss_file" required><br>
+
+        <label for="ntpg_file">Node TPG Output File:</label>
+        <input type="text" id="ntpg_file" name="ntpg_file" required><br>
+
+        <label for="htpg_file">Host TPG Output File:</label>
+        <input type="text" id="htpg_file" name="htpg_file" required><br>
+
+        <label for="min_nodes">Min Nodes:</label>
+        <input type="number" id="min_nodes" name="min_nodes" required><br>
+
+        <label for="max_nodes">Max Nodes:</label>
+        <input type="number" id="max_nodes" name="max_nodes" required><br>
+
+        <label for="min_cves">Min CVEs per Connection:</label>
+        <input type="number" id="min_cves" name="min_cves" required><br>
+
+        <label for="max_cves">Max CVEs per Connection:</label>
+        <input type="number" id="max_cves" name="max_cves" required><br>
+
+        <input type="submit" value="Generate TPG">
+    </form>
+</body>
+</html>
