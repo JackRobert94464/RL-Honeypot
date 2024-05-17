@@ -333,9 +333,6 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):  # Inherit from gym.Env
             pop=[route[0] for route in self._ntpg.get(current_node)]
             wei=[(route[1] + route[2])/2 for route in self._ntpg.get(current_node)]
 
-            
-            
-
             print("Population:", pop)
             print("Weights:", wei)
 

@@ -26,10 +26,10 @@ next_node = random.choices(
             )[0]
 '''
 
-
-
 def simulate_error_v2(value, fn_rate, fp_rate, tp_rate, tn_rate):
-    return random.choices(population=[0, 1], weights=[tn_rate + fp_rate, fn_rate + tp_rate], k=1)[0]
+    if value == 0:
+        # For true negatives
+        return random.choices(population=[0, 1], weights=[tn_rate + fp_rate, fn_rate + tp_rate], k=1)[0]
 
 
 def simulate_alert_training(true_state, fnr, fpr):
@@ -46,12 +46,11 @@ def simulate_alert_training(true_state, fnr, fpr):
         A binary list representing nodes with raised alerts.
     """
     
-    attacked_nodes = true_state
     alerted_nodes = []
 
     index = 0
-
-    for value in attacked_nodes:
+    # [0 1 1 0 0]
+    for value in true_state:
 
         # attack_rate = epss_score[index]
         # non_attack_rate = 1 - epss_score[index]
