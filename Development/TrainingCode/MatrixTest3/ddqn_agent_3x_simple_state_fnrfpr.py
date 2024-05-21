@@ -17,7 +17,7 @@ from . import test_3_field_02_ntpg_matrix
 import math
 
 # import FNR FPR simulation code
-from fnr_fpr_test.fnrfpr_calc import simulate_alert_training
+from fnr_fpr_test.fnrfpr_calc_v2 import simulate_alert_training
 
 actionsAppend = []
 
@@ -319,11 +319,15 @@ class DoubleDeepQLearning:
         currentState = self.env.reset()
         rewardsEpisode = []
         step_count = 0
+        
+        #Initialize alerted observation (Defender's view of the network through Network Monitoring System)
+        alerted_initial = [0] * len(currentState.observation.reshape(1, -1)[0])
 
         while not self.env.is_last():
             start_time = time.time()
 
-            alerted_observation = simulate_alert_training(currentState.observation.reshape(1, -1)[0], self._fnr, self._fpr)
+            alerted_observation = simulate_alert_training(currentState.observation.reshape(1, -1)[0], alerted_initial, self._fnr, self._fpr)
+            alerted_initial = alerted_observation
 
             alerted_observation = np.array(alerted_observation)
             alerted_observation = np.expand_dims(alerted_observation, axis=0)
@@ -350,6 +354,8 @@ class DoubleDeepQLearning:
             self.trainNetwork()
             self.visitCounts += 1
             currentState = nextState
+            
+            
 
         self.time_taken.append(self.clock_counter)
         

@@ -281,6 +281,9 @@ class SarsaLearning:
         t = 0
         state1 = self.env.reset()
         action1 = self.selectAction(state1)
+        
+        #Initialize alerted observation (Defender's view of the network through Network Monitoring System)
+        alerted_initial = [0] * len(state1.observation.reshape(1, -1)[0])
 
         while t < self.max_steps:
             #Visualizing the training

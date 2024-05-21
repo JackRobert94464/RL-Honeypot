@@ -27,9 +27,7 @@ next_node = random.choices(
 '''
 
 def simulate_error_v2(value, fn_rate, fp_rate, tp_rate, tn_rate):
-    if value == 0:
-        # For true negatives
-        return random.choices(population=[0, 1], weights=[tn_rate + fp_rate, fn_rate + tp_rate], k=1)[0]
+    return random.choices(population=[0, 1], weights=[tn_rate + fp_rate, fn_rate + tp_rate], k=1)[0]
 
 
 def simulate_alert_training(true_state, fnr, fpr):

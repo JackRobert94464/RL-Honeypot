@@ -1,3 +1,12 @@
 2 ma tran trang thai: 1 attacker di chuyen that, 1 defender nhin thay (NMS)
 
 phut 42 tro di -> logic moi
+
+real    alerted
+0000    0000
+1000    1000    true
+1100    1000    false
+1101    1001    false
+1101    1101    true
+
+=> alerted co the khong cap nhat len 1, nhung khi da len 1 se khong quay ve 0 (node da bi chiem, canh bao da bi chiem)
