@@ -6,9 +6,11 @@ import numpy as np
 import random
 import os
 import misc
-from Development.TrainingCode.sarsa.sarsa_NetworkHoneypotEnv import NetworkHoneypotEnv
 import tensorflow as tf
 import time
+
+# import FNR FPR simulation code
+from fnr_fpr_test.fnrfpr_calc_v2 import simulate_alert_training
 
 # Policy
 # - The policy is a function that maps states to actions.
@@ -18,8 +20,6 @@ import time
 # - The policy is updated by minimizing the loss between the predicted action values and the target action values.
 # - The policy is updated using the Adam optimizer with a learning rate of 0.001.
 # - The policy is updated using the Huber loss function, which is less sensitive to outliers than the mean squared error loss function.
-
-
 
 class SARSAQNetwork:
     def __init__(self, observation_space_size, action_space_size):
@@ -44,7 +44,7 @@ class SARSAQNetwork:
 
 
 class SarsaLearning:
-    def __init__(self, env, epsilon, numberEpisodes, max_steps, alpha, gamma, total_permutations):
+    def __init__(self, env, epsilon, numberEpisodes, max_steps, alpha, gamma, total_permutations, fnr, fpr):
 
         self.env=env
         # Testing purposes
@@ -71,12 +71,11 @@ class SarsaLearning:
         print("Observation space size: ", self.num_observation_space)
 
         # Create the Q-network
-        self.q_network = SARSAQNetwork(self.num_observation_space, self.num_action_space)
+        self.mainNetwork = SARSAQNetwork(self.num_observation_space, self.num_action_space)
 
         #Initializing the Q-matrix
         # Q = np.zeros((env.observation_space.n, env.action_space.n))
         # self.Q = np.zeros((int(2 ** self.env.K), int(self.total_permutations)))
-
 
         # initialize step counter (time/dsp)
         # Counter for the number of steps each episode takes
@@ -97,7 +96,11 @@ class SarsaLearning:
         # number of episode won
         # TODO: replace this later
         self.episodeWon = 0
-        # initialize step counter (time/dsp)
+        
+        self.currentTrainingEpisode = 0
+        
+        self._fnr = fnr
+        self._fpr = fpr
 
 
 
@@ -105,11 +108,29 @@ class SarsaLearning:
     #Function to choose the next action
     def selectAction(self, state):
         # Reshape the state observation to match the input shape of the Q-network
-        state = state.observation.reshape(1, -1)
+        state = state.reshape(1, -1)
 
         # Get the Q-values for the current state from the Q-network
-        q_values = self.q_network.predict(state)[0]
+        q_values = self.mainNetwork.predict(state)[0]
 
+        # Choose the action based on the epsilon-greedy policy
+        if np.random.uniform(0, 1) < self.epsilon:
+            # Choose a random action
+            action_space_values = list(self.env.action_space().values())
+            random_action = random.choice(action_space_values)
+            action = np.array(random_action, dtype=np.int32)
+        else:
+            # Choose the action with the maximum Q-value
+            action_index = np.argmax(q_values)
+            action = self.index_to_action(action_index)
+
+        return action
+    
+    # Function to infer the action from the saved model
+    def selectActionEval(self, state, episode, trained_model):
+        state = state.reshape(1, -1)
+        q_values = trained_model.predict(state)[0]
+        
         # Choose the action based on the epsilon-greedy policy
         if np.random.uniform(0, 1) < self.epsilon:
             # Choose a random action
@@ -134,12 +155,12 @@ class SarsaLearning:
     # SARSA update rule with function approximation
     def updateQvalues(self, state1, action1, reward, state2, action2, done):
         # Reshape the observations to fit the neural network input
-        state = state1.observation.reshape(1, -1)
-        state2 = state2.observation.reshape(1, -1)
+        state = state1.reshape(1, -1)
+        state2 = state2.reshape(1, -1)
         
         # Get Q-values for the current state and the next state
-        current_q_values = self.q_network.predict(state)
-        next_q_values = self.q_network.predict(state2)
+        current_q_values = self.mainNetwork.predict(state)
+        next_q_values = self.mainNetwork.predict(state2)
 
         # print("Current Q-values: ", current_q_values)
         # print("Next Q-values: ", next_q_values)
@@ -166,12 +187,9 @@ class SarsaLearning:
         target_vector[0][action_index] = target
         
         # Train the network with the state as input and target vector as desired output
-        self.q_network.model.fit(state, target_vector, epochs=1, verbose=0)
+        self.mainNetwork.model.fit(state, target_vector, epochs=1, verbose=0)
 
 
-
-
-        
     def trainingEpisodes(self):
         
         # Starting the SARSA learning
@@ -244,117 +262,66 @@ class SarsaLearning:
 
             # Time/DSP calculation
             # add the step count to the global step counter
-            self.step_counter += step_count
-
-            # if episode is a multiple of 50, append step count and calculate dsp
-            if episode % 2 == 0:
-                self.step_globalcounter.append(self.getStepCount())
-                print("episode Won: ", self.episodeWon)
-                print("episode: ", episode)
-                dsp = self.episodeWon / (episode+1)
-                print("Defense Success Probability: ", dsp)
-                
-                # Add the current clock counter value to the time taken list
-                self.time_taken.append(self.clock_counter)
-                
-                # os.system("pause")
-                self.dsp_globalcounter.append(dsp)
+            self.step_counter = step_count
 
 
         print("Sum of rewards {}".format(np.sum(rewardsEpisode)))        
         self.sumRewardsEpisode.append(np.sum(rewardsEpisode)) 
-
-
-
-    
-
-
-    def trainingSingleEpisode(self):
-              
-        # Time/DSP calculation
-        # reset the step count for the new episode
+        
+    def trainingSingleEpisodes(self):
         step_count = 0
-
-        # list that store rewards in each episode to keep track of convergence
-        rewardsEpisode=[]
+        rewardsEpisode = []
 
         t = 0
         state1 = self.env.reset()
-        action1 = self.selectAction(state1)
         
-        #Initialize alerted observation (Defender's view of the network through Network Monitoring System)
+        # Initialize alerted observation (Defender's view of the network through Network Monitoring System)
         alerted_initial = [0] * len(state1.observation.reshape(1, -1)[0])
+        alerted_observation1 = simulate_alert_training(state1.observation.reshape(1, -1)[0], alerted_initial, self._fnr, self._fpr)
+        alerted_observation1 = np.array(alerted_observation1)
+        alerted_observation1 = np.expand_dims(alerted_observation1, axis=0)
+
+        action1 = self.selectAction(alerted_observation1)
 
         while t < self.max_steps:
-            #Visualizing the training
-            # self.env.render()
-
-
-            # Time/DSP calculation
-            # Start the timer
             start_time = time.time()
-            # Time/DSP calculation
-            
-            #Getting the next state
-            state2 = self.env.step(action1)
-            
-            # print("State 1 observation: ", state1)
-            # print("Action 1: ", action1)
-            
-            (discount, state2Observation, reward, terminalState) = (state1.discount, state2.observation, state2.reward, self.env.is_last())
-            # (discount, nextStateObservation, reward, terminalState) = (currentState.discount, nextState.observation, nextState.reward, self.env.is_last())
-            # print("State 2: ", state2)
-            # print("State 2 observation: ", state2Observation)
-            # print("Reward: ", reward)
-            # print("Done: ", terminalState)
-            # print("Discount: ", discount)
 
-            #Choosing the next action
-            action2 = self.selectAction(state2)
+            state2 = self.env.step(action1)
+
+            (discount, state2Observation, reward, terminalState) = (state1.discount, state2.observation, state2.reward, self.env.is_last())
             
-            #Learning the Q-value
-            # self, state1, action1, reward, state2, action2, done
-            self.updateQvalues(state1, action1, reward, state2, action2, terminalState)
+            # Update alerted observation
+            alerted_observation2 = simulate_alert_training(state2Observation.reshape(1, -1)[0], alerted_observation1[0], self._fnr, self._fpr)
+            alerted_observation2 = np.array(alerted_observation2)
+            alerted_observation2 = np.expand_dims(alerted_observation2, axis=0)
+
+            action2 = self.selectAction(alerted_observation2)
+
+            self.updateQvalues(alerted_observation1, action1, reward, alerted_observation2, action2, terminalState)
 
             state1 = state2
             action1 = action2
-            
-            #Updating the respective vaLues
+            alerted_observation1 = alerted_observation2  # Update alerted state for next iteration
+
             t += 1
             reward += 1
 
             rewardsEpisode.append(reward)
 
-            # Time/DSP calculation
             if reward == 1:
                 self.episodeWon += 1
 
-            # increment the step count
             step_count += 1
-
-            # Calculate the time taken for this step and add it to the clock counter
+            self.step_counter += 1
+            if self.step_counter in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000]:
+                break
             self.clock_counter += time.time() - start_time
-            # Time/DSP calculation
 
-            
-            #If at the end of learning process
             if terminalState:
                 break
-
-
-        # Time/DSP calculation
-        # add the step count to the global step counter
-        self.step_counter += step_count
-
-
-
         
-
-
-
-
-    
-
+        self.time_taken.append(self.clock_counter)
+        
     def evaluateModel(self):
 
         total_episode_rewards = []
@@ -376,11 +343,8 @@ class SarsaLearning:
                 # Update the total reward
                 current_reward += state2.reward
 
-                
-                
                 # Update the current state
                 state = state2
-                
 
                 # Check if the episode is done
                 done = self.env.is_last()
@@ -395,53 +359,39 @@ class SarsaLearning:
             self.dsp_globalcounter.append(dsp)
 
         return total_episode_rewards
-
-        
-    ###########################################################################
-    #   START - step counting function for calculating dsp
-    #   Status: Active
-    ###########################################################################
     
     def getStepCount(self):
         return self.step_counter
     
-    ###########################################################################
-    #   END - step counting function for calculating dsp
-    ###########################################################################
-    
-    ###########################################################################
-    #   START - step_globalcounter retrieval function for calculating dsp
-    #   Status: Active
-    ###########################################################################
-    
     def getGlobalStepCount(self):
         return self.step_globalcounter
-    
-    ###########################################################################
-    #   END - step counting function for calculating dsp
-    ###########################################################################
-    
-    ###########################################################################
-    #   START - dsp_globalcounter retrieval function for calculating dsp
-    #   Status: Active
-    ###########################################################################
     
     def getGlobalDSPCount(self):
         return self.dsp_globalcounter
     
-    ###########################################################################
-    #   END - step counting function for calculating dsp
-    ###########################################################################
-    
-    ###########################################################################
-    #   START - time_taken retrieval function for calculating time taken
-    #   Status: Active
-    ###########################################################################
-    
     def getGlobalTimeTaken(self):
         return self.time_taken
     
-    ###########################################################################
-    #   END - time_taken retrieval function for calculating time taken
-    ###########################################################################
+    def retrieveTraintimeDict(self):
+        return {self.getStepCount(): self.time_taken[-1]}
+    
+    def updateTrainingEpisode(self, episode):
+        self.currentTrainingEpisode = episode
         
+    def updateModelPath(self, path):
+        self._modelPath = path
+        
+    def retrieveModelPath(self):
+        return self._modelPath
+    
+    def saveModel(self):
+        if os.name == 'nt':
+            os.makedirs("./TrainedModel/weighted_random_attacker", exist_ok=True)
+            self.mainNetwork.model.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_SARSA_win_ver{self.getStepCount()}.keras")
+            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_SARSA_win_ver{self.getStepCount()}.keras")
+            
+        else:
+            os.makedirs("./TrainedModel/weighted_random_attacker", exist_ok=True)
+            self.mainNetwork.model.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_SARSA_linux_ver{self.getStepCount()}.keras")
+            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_SARSA_linux_ver{self.getStepCount()}.keras")
+    

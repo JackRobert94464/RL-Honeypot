@@ -10,3 +10,5 @@ real    alerted
 1101    1101    true
 
 => alerted co the khong cap nhat len 1, nhung khi da len 1 se khong quay ve 0 (node da bi chiem, canh bao da bi chiem)
+
+Thuc hien FNR/FPR cho SARSA va chay 20000 episode training

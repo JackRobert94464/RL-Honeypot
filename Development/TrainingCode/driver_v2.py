@@ -18,6 +18,11 @@ gamma = 0.99  # Discount factor for future rewards
 # Epsilon parameter for the epsilon-greedy approach
 epsilon = 0.1
 
+# For SARSA
+max_steps_sarsa = 100
+alpha_sarsa = 0.1
+
+
 # FNR and FPR values as lists (todo...)
 # fnr = [float(input("Enter FNR value: "))]
 # fpr = [float(input("Enter FPR value: "))]
@@ -28,11 +33,11 @@ fpr = float(input("Enter FPR value: "))
 
 # Load the TPG data
 if os.name == 'nt':  # If the operating system is Windows
-        ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_big.csv")
-        htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg_big.csv")
+        ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_40.csv")
+        htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg_40.csv")
 else:  # For other operating systems like Linux
-        ntpg = misc.create_dictionary_ntpg("./Development/TPG-Data/ntpg.csv")
-        htpg = misc.create_dictionary_htpg("./Development/TPG-Data/htpg.csv")
+        ntpg = misc.create_dictionary_ntpg("./Development/TPG-Data/ntpg_40.csv")
+        htpg = misc.create_dictionary_htpg("./Development/TPG-Data/htpg_40.csv")
 
 normal_nodes = misc.count_nodes(ntpg)
 print("Normal nodes:", normal_nodes)
@@ -71,16 +76,16 @@ def TestTrain():
     total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
 
     # create an object
-    LearningQDeep=DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations, fnr, fpr)
+    agent=DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations, fnr, fpr)
     
     # Training the Agent with a fixed number of episodes
     for ep in range(numberEpisodes):
-        LearningQDeep.updateTrainingEpisode(ep)
+        agent.updateTrainingEpisode(ep)
         # print("Episode: ", ep)
-        LearningQDeep.trainingSingleEpisodes()
+        agent.trainingSingleEpisodes()
         
         # Every 2000 5000 10000 step, we perform evaluation        
-        currentStep = LearningQDeep.getStepCount()
+        currentStep = agent.getStepCount()
         
         if currentStep in [2000, 5000, 10000, 20000, 30000]:
             
@@ -88,14 +93,14 @@ def TestTrain():
             evaluator = evaluation_v2.Evaluation()
             
             # Save models to folder
-            LearningQDeep.saveModel()
-            model_path = LearningQDeep.retrieveModelPath()
+            agent.saveModel()
+            model_path = agent.retrieveModelPath()
             
             # Collect the training time dict from training code
-            training_time_dict.update(LearningQDeep.retrieveTraintimeDict())
+            training_time_dict.update(agent.retrieveTraintimeDict())
             
             # Evaluate the model
-            evaluator.evaluate(LearningQDeep, model_path)
+            evaluator.evaluate(agent, model_path)
             
             # Collect the DSP dict from evaluation code
             dsp_dict.update(evaluator.retrieveDSPdict())
@@ -111,41 +116,41 @@ def TestTrain():
     import ddqn_trainingtime_visualizer
 
 
-    print("Total steps: ", LearningQDeep.getGlobalStepCount())
-    print("Total DSP: ", LearningQDeep.getGlobalDSPCount())
-    print("Total Time: ", LearningQDeep.getGlobalTimeTaken())
+    print("Total steps: ", agent.getGlobalStepCount())
+    print("Total DSP: ", agent.getGlobalDSPCount())
+    print("Total Time: ", agent.getGlobalTimeTaken())
 
 
 
     # Visualize the Defense Success Probability (DSP) of our method
     # Save the global step count and global DSP count to a text file
     with open(f"result_fnr{fnr}_fpr{fpr}.txt", "w") as file:
-            file.write(f"Global Step Count: {LearningQDeep.getGlobalStepCount()}\n")
-            file.write(f"Global DSP Count: {LearningQDeep.getGlobalDSPCount()}\n")
-    ddqn_dsp_visualizer.ddqn_dsp_visual(LearningQDeep.getGlobalStepCount(), LearningQDeep.getGlobalDSPCount())
+            file.write(f"Global Step Count: {agent.getGlobalStepCount()}\n")
+            file.write(f"Global DSP Count: {agent.getGlobalDSPCount()}\n")
+    ddqn_dsp_visualizer.ddqn_dsp_visual(agent.getGlobalStepCount(), agent.getGlobalDSPCount())
 
 
 
     # Visualize the training time taken of our method
-    ddqn_trainingtime_visualizer.ddqn_dsp_visual(LearningQDeep.getGlobalStepCount(), LearningQDeep.getGlobalTimeTaken())
+    ddqn_trainingtime_visualizer.ddqn_dsp_visual(agent.getGlobalStepCount(), agent.getGlobalTimeTaken())
 
 
     # get the obtained rewards in every episode
-    LearningQDeep.sumRewardsEpisode
+    agent.sumRewardsEpisode
 
     print(rewards)
 
     #  summarize the model
-    LearningQDeep.mainNetwork.summary()
+    agent.mainNetwork.summary()
     # save the model, this is important, since it takes long time to train the model 
     # and we will need model in another file to visualize the trained model performance
     if os.name == 'nt':  # If the operating system is Windows
-            LearningQDeep.mainNetwork.save(f".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_weighted_attacker_1to5_decoy_win_ver{numberEpisodes}_fnrfpr_{fnr}{fpr}.keras")
+            agent.mainNetwork.save(f".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_weighted_attacker_1to5_decoy_win_ver{numberEpisodes}_fnrfpr_{fnr}{fpr}.keras")
     else:  # For other operating systems like Linux
-            LearningQDeep.mainNetwork.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_weighted_attacker_1to5_decoy_linux_ver{numberEpisodes}_fnrfpr_{fnr}{fpr}.keras")
+            agent.mainNetwork.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_weighted_attacker_1to5_decoy_linux_ver{numberEpisodes}_fnrfpr_{fnr}{fpr}.keras")
         
 
-def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name):
+def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type):
     '''
     Short training for testing out the dsp graphing function
 
@@ -169,37 +174,44 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name):
     dsp_dict = {}
     
     # create an object
-    LearningQDeep=DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations, fnr, fpr)
+    if(model_type == 1):
+        # DQN
+        agent=DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations, fnr, fpr)
+    if(model_type == 2):
+        # SARSA
+        agent=SarsaLearning(env, epsilon, numberEpisodes, max_steps_sarsa, alpha_sarsa, gamma, total_permutations, fnr, fpr)
+    
     
     # run the learning process
     for ep in range(numberEpisodes):
-        LearningQDeep.updateTrainingEpisode(ep)
+        agent.updateTrainingEpisode(ep)
         # print("Episode: ", ep)
-        LearningQDeep.trainingSingleEpisodes()
+        agent.trainingSingleEpisodes()
         
         # Every 2000 5000 10000 step, we perform evaluation        
-        currentStep = LearningQDeep.getStepCount()
+        currentStep = agent.getStepCount()
+        print("Current Step: ", currentStep)
         
-        if currentStep in [2000, 5000, 10000, 20000, 30000]:
+        if currentStep in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000]:
             
             # Initialize an evalutaion instance
             evaluator = evaluation_v2.Evaluation()
             
             # Save models to folder
-            LearningQDeep.saveModel()
-            model_path = LearningQDeep.retrieveModelPath()
+            agent.saveModel()
+            model_path = agent.retrieveModelPath()
             
             # Collect the training time dict from training code
-            training_time_dict.update(LearningQDeep.retrieveTraintimeDict())
+            training_time_dict.update(agent.retrieveTraintimeDict())
             
             # Evaluate the model
-            evaluator.evaluate(model_path)
+            evaluator.evaluate(agent, model_path)
             
             # Collect the DSP dict from evaluation code
-            dsp_dict.update(evaluator.retrieveDSPdict())
+            dsp_dict.update(evaluator.retrieveDSPdict(currentStep))
             
             # Save the training time dict and DSP dict to a text file
-            with open(f"result_fnr{fnr}_fpr{fpr}_model_{model_name}.txt", "w") as file:
+            with open(f"result_fnr{fnr}_fpr{fpr}_model_{model_name}_{currentStep}.txt", "w") as file:
                 file.write(f"Training Time Dict: {training_time_dict}\n")
                 file.write(f"DSP Dict: {dsp_dict}\n")
                 
@@ -207,10 +219,13 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name):
             print(f"File name: result_fnr{fnr}_fpr{fpr}_model_{model_name}.txt")
 
     #  summarize the model
-    LearningQDeep.mainNetwork.summary()
+    if(model_type == 1):
+        agent.mainNetwork.summary()
+        
+    if(model_type == 2):
+        agent.mainNetwork.model.summary()
 
-
-def MultiDecoyTraining(numberEpisodes, model_name):
+def MultiDecoyTraining(numberEpisodes, model_name, model_type):
     '''
     For loop for long training
     The training will start from giving the agent only 1 deception node and increase the number of deception nodes by 1 in each iteration.
@@ -234,16 +249,21 @@ def MultiDecoyTraining(numberEpisodes, model_name):
         dsp_dict = {}
 
         # create an object
-        LearningQDeep=DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations, fnr, fpr)
-        
+        if(model_type == 1):
+            # DQN
+            agent=DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations, fnr, fpr)
+        if(model_type == 2):
+            # SARSA
+            agent=SarsaLearning(env, epsilon, numberEpisodes, max_steps_sarsa, alpha_sarsa, gamma, total_permutations, fnr, fpr)
+            
         # run the learning process
         for ep in range(numberEpisodes):
-            LearningQDeep.updateTrainingEpisode(ep)
+            agent.updateTrainingEpisode(ep)
             # print("Episode: ", ep)
-            LearningQDeep.trainingSingleEpisodes()
+            agent.trainingSingleEpisodes()
             
             # Every 2000 5000 10000 step, we perform evaluation        
-            currentStep = LearningQDeep.getStepCount()
+            currentStep = agent.getStepCount()
             
             if currentStep in [2000, 5000, 10000, 20000, 30000]:
                 
@@ -251,11 +271,11 @@ def MultiDecoyTraining(numberEpisodes, model_name):
                 evaluator = evaluation_v2.Evaluation()
                 
                 # Save models to folder
-                LearningQDeep.saveModel()
-                model_path = LearningQDeep.retrieveModelPath()
+                agent.saveModel()
+                model_path = agent.retrieveModelPath()
                 
                 # Collect the training time dict from training code
-                training_time_dict.update(LearningQDeep.retrieveTraintimeDict())
+                training_time_dict.update(agent.retrieveTraintimeDict())
                 
                 # Evaluate the model
                 evaluator.evaluate(model_path)
@@ -265,6 +285,22 @@ def MultiDecoyTraining(numberEpisodes, model_name):
                 
                 # Save the training time dict and DSP dict to a text file
                 with open(f"result_fnr{fnr}_fpr{fpr}_model_{model_name}.txt", "w") as file:
+                    print("Writing to file...")
+                    print("Writing to file...")
+                    print("Writing to file...")
+                    print("Writing to file...")
+                    print("Writing to file...")
+                    print("Writing to file...")
+                    print("Writing to file...")
+                    print("Writing to file...")
+                    print("Writing to file...")
+                    print("Writing to file...")
+                    print("Writing to file...")
+                    print("Writing to file...")
+                    print("Writing to file...")
+                    print("Writing to file...")
+                    print("Writing to file...")
+                    print("Writing to file...")
                     file.write(f"Training Time Dict: {training_time_dict}\n")
                     file.write(f"DSP Dict: {dsp_dict}\n")
                 
@@ -272,7 +308,11 @@ def MultiDecoyTraining(numberEpisodes, model_name):
                 print(f"File name: result_fnr{fnr}_fpr{fpr}_model_{model_name}.txt")
             
         #  summarize the model
-        LearningQDeep.mainNetwork.summary()
+        if(model_type == 1):
+            agent.mainNetwork.summary()
+            
+        if(model_type == 2):
+            agent.mainNetwork.model.summary()
         
         
 
@@ -285,23 +325,29 @@ However, make sure to include an empty __init__.py file in the directory.
 '''
 
 if __name__ == "__main__":
+    
+    model_type = 1 # Default to DQN
+    
     # Ask the user which model they want to use for training
     print("Select the model for training:")
     print("1: Standard Model")
     print("2: Three Input Conv1D Model")
     print("3: FNR/FPR Rate Model (Deprecated)")
+    print("4: SARSA Model")
     model_choice = input("Enter the number of the model you want to train: ")
     model_name = None
 
     # Based on the user's choice, import the appropriate environment and agent
     if model_choice == '1':
         model_name = "Base"
+        model_type = 1
         from NetworkHoneypotEnv_base import NetworkHoneypotEnv
         from ddqn_agent_headless_v2 import DoubleDeepQLearning
         print("Imported the environment and agent successfully.")
         
     elif model_choice == '2':
-        model_name = "3xConv1D"
+        
+        model_type = 1
         from MatrixTest3.test_3_NetworkHoneypotEnv import NetworkHoneypotEnv
         
         print("Which input type would you like to use?")
@@ -310,8 +356,10 @@ if __name__ == "__main__":
         input_choice = input("Enter the number of the input type you want to use: ")
         
         if input_choice == '1':
+            model_name = "3xConv1D"
             from MatrixTest3.ddqn_agent_3x_simple_state_fnrfpr import DoubleDeepQLearning
         elif input_choice == '2':
+            model_name = "3xConv1D_LTSM"
             from MatrixTest3.ddqn_agent_3x_multi_input_fnrfpr import DoubleDeepQLearning
         
         print("Imported the environment and agent successfully.")
@@ -326,6 +374,13 @@ if __name__ == "__main__":
         # from fnr_fpr_test.NetworkHoneypotEnv_fnrfpr import NetworkHoneypotEnv
         # from fnr_fpr_test.ddqn_agent_headless_fnrfpr import DoubleDeepQLearning
         # print("Imported the environment and agent successfully.")
+        
+    elif model_choice == '4':
+        model_name = "SARSA"
+        from sarsa.sarsa_NetworkHoneypotEnv import NetworkHoneypotEnv
+        from sarsa.sarsa_agent import SarsaLearning
+        model_type = 2
+        print("Imported the environment and agent successfully.")
         
     else:
         print("Invalid selection. Exiting.")
@@ -343,12 +398,12 @@ if __name__ == "__main__":
         numberEpisodes = int(input("Enter the number of episodes: "))
         print("And how many decoy nodes will be available?")
         deception_nodes = int(input("Enter the number of deception nodes: "))
-        SingleDecoyTraining(deception_nodes, numberEpisodes, model_name)
+        SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
     elif training_choice == '2':
         print("Enter the number of episodes you want to train for each number of decoy nodes:")
         print("BEWARE: Try to keep this low as the training will take a long time if there's many counts of decoy nodes.")
         numberEpisodes = int(input("Enter the number of episodes: "))
-        MultiDecoyTraining(numberEpisodes, model_name)
+        MultiDecoyTraining(numberEpisodes, model_name, model_type)
     else:
         print("Invalid selection. Exiting.")
         exit()

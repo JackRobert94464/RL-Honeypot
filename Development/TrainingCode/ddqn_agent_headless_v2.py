@@ -108,7 +108,7 @@ class DoubleDeepQLearning:
                 rewardsEpisode.append(reward)
                 if reward == 1:
                     self.episodeWon += 1
-                step_count += 1
+                self.step_counter += 1
                 self.clock_counter += time.time() - start_time
 
                 if terminalState:
@@ -122,8 +122,6 @@ class DoubleDeepQLearning:
                 self.visitCounts += 1
                 currentState = nextState
 
-            self.step_counter += step_count
-
             if episode % 2 == 0:
                 self.step_globalcounter.append(self.getStepCount())
                 dsp = self.episodeWon / (episode+1)
@@ -135,7 +133,6 @@ class DoubleDeepQLearning:
     def trainingSingleEpisodes(self):
         currentState = self.env.reset()
         rewardsEpisode = []
-        step_count = 0
         
         #Initialize alerted observation (Defender's view of the network through Network Monitoring System)
         alerted_initial = [0] * len(currentState.observation.reshape(1, -1)[0])
@@ -159,7 +156,11 @@ class DoubleDeepQLearning:
             rewardsEpisode.append(reward)
             if reward == 1:
                 self.episodeWon += 1
-            step_count += 1
+                
+            self.step_counter += 1
+            if self.step_counter in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000]:
+                break
+            
             self.clock_counter += time.time() - start_time
 
             if terminalState:
@@ -175,8 +176,6 @@ class DoubleDeepQLearning:
 
         self.time_taken.append(self.clock_counter)
         
-        self.step_counter += step_count
-
     def getStepCount(self):
         return self.step_counter
     

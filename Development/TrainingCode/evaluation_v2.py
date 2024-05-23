@@ -31,25 +31,32 @@ class Evaluation:
         return trained_model
 
     def load_tpg_data(self):
+        ##########################
+        
+        ########################
+        
+        # MUST FIX MUST FIX
+        
+        #######################
         if os.name == 'nt':
-            ntpg_path = ".\\Development\\TPG-Data\\ntpg_eval.csv"
-            htpg_path = ".\\Development\\TPG-Data\\htpg_eval.csv"
+            ntpg_path = ".\\Development\\TPG-Data\\ntpg_40.csv"
+            htpg_path = ".\\Development\\TPG-Data\\htpg_40.csv"
         else:
-            ntpg_path = "./Development/TPG-Data/ntpg_eval.csv"
-            htpg_path = "./Development/TPG-Data/htpg_eval.csv"
+            ntpg_path = "./Development/TPG-Data/ntpg_40.csv"
+            htpg_path = "./Development/TPG-Data/htpg_40.csv"
         ntpg = misc.create_dictionary_ntpg(ntpg_path)
         htpg = misc.create_dictionary_htpg(htpg_path)
         return ntpg, htpg
 
     def create_environment(self, ntpg, htpg):
-        deception_nodes = misc.get_deception_nodes()
+        deception_nodes = 2 # misc.get_deception_nodes()
         normal_nodes = misc.count_nodes(ntpg)
         first_parameter = misc.calculate_first_parameter(deception_nodes, normal_nodes)
         total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
         eval_env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, htpg)
         return eval_env
 
-    def evaluate_episodes(self, eval_env, ddqn_agent, trained_model):
+    def evaluate_episodes(self, eval_env, agent, trained_model):
         for episode in range(self.eval_episodes):
             episode_reward = 0
             episode_steps = 0
@@ -59,7 +66,7 @@ class Evaluation:
             steps_entity = []
             eval_time_step = eval_env.reset()
             while not eval_time_step.is_last():
-                action = ddqn_agent.selectActionEval(eval_time_step.observation, episode, trained_model)
+                action = agent.selectActionEval(eval_time_step.observation, episode, trained_model)
                 print("ACTION SELECTED:", action)
                 if action is None:
                     print("No action selected. Skipping this step.")
@@ -77,13 +84,20 @@ class Evaluation:
             if episode_reward > 0:
                 self.episodeWon += 1
             self.step_counter += episode_steps
-            if episode % 2 == 0:
-                self.step_globalcounter.append(self.step_counter)
-                print("episode Won: ", self.episodeWon)
-                print("episode: ", episode)
-                dsp = self.episodeWon / (episode+1)
-                print("Defense Success Probability: ", dsp)
-                self.dsp_globalcounter.append(dsp)
+            
+            self.step_globalcounter.append(self.step_counter)
+            
+            dsp = self.episodeWon / (episode+1)
+            self.dsp_globalcounter.append(dsp)
+            
+            print(f"DSP Global Counter after episode {episode}: ", self.dsp_globalcounter)
+            
+            # Write dsp_globalcounter to a temporary file
+            with open('dsp_globalcounter.tmp', 'w') as file:
+                for item in self.dsp_globalcounter:
+                    file.write(str(item) + '\n')
+                    print(f"Writing DSP Global Counter: {item}")
+            
             self.eval_rewards.append(episode_reward)
             self.eval_steps.append(episode_steps)
 
@@ -126,24 +140,35 @@ class Evaluation:
         plt.tight_layout()
         plt.show()
         
+    # Read dsp_globalcounter from the temporary file in retrieveDSPdict
     def retrieveDSPdict(self, currentStep):
-        final_dsp = sum(self.dsp_globalcounter) / len(self.dsp_globalcounter)
+        dsp_globalcounter = []
+        with open('dsp_globalcounter.tmp', 'r') as file:
+            for line in file:
+                dsp_globalcounter.append(float(line.strip()))
+                
+        print(f"Retrieved DSP Global Counter: {dsp_globalcounter}")
+        final_dsp = sum(dsp_globalcounter) / len(dsp_globalcounter)
+        
+        # Delete the temporary file
+        os.remove('dsp_globalcounter.tmp')
+        
         return {currentStep: final_dsp}
 
-    def evaluate(ddqn_agent, model_path):
+    def evaluate(self, agent, model_path):
         evaluation = Evaluation()
-        ddqn_agent = ddqn_agent
+        evalAgent = agent
         trained_model = evaluation.load_trained_model(model_path)
         
         # TODO: MAKE THE TPG DATA LOAD CUSTOM TOO
         ntpg, htpg = evaluation.load_tpg_data()
         eval_env = evaluation.create_environment(ntpg, htpg)
-        evaluation.evaluate_episodes(eval_env, ddqn_agent, trained_model)
-        evaluation.visualize_dsp()
+        evaluation.evaluate_episodes(eval_env, evalAgent, trained_model)
+        # evaluation.visualize_dsp()
         evaluation.save_visualization_data()
-        evaluation.visualize_steps(ntpg)
+        # evaluation.visualize_steps(ntpg)
         df, avg_eval_reward, avg_eval_steps, dsp = evaluation.calculate_evaluation_results()
-        evaluation.plot_rewards_and_steps()
+        # evaluation.plot_rewards_and_steps()
         print(df)
         print("Evaluation Results:")
         print("Number of Episodes:", evaluation.eval_episodes)
@@ -154,4 +179,12 @@ class Evaluation:
         print("Average Reward per Episode:", avg_eval_reward)
         print("Average Steps per Episode:", avg_eval_steps)
         print("Defense Success Probability (DSP):", dsp)
+        
+        
+
+        
+
+        
+        
+        
 

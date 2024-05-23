@@ -240,10 +240,7 @@ class DoubleDeepQLearning:
 
             # list that store rewards in each episode to keep track of convergence
             rewardsEpisode=[]
-            
-            # reset the step count for the new episode
-            step_count = 0
-
+        
             print("------------------------------------------------------------------------------------------------------------------------")
             print("Simulating episode number: ",episode)
             print("------------------------------------------------------------------------------------------------------------------------")
@@ -278,7 +275,7 @@ class DoubleDeepQLearning:
                     self.episodeWon += 1
 
                 # increment the step count
-                step_count += 1
+                self.step_counter += 1
 
                 # Calculate the time taken for this step and add it to the clock counter
                 self.clock_counter += time.time() - start_time
@@ -309,9 +306,6 @@ class DoubleDeepQLearning:
                 print("Visit counts: ",self.visitCounts)
                  
                 currentState=nextState
-
-            # add the step count to the global step counter
-            self.step_counter += step_count
 
             # if episode is a multiple of 50, append step count and calculate dsp
             if episode % 2 == 0:
@@ -358,7 +352,9 @@ class DoubleDeepQLearning:
             rewardsEpisode.append(reward)
             if reward == 1:
                 self.episodeWon += 1
-            step_count += 1
+            self.step_counter += 1
+            if self.step_counter in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000]:
+                break
             self.clock_counter += time.time() - start_time
 
             if terminalState:
@@ -373,8 +369,6 @@ class DoubleDeepQLearning:
             currentState = nextState
 
         self.time_taken.append(self.clock_counter)
-        
-        self.step_counter += step_count
                
     ###########################################################################
     #   END - trainingEpisodes function
