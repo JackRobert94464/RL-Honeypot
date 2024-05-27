@@ -270,3 +270,62 @@ import ddqn_dsp_visualizer
 
     print(rewards)
 '''
+
+    
+'''
+06/04 xem + chinh lai ham nay luon
+legacy code
+def __is_action_valid(self, action):
+    # Check if the action is a valid matrix of size m*k with values 0 or 1
+    # Return True if the action is valid, False otherwise
+    if action is None:
+        return False
+    
+    # Check if the action has the correct shape
+    if action.shape != (self.M, self.K):
+        return False
+    
+    # Check if the action has the correct type
+    if action.dtype != np.int32:
+        return False
+    
+    # Check if the action has the correct values
+    if not np.all(np.isin(action, [0, 1])):
+        return False
+    
+    # Check if each row has only one 1
+    if not np.all(np.sum(action, axis=1) == 1):
+        return False
+    
+    # If all checks pass, return True
+    return True
+'''
+
+# self._action_spec = array_spec.BoundedArraySpec(
+#     shape=(M, K), dtype=np.int32, minimum=0, maximum=1, name='action')
+# print("Action spec:", self._action_spec)
+
+
+'''
+New action suggestion (06/04 ngay mai nho doc lai)
+[ 0 0 1 0 1 0 0 ]
+1 la cho se dat honeypot
+self._action_spec = array_spec.BoundedArraySpec(
+    shape=(1, K), dtype=np.int32, minimum=0, maximum=1, name='action')
+print("Action spec:", self._action_spec)
+'''
+
+'''
+06/04 xem + chinh lai ham nay luon
+Legacy code
+# Updates the NIFR list based on the action matrix.
+def __update_nifr_nodes(self, nifr_nodes):
+    print("self._matrix to update nifr nodes:", self._matrix)
+    for row in self._matrix:
+        if any(row):
+            print("row.argmax():", row.argmax())
+            nifr_nodes.append(row.argmax())
+            if len(nifr_nodes) > self.M:
+                nifr_nodes.pop(0)
+            print("NIFR list after update:", nifr_nodes)
+'''
