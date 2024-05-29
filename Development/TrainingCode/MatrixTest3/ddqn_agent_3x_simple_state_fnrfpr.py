@@ -146,21 +146,22 @@ class DoubleDeepQLearning:
         
         # First interpretation model
         observable_branch_1 = Dense(64, activation='relu')(observable_input)
-        
-        
 
         # Branch 2: Process EPSS matrix
-        epss_conv_1 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(epss_input)
+        epss_conv_1 = keras.layers.Conv1D(1, kernel_size=4, activation='relu', padding='same')(epss_input)
         epss_pool_1 = tf.keras.layers.MaxPooling1D(pool_size=1)(epss_conv_1)
-        epss_conv_2 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(epss_pool_1)
-        epss_pool_2 = tf.keras.layers.MaxPooling1D(pool_size=1)(epss_conv_2)
-        epss_flatten = keras.layers.Flatten()(epss_pool_2)
+        # epss_conv_2 = keras.layers.Conv1D(1, kernel_size=4, activation='relu', padding='same')(epss_pool_1)
+        # epss_pool_2 = tf.keras.layers.MaxPooling1D(pool_size=1)(epss_conv_2)
+        
+        epss_batch_normal = keras.layers.BatchNormalization()(epss_pool_1)
+        
+        epss_flatten = keras.layers.Flatten()(epss_batch_normal)
 
 
         # Branch 3: Process ntpg penetration graph
-        ntpg_conv_1 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(ntpg_input)
+        ntpg_conv_1 = keras.layers.Conv1D(1, kernel_size=4, activation='relu', padding='same')(ntpg_input)
         ntpg_pool_1 = tf.keras.layers.MaxPooling1D(pool_size=1)(ntpg_conv_1)
-        ntpg_conv_2 = keras.layers.Conv1D(1, kernel_size=4, activation='softmax', padding='same')(ntpg_pool_1)
+        ntpg_conv_2 = keras.layers.Conv1D(1, kernel_size=4, activation='relu', padding='same')(ntpg_pool_1)
         ntpg_pool_2 = tf.keras.layers.MaxPooling1D(pool_size=1)(ntpg_conv_2)
         ntpg_flatten = keras.layers.Flatten()(ntpg_pool_2)
 
