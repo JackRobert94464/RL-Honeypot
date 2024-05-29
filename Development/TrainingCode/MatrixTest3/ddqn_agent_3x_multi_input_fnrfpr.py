@@ -332,14 +332,21 @@ class DoubleDeepQLearning:
         step_count = 0
         
         #Initialize alerted observation (Defender's view of the network through Network Monitoring System)
-        alerted_initial = [0] * len(currentState.observation.reshape(1, -1)[0])
+        # alerted_initial = [0] * len(currentState.observation.reshape(1, -1)[0])
 
         while not self.env.is_last():
             start_time = time.time()
 
+            '''
+            Legacy
             alerted_observation = simulate_alert_training(currentState.observation.reshape(1, -1)[0], alerted_initial, self._fnr, self._fpr)
             alerted_initial = alerted_observation
+            
 
+            alerted_observation = np.array(alerted_observation)
+            alerted_observation = np.expand_dims(alerted_observation, axis=0)
+            '''
+            alerted_observation = self.env.get_alerted_state()
             alerted_observation = np.array(alerted_observation)
             alerted_observation = np.expand_dims(alerted_observation, axis=0)
 

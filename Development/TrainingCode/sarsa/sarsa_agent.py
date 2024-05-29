@@ -276,8 +276,10 @@ class SarsaLearning:
         state1 = self.env.reset()
         
         # Initialize alerted observation (Defender's view of the network through Network Monitoring System)
-        alerted_initial = [0] * len(state1.observation.reshape(1, -1)[0])
-        alerted_observation1 = simulate_alert_training(state1.observation.reshape(1, -1)[0], alerted_initial, self._fnr, self._fpr)
+        # alerted_initial = [0] * len(state1.observation.reshape(1, -1)[0])
+        # alerted_observation1 = simulate_alert_training(state1.observation.reshape(1, -1)[0], alerted_initial, self._fnr, self._fpr)
+
+        alerted_observation1 = self.env.get_alerted_state()
         alerted_observation1 = np.array(alerted_observation1)
         alerted_observation1 = np.expand_dims(alerted_observation1, axis=0)
 
@@ -291,7 +293,8 @@ class SarsaLearning:
             (discount, state2Observation, reward, terminalState) = (state1.discount, state2.observation, state2.reward, self.env.is_last())
             
             # Update alerted observation
-            alerted_observation2 = simulate_alert_training(state2Observation.reshape(1, -1)[0], alerted_observation1[0], self._fnr, self._fpr)
+            # alerted_observation2 = simulate_alert_training(state2Observation.reshape(1, -1)[0], alerted_observation1[0], self._fnr, self._fpr)
+            alerted_observation2 = self.env.get_alerted_state()
             alerted_observation2 = np.array(alerted_observation2)
             alerted_observation2 = np.expand_dims(alerted_observation2, axis=0)
 

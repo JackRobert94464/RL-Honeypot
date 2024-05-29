@@ -1,0 +1,19 @@
+<mxfile host="Electron" modified="2024-05-25T03:07:31.214Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.4.8 Chrome/124.0.6367.207 Electron/30.0.6 Safari/537.36" etag="bF6yalhM6JAVnZRy21x9" version="24.4.8" type="device">
+  <diagram name="Page-1" id="hXYJxKQ2SAPi_b1xXRcE">
+    <mxGraphModel dx="978" dy="566" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="BeVFnoluY8J0wf4Qo2iJ-1" value="Environment" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="710" y="400" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="BeVFnoluY8J0wf4Qo2iJ-2" value="Agent" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" vertex="1" parent="1">
+          <mxGeometry x="710" y="480" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="BeVFnoluY8J0wf4Qo2iJ-3" value="Create a network based on provided ntpg and htpg&amp;nbsp;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="280" y="180" width="120" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
