@@ -161,9 +161,12 @@ class DoubleDeepQLearning:
         # Branch 3: Process ntpg penetration graph
         ntpg_conv_1 = keras.layers.Conv1D(1, kernel_size=4, activation='relu', padding='same')(ntpg_input)
         ntpg_pool_1 = tf.keras.layers.MaxPooling1D(pool_size=1)(ntpg_conv_1)
-        ntpg_conv_2 = keras.layers.Conv1D(1, kernel_size=4, activation='relu', padding='same')(ntpg_pool_1)
-        ntpg_pool_2 = tf.keras.layers.MaxPooling1D(pool_size=1)(ntpg_conv_2)
-        ntpg_flatten = keras.layers.Flatten()(ntpg_pool_2)
+        # ntpg_conv_2 = keras.layers.Conv1D(1, kernel_size=4, activation='relu', padding='same')(ntpg_pool_1)
+        # ntpg_pool_2 = tf.keras.layers.MaxPooling1D(pool_size=1)(ntpg_conv_2)
+        
+        ntpg_batch_normal = keras.layers.BatchNormalization()(ntpg_pool_1)
+        
+        ntpg_flatten = keras.layers.Flatten()(ntpg_batch_normal)
 
 
         # Concatenate the outputs of all branches

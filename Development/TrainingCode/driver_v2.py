@@ -108,7 +108,17 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
             dsp_dict.update(evaluator.retrieveDSPdict(currentStep))
             
             # Save the training time dict and DSP dict to a text file
-            with open(f"result_fnr{fnr}_fpr{fpr}_model_{model_name}_{currentStep}.txt", "w") as file:
+            output_folder = "output_dsp_trainingtime/"
+            if os.name == 'nt':
+                output_folder = ".\\output_dsp_trainingtime\\"
+            else:
+                output_folder = "./output_dsp_trainingtime/"
+            
+            # Create the output folder if it doesn't exist
+            if not os.path.exists(output_folder):
+                os.makedirs(output_folder)
+                
+            with open(output_folder + f"result_fnr{fnr}_fpr{fpr}_model_{model_name}_{currentStep}.txt", "w") as file:
                 file.write(f"Training Time Dict: {training_time_dict}\n")
                 file.write(f"DSP Dict: {dsp_dict}\n")
                 
