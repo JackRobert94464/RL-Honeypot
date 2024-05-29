@@ -242,14 +242,18 @@ if __name__ == "__main__":
         from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
         
         print("Which input type would you like to use?")
-        print("1: Single Input - quickly process observation state using one dense layer")
-        print("2: Multi Input - a LTSM for observation state will be used")
+        print("1: Single Input v1 - quickly process observation state using one dense layer")
+        print("2: Single Input v2 - reduce to 1 conv1D and apply batch normailzation - 29/05/2024")
+        print("3: Multi Input - a LTSM for observation state will be used")
         input_choice = input("Enter the number of the input type you want to use: ")
         
         if input_choice == '1':
-            model_name = "3xConv1D"
+            model_name = "3xConv1D_v1"
             from MatrixTest3.ddqn_agent_3x_simple_state_fnrfpr import DoubleDeepQLearning
         elif input_choice == '2':
+            model_name = "3xConv1D_v2"
+            from MatrixTest3.ddqn_agent_3x_simple_state_fnrfpr_v2 import DoubleDeepQLearning
+        elif input_choice == '3':
             model_name = "3xConv1D_LTSM"
             from MatrixTest3.ddqn_agent_3x_multi_input_fnrfpr import DoubleDeepQLearning
         
