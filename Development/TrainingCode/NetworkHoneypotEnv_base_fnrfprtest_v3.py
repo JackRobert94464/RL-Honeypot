@@ -107,16 +107,17 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
             else:
                 self._alerted_state[current_node_index] = 0
 
-            # Pick next node based on weighted random choice
-            pop = [route[0] for route in self._ntpg.get(current_node)]
-            wei = [(route[1] + route[2])/2 for route in self._ntpg.get(current_node)]
-            next_node = random.choices(
-                population=pop,
-                weights=wei,
-                k=1
-            )[0]
-            
-            self._current_attacker_node = next_node
+            if state_type in ['TP', 'FN']:
+                # Pick next node based on weighted random choice
+                pop = [route[0] for route in self._ntpg.get(current_node)]
+                wei = [(route[1] + route[2])/2 for route in self._ntpg.get(current_node)]
+                next_node = random.choices(
+                    population=pop,
+                    weights=wei,
+                    k=1
+                )[0]
+                
+                self._current_attacker_node = next_node
 
     def __is_nicr_attacked(self, nicr_nodes):
         for i in nicr_nodes:
