@@ -329,3 +329,110 @@ def __update_nifr_nodes(self, nifr_nodes):
                 nifr_nodes.pop(0)
             print("NIFR list after update:", nifr_nodes)
 '''
+
+
+def TestTrain():
+    '''
+    Short training for testing out the dsp graphing function
+    
+    This func is use for the main which is now currently developing the modular trainingEpisode function (13/05/2024)
+    
+    For debugging purpose, uncomment this
+    '''
+    
+    # Initialize empty dictionaries to store the training time and DSP values
+    training_time_dict = {}
+    dsp_dict = {}
+
+    deception_nodes = 2 # Change this to the number of deception nodes you want to test
+
+    first_parameter = misc.calculate_first_parameter(deception_nodes, normal_nodes)
+
+    # Create the environment
+    env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, htpg)
+
+    # Create the environment. Since it was built using PyEnvironment, we need to wrap it in a TFEnvironment to use with TF-Agents
+    tf_env = tf_py_environment.TFPyEnvironment(env)
+
+
+    timestep = tf_env.reset()
+    rewards = []
+    numberEpisodes = 20000
+
+    # calculate the number of possible combinations
+    total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
+
+    # create an object
+    agent=DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations, fnr, fpr)
+    
+    # Training the Agent with a fixed number of episodes
+    for ep in range(numberEpisodes):
+        agent.updateTrainingEpisode(ep)
+        # print("Episode: ", ep)
+        agent.trainingSingleEpisodes()
+        
+        # Every 2000 5000 10000 step, we perform evaluation        
+        currentStep = agent.getStepCount()
+        
+        if currentStep in [2000, 5000, 10000, 20000, 30000]:
+            
+            # Initialize an evalutaion instance
+            evaluator = evaluation_v2.Evaluation()
+            
+            # Save models to folder
+            agent.saveModel()
+            model_path = agent.retrieveModelPath()
+            
+            # Collect the training time dict from training code
+            training_time_dict.update(agent.retrieveTraintimeDict())
+            
+            # Evaluate the model
+            evaluator.evaluate(agent, model_path)
+            
+            # Collect the DSP dict from evaluation code
+            dsp_dict.update(evaluator.retrieveDSPdict())
+            
+            # Save the training time dict and DSP dict to a text file
+            with open(f"result_fnr{fnr}_fpr{fpr}.txt", "w") as file:
+                file.write(f"Training Time Dict: {training_time_dict}\n")
+                file.write(f"DSP Dict: {dsp_dict}\n")
+    
+    
+
+    import ddqn_dsp_visualizer
+    import ddqn_trainingtime_visualizer
+
+
+    print("Total steps: ", agent.getGlobalStepCount())
+    print("Total DSP: ", agent.getGlobalDSPCount())
+    print("Total Time: ", agent.getGlobalTimeTaken())
+
+
+
+    # Visualize the Defense Success Probability (DSP) of our method
+    # Save the global step count and global DSP count to a text file
+    with open(f"result_fnr{fnr}_fpr{fpr}.txt", "w") as file:
+            file.write(f"Global Step Count: {agent.getGlobalStepCount()}\n")
+            file.write(f"Global DSP Count: {agent.getGlobalDSPCount()}\n")
+    ddqn_dsp_visualizer.ddqn_dsp_visual(agent.getGlobalStepCount(), agent.getGlobalDSPCount())
+
+
+
+    # Visualize the training time taken of our method
+    ddqn_trainingtime_visualizer.ddqn_dsp_visual(agent.getGlobalStepCount(), agent.getGlobalTimeTaken())
+
+
+    # get the obtained rewards in every episode
+    agent.sumRewardsEpisode
+
+    print(rewards)
+
+    #  summarize the model
+    agent.mainNetwork.summary()
+    # save the model, this is important, since it takes long time to train the model 
+    # and we will need model in another file to visualize the trained model performance
+    if os.name == 'nt':  # If the operating system is Windows
+            agent.mainNetwork.save(f".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_weighted_attacker_1to5_decoy_win_ver{numberEpisodes}_fnrfpr_{fnr}{fpr}.keras")
+    else:  # For other operating systems like Linux
+            agent.mainNetwork.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_weighted_attacker_1to5_decoy_linux_ver{numberEpisodes}_fnrfpr_{fnr}{fpr}.keras")
+        
