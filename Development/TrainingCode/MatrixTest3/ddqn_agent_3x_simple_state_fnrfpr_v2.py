@@ -161,15 +161,15 @@ class DoubleDeepQLearning:
         
         # Giu nguyen cac lop nay de cho cac model sau nay
         # Interpreting the concatenated data
-        x = tf.keras.layers.Dense(64, activation='relu')(concatenated)
+        x = tf.keras.layers.Dense(256, activation='relu')(concatenated)
         x = tf.keras.layers.BatchNormalization()(x)
-        x = tf.keras.layers.Dense(128, activation='relu')(x)
+        x = tf.keras.layers.Dense(256, activation='relu')(x)
         x = tf.keras.layers.BatchNormalization()(x)
         x = tf.keras.layers.Dense(256, activation='relu')(x)
         x = tf.keras.layers.BatchNormalization()(x)
 
         # model output
-        output = tf.keras.layers.Dense(self.actionDimension, activation='tanh')(x)
+        output = tf.keras.layers.Dense(self.actionDimension, activation='softmax')(x)
 
         # Create model
         model = Model(inputs=[observable_input, epss_input, ntpg_input], outputs=output)
