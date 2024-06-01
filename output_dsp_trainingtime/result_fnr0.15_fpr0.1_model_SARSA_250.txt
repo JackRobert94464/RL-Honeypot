@@ -1,2 +1,7 @@
+<<<<<<< HEAD
 Training Time Dict: {250: 66.37508130073547}
 DSP Dict: {250: 1.0}
+=======
+Training Time Dict: {250: 55.98562049865723}
+DSP Dict: {250: 0.7342167677461778}
+>>>>>>> ae1e79dd4abedd9172957b2c96f594320c278ae9

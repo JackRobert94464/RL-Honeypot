@@ -124,7 +124,7 @@ else:  # For other operating systems like Linux
 env = NetworkHoneypotEnv(N, M, K, ntpg, htpg)
 
 # Set hyperparameters
-EPISODES = 100000
+EPISODES = 10000
 LOSS_CLIPPING = 0.2
 EPOCHS = 10
 NOISE = 1.0
@@ -147,11 +147,17 @@ class PPOLoss(layers.Layer):
 
     def call(self, inputs):
         y_true, y_pred, advantage, old_prediction = inputs
-        prob = tf.reduce_sum(y_true * y_pred, axis=-1)
-        old_prob = tf.reduce_sum(y_true * old_prediction, axis=-1)
+
+        prob = tf.reduce_sum(y_true * y_pred, axis=-1, keepdims=True)
+        old_prob = tf.reduce_sum(y_true * old_prediction, axis=-1, keepdims=True)
         r = prob / (old_prob + 1e-10)
         clipped_r = tf.clip_by_value(r, 1 - self.loss_clipping, 1 + self.loss_clipping)
-        loss = -tf.reduce_mean(tf.minimum(r * advantage, clipped_r * advantage) + self.entropy_loss * -(prob * tf.math.log(prob + 1e-10)))
+        
+        advantage = tf.cast(advantage, y_pred.dtype)
+        surrogate_loss = tf.minimum(r * advantage, clipped_r * advantage)
+        entropy_bonus = self.entropy_loss * -(prob * tf.math.log(prob + 1e-10))
+        loss = -tf.reduce_mean(surrogate_loss + entropy_bonus)
+        
         return loss
 
 # Create dummy tensors
@@ -191,9 +197,10 @@ class Agent:
         model = keras.Model(inputs=[state_input, advantage, old_prediction], outputs=[out_actions])
         loss_layer = PPOLoss()
         model.compile(optimizer=keras.optimizers.Adam(learning_rate=LR),
-                      loss=lambda y_true, y_pred: loss_layer([y_true, y_pred, advantage, old_prediction]))
+                    loss=lambda y_true, y_pred: loss_layer([y_true, y_pred, advantage, old_prediction]))
 
         return model
+
 
     def build_critic(self):
         state_input = keras.Input(shape=(NUM_STATE,))

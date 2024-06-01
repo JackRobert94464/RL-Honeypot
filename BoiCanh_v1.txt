@@ -1,0 +1,7 @@
+Ke hoach tuan sau 30/05/2024
+
+- Dua current_node thanh next_node (node ke tiep la cai can set true state) => chay weight truoc de tinh ra node dinh di toi, xong set next node thanh 1 neu gap truong hop 
+
+- Trien khai inference, ap len mang muc tieu KVM that
+
+- Viet bao cao overleaf chuong 4 5
