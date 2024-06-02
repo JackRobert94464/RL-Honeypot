@@ -8,8 +8,12 @@
 #     python inference_v2.py
 #
 # The server will be running on http://server-ip:35025. You can send a POST request to http://server-ip:35025/predict with the network state and the number of honeypots to deploy.
+#
 # Example:
-# curl -X POST -H "Content-Type: application/json" -d '{"network_state": [0, 1, 0, 0, 1, 0], "num_honeypots": 2}' http://0.0.0.0:5000/predict
+#
+# Linux: curl -X POST -H "Content-Type: application/json" -d '{"network_state": [0, 1, 0, 0, 1, 0], "num_honeypots": 2}' http://0.0.0.0:5000/predict
+#
+# Invoke-WebRequest -Uri "http://127.0.0.1:35025/predict" -Method POST -ContentType "application/json" -Body '{"network_state": [0, 1, 0, 1, 0, 0], "num_honeypots": 2}' -Headers @{}
 
 
 import numpy as np
