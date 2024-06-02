@@ -5,7 +5,7 @@ import socket
 
 # Import necessary components
 from ddqn_loss_fn import ddqn_loss_fn
-from NetworkHoneypotEnv_base import NetworkHoneypotEnv
+from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
 
 class Inference:
     def __init__(self, model_path, deployment_server_ip, deployment_server_port, num_honeypots):

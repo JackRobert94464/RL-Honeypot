@@ -130,33 +130,33 @@ def predict(network_state, num_honeypots):
 
 if __name__ == '__main__':
     
-    # Doc tu file input ("network_state": [0, 1, 0, 0, 1, 0], "num_honeypots": 2)
-    # Read the input from the 'input.tmp' file
-    with open('input.tmp', 'r') as file:
-        data = json.load(file)
-        network_state = data['network_state']
-        num_honeypots = data['num_honeypots']
+    while True:
+        # Khuc nay co the them phan ham check file input ton tai truoc khi doc ong noi nhe
+        
+        # Read the input from the 'input.tmp' file
+        with open('input.tmp', 'r') as file:
+            data = json.load(file)
+            network_state = data['network_state']
+            num_honeypots = data['num_honeypots']
 
-    # Dua input vao cho ham predict
-    predict_result = predict(network_state, num_honeypots)
+        # Dua input vao cho ham predict
+        predict_result = predict(network_state, num_honeypots)
 
-    # Chon subnet cho ket qua predict
-    subnet_targets = [0] * 4
-    for node in predict_result:
-        if node in range(0, 1):
-            subnet = 0
-        elif node in range(2, 4):
-            subnet = 1
-        elif node in range(5, 7):
-            subnet = 2
-        elif node in range(8, 9):
-            subnet = 3
-        subnet_targets[subnet] = 1
+        # Chon subnet cho ket qua predict
+        subnet_targets = [0] * 4
+        for node in predict_result:
+            if node in range(0, 1):
+                subnet = 0
+            elif node in range(2, 4):
+                subnet = 1
+            elif node in range(5, 7):
+                subnet = 2
+            elif node in range(8, 9):
+                subnet = 3
+            subnet_targets[subnet] = 1
 
-    subnet_result = jsonify({'subnet_targets': subnet_targets})
-
-    # Dua ket qua ra file output
-    with open('output.tmp', 'w') as f:
-        f.write(subnet_result)
-
+        # Write the subnet_targets to 'output.tmp' file
+        with open('output.tmp', 'w') as file:
+            for target in subnet_targets:
+                file.write(str(target) + '\n')
 

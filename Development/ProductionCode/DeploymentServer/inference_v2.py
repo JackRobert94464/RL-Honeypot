@@ -8,12 +8,8 @@
 #     python inference_v2.py
 #
 # The server will be running on http://server-ip:35025. You can send a POST request to http://server-ip:35025/predict with the network state and the number of honeypots to deploy.
-#
 # Example:
-#
-# Linux: curl -X POST -H "Content-Type: application/json" -d '{"network_state": [0, 1, 0, 0, 1, 0], "num_honeypots": 2}' http://0.0.0.0:5000/predict
-#
-# Invoke-WebRequest -Uri "http://127.0.0.1:35025/predict" -Method POST -ContentType "application/json" -Body '{"network_state": [0, 1, 0, 1, 0, 0], "num_honeypots": 2}' -Headers @{}
+# curl -X POST -H "Content-Type: application/json" -d '{"network_state": [0, 1, 0, 0, 1, 0], "num_honeypots": 2}' http://0.0.0.0:5000/predict
 
 
 import numpy as np
@@ -131,8 +127,26 @@ def predict():
     # deployment_targets = top_indices.tolist()
     deployment_targets = action
 
+    # Chon subnet cho ket qua predict
+    subnet_targets = [0] * 4
+    for node in deployment_targets:
+        if node in range(0, 1):
+            subnet = 0
+        elif node in range(2, 4):
+            subnet = 1
+        elif node in range(5, 7):
+            subnet = 2
+        elif node in range(8, 9):
+            subnet = 3
+        subnet_targets[subnet] = 1
+
+    # Write the subnet_targets to 'output.tmp' file
+    with open('output.tmp', 'w') as file:
+        for target in subnet_targets:
+            file.write(str(target) + '\n')
+
     # Return the deployment targets as a JSON response
-    return jsonify({'deployment_targets': deployment_targets})
+    return jsonify({'deployment_targets': deployment_targets, 'subnet': subnet_targets})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=35025)
