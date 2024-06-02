@@ -77,6 +77,9 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
     if(model_type == 2):
         # SARSA
         agent=SarsaLearning(env, epsilon, numberEpisodes, max_steps_sarsa, alpha_sarsa, gamma, total_permutations, fnr, fpr)
+    if(model_type == 3):
+        # PPO
+        agent = PPOAgent(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations, fnr, fpr)
     
     
     # run the learning process
@@ -102,7 +105,7 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
             training_time_dict.update(agent.retrieveTraintimeDict())
             
             # Evaluate the model
-            evaluator.evaluate(agent, model_path)
+            evaluator.evaluate(agent, model_path, model_type)
             
             # Collect the DSP dict from evaluation code
             dsp_dict.update(evaluator.retrieveDSPdict(currentStep))
@@ -162,6 +165,9 @@ def MultiDecoyTraining(numberEpisodes, model_name, model_type):
         if(model_type == 2):
             # SARSA
             agent=SarsaLearning(env, epsilon, numberEpisodes, max_steps_sarsa, alpha_sarsa, gamma, total_permutations, fnr, fpr)
+        if(model_type == 3):
+            # PPO
+            agent = PPOAgent(env)
             
         # run the learning process
         for ep in range(numberEpisodes):
@@ -185,7 +191,7 @@ def MultiDecoyTraining(numberEpisodes, model_name, model_type):
                 training_time_dict.update(agent.retrieveTraintimeDict())
                 
                 # Evaluate the model
-                evaluator.evaluate(model_path)
+                evaluator.evaluate(agent, model_path, model_type)
                 
                 # Collect the DSP dict from evaluation code
                 dsp_dict.update(evaluator.retrieveDSPdict())
@@ -225,6 +231,7 @@ if __name__ == "__main__":
     print("2: Three Input Conv1D Model")
     print("3: FNR/FPR Rate Model (Deprecated)")
     print("4: SARSA Model")
+    print("5: PPO Model")
     model_choice = input("Enter the number of the model you want to train: ")
     model_name = None
 
@@ -276,6 +283,13 @@ if __name__ == "__main__":
         from sarsa.sarsa_agent import SarsaLearning
         model_type = 2
         print("Imported the environment and agent successfully.")
+
+    elif model_choice == '5':
+        model_name = "PPO"
+        model_type = 3  # Set a new model type for PPO
+        from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
+        from PPO.ppo_in_a_box_v4 import PPOAgent
+        print("Imported the environment and PPO agent successfully.")
         
     else:
         print("Invalid selection. Exiting.")

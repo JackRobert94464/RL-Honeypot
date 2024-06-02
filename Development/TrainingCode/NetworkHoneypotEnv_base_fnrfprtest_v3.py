@@ -93,8 +93,6 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
 
         current_node = self._current_attacker_node
         current_node_index = list(self._ntpg.keys()).index(current_node)
-        
-
 
         if self._ntpg.get(current_node):
 
@@ -109,18 +107,20 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
                 k=1
             )[0]
 
+            next_node_index = list(self._ntpg.keys()).index(next_node)
+
             # Update the true state
             if state_type in ['TP', 'FN']:
-                self._state[next_node] = 1
+                self._state[next_node_index] = 1
             else:
-                self._state[next_node] = 0
+                self._state[next_node_index] = 0
 
             # Update the alerted state
             # Set cho nay thanh next node 30 05 2024
             if state_type in ['TP', 'FP']:
-                self._alerted_state[next_node] = 1
+                self._alerted_state[next_node_index] = 1
             else:
-                self._alerted_state[next_node] = 0
+                self._alerted_state[next_node_index] = 0
 
             if state_type in ['TP', 'FN']:
                 self._current_attacker_node = next_node
