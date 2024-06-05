@@ -9,7 +9,7 @@
 #
 # The server will be running on http://server-ip:35025. You can send a POST request to http://server-ip:35025/predict with the network state and the number of honeypots to deploy.
 # Example:
-# curl -X POST -H "Content-Type: application/json" -d '{"network_state": [0, 1, 0, 0, 1, 0], "num_honeypots": 2}' http://0.0.0.0:5000/predict
+# curl -X POST -H "Content-Type: application/json" -d '{"network_state": [0, 1, 0, 0, 1, 0, 0, 1, 1, 1], "num_honeypots": 2}' http://0.0.0.0:5000/predict
 
 
 import numpy as np
@@ -23,7 +23,7 @@ ntpg_infer_csv = "ntpg_inf.csv"
 htpg_infer_csv = "htpg_inf.csv"
 
 # Load the trained model
-model_path = 'RL_Honeypot_1to5_conv1D_simpleinput_linux_ver30000.keras'
+model_path = 'RL_Honeypot_1to5_conv1D_simpleinput_v2_linux_ver44993.keras'
 
 ddqn_loss_fn = ddqn_loss_fn.ddqn_loss_fn
 model_infer = misc.load_trained_model(model_path=model_path, loss_fn=ddqn_loss_fn)
@@ -126,17 +126,19 @@ def predict():
     # top_indices = np.argsort(action)[-num_honeypots:]
     # deployment_targets = top_indices.tolist()
     deployment_targets = action
-
+    
     # Chon subnet cho ket qua predict
     subnet_targets = [0] * 4
+    
     for node in deployment_targets:
-        if node in range(0, 1):
+        subnet = None
+        if node in range(0, 2):
             subnet = 0
-        elif node in range(2, 4):
+        elif node in range(2, 5):
             subnet = 1
-        elif node in range(5, 7):
+        elif node in range(5, 8):
             subnet = 2
-        elif node in range(8, 9):
+        elif node in range(8, 10):
             subnet = 3
         subnet_targets[subnet] = 1
 

@@ -36,11 +36,11 @@ attack_rate = float(input("Enter the attack rate for the attacker: "))
 
 # Load the TPG data
 if os.name == 'nt':  # If the operating system is Windows
-        ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_40.csv")
-        htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg_40.csv")
+        ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_10.csv")
+        htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg_10.csv")
 else:  # For other operating systems like Linux
-        ntpg = misc.create_dictionary_ntpg("./Development/TPG-Data/ntpg_40.csv")
-        htpg = misc.create_dictionary_htpg("./Development/TPG-Data/htpg_40.csv")
+        ntpg = misc.create_dictionary_ntpg("./Development/TPG-Data/ntpg_10.csv")
+        htpg = misc.create_dictionary_htpg("./Development/TPG-Data/htpg_10.csv")
 
 normal_nodes = misc.count_nodes(ntpg)
 print("Normal nodes:", normal_nodes)
@@ -92,7 +92,7 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
         currentStep = agent.getStepCount()
         print("Current Step: ", currentStep)
         
-        if currentStep in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000]:
+        if currentStep in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000, 50000]:
             
             # Initialize an evalutaion instance
             evaluator = evaluation_v2.Evaluation()
@@ -121,7 +121,7 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
             if not os.path.exists(output_folder):
                 os.makedirs(output_folder)
                 
-            with open(output_folder + f"result_fnr{fnr}_fpr{fpr}_model_{model_name}_{currentStep}.txt", "w") as file:
+            with open(output_folder + f"result_fnr{fnr}_fpr{fpr}_model_{model_name}_{currentStep}_honeypotAmount_{deception_nodes}.txt", "w") as file:
                 file.write(f"Training Time Dict: {training_time_dict}\n")
                 file.write(f"DSP Dict: {dsp_dict}\n")
                 
@@ -131,9 +131,11 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
     #  summarize the model
     if(model_type == 1):
         agent.mainNetwork.summary()
+        agent.saveModel()
         
     if(model_type == 2):
         agent.mainNetwork.model.summary()
+        agent.saveModel()
 
 def MultiDecoyTraining(numberEpisodes, model_name, model_type):
     '''
@@ -147,7 +149,7 @@ def MultiDecoyTraining(numberEpisodes, model_name, model_type):
         first_parameter = misc.calculate_first_parameter(deception_nodes, normal_nodes)
 
         # Create the environment
-        env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, htpg)
+        env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, htpg, fnr, fpr, attack_rate)
 
         numberEpisodes = numberEpisodes
 
@@ -157,7 +159,7 @@ def MultiDecoyTraining(numberEpisodes, model_name, model_type):
         # Initialize empty dictionaries to store the training time and DSP values
         training_time_dict = {}
         dsp_dict = {}
-
+        
         # create an object
         if(model_type == 1):
             # DQN
@@ -167,8 +169,9 @@ def MultiDecoyTraining(numberEpisodes, model_name, model_type):
             agent=SarsaLearning(env, epsilon, numberEpisodes, max_steps_sarsa, alpha_sarsa, gamma, total_permutations, fnr, fpr)
         if(model_type == 3):
             # PPO
-            agent = PPOAgent(env)
-            
+            agent = PPOAgent(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations, fnr, fpr)
+        
+        
         # run the learning process
         for ep in range(numberEpisodes):
             agent.updateTrainingEpisode(ep)
@@ -177,8 +180,9 @@ def MultiDecoyTraining(numberEpisodes, model_name, model_type):
             
             # Every 2000 5000 10000 step, we perform evaluation        
             currentStep = agent.getStepCount()
+            print("Current Step: ", currentStep)
             
-            if currentStep in [2000, 5000, 10000, 20000, 30000]:
+            if currentStep in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000, 50000]:
                 
                 # Initialize an evalutaion instance
                 evaluator = evaluation_v2.Evaluation()
@@ -194,22 +198,34 @@ def MultiDecoyTraining(numberEpisodes, model_name, model_type):
                 evaluator.evaluate(agent, model_path, model_type)
                 
                 # Collect the DSP dict from evaluation code
-                dsp_dict.update(evaluator.retrieveDSPdict())
+                dsp_dict.update(evaluator.retrieveDSPdict(currentStep))
                 
                 # Save the training time dict and DSP dict to a text file
-                with open(f"result_fnr{fnr}_fpr{fpr}_model_{model_name}.txt", "w") as file:
+                output_folder = "output_dsp_trainingtime/"
+                if os.name == 'nt':
+                    output_folder = ".\\output_dsp_trainingtime\\"
+                else:
+                    output_folder = "./output_dsp_trainingtime/"
+                
+                # Create the output folder if it doesn't exist
+                if not os.path.exists(output_folder):
+                    os.makedirs(output_folder)
+                    
+                with open(output_folder + f"result_fnr{fnr}_fpr{fpr}_model_{model_name}_{currentStep}_honeypotAmount_{deception_nodes}.txt", "w") as file:
                     file.write(f"Training Time Dict: {training_time_dict}\n")
                     file.write(f"DSP Dict: {dsp_dict}\n")
-                
+                    
                 print("Training Time and DSP saved to file.")
                 print(f"File name: result_fnr{fnr}_fpr{fpr}_model_{model_name}.txt")
-            
+
         #  summarize the model
         if(model_type == 1):
             agent.mainNetwork.summary()
+            agent.saveModel()
             
         if(model_type == 2):
             agent.mainNetwork.model.summary()
+            agent.saveModel()
         
         
 

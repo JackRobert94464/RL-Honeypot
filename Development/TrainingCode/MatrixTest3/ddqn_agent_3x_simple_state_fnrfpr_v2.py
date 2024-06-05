@@ -341,7 +341,7 @@ class DoubleDeepQLearning:
                 self.episodeWon += 1
                 
             self.step_counter += 1
-            if self.step_counter in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000]:
+            if self.step_counter in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000, 50000]:
                 break
             
             self.clock_counter += time.time() - start_time
@@ -679,10 +679,10 @@ class DoubleDeepQLearning:
     def saveModel(self):
         if os.name == 'nt':
             os.makedirs("./TrainedModel/weighted_random_attacker", exist_ok=True)
-            self.mainNetwork.save(f".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_1to5_conv1D_simpleinput_win_ver{self.getStepCount()}.keras")
-            self.updateModelPath(f".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_1to5_conv1D_simpleinput_win_ver{self.getStepCount()}.keras")
+            self.mainNetwork.save(f".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_1to5_conv1D_simpleinput_v2_win_ver{self.getStepCount()}.keras")
+            self.updateModelPath(f".\\TrainedModel\\weighted_random_attacker\\RL_Honeypot_1to5_conv1D_simpleinput_v2_win_ver{self.getStepCount()}.keras")
             
         else:
             os.makedirs("./TrainedModel/weighted_random_attacker", exist_ok=True)
-            self.mainNetwork.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_1to5_conv1D_simpleinput_linux_ver{self.getStepCount()}.keras")
-            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_1to5_conv1D_simpleinput_linux_ver{self.getStepCount()}.keras")
+            self.mainNetwork.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_1to5_conv1D_simpleinput_v2_linux_ver{self.getStepCount()}.keras")
+            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_1to5_conv1D_simpleinput_v2_linux_ver{self.getStepCount()}.keras")

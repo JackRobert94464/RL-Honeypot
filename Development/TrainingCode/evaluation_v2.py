@@ -39,11 +39,11 @@ class Evaluation:
         
         #######################
         if os.name == 'nt':
-            ntpg_path = ".\\Development\\TPG-Data\\ntpg_40.csv"
-            htpg_path = ".\\Development\\TPG-Data\\htpg_40.csv"
+            ntpg_path = ".\\Development\\TPG-Data\\ntpg_10.csv"
+            htpg_path = ".\\Development\\TPG-Data\\htpg_10.csv"
         else:
-            ntpg_path = "./Development/TPG-Data/ntpg_40.csv"
-            htpg_path = "./Development/TPG-Data/htpg_40.csv"
+            ntpg_path = "./Development/TPG-Data/ntpg_10.csv"
+            htpg_path = "./Development/TPG-Data/htpg_10.csv"
         ntpg = misc.create_dictionary_ntpg(ntpg_path)
         htpg = misc.create_dictionary_htpg(htpg_path)
         return ntpg, htpg
@@ -162,8 +162,8 @@ class Evaluation:
         dsp = (num_successful_defense / self.eval_episodes)
         results = {
             "Episode": list(range(1, self.eval_episodes + 1)),
-            "Reward": self.eval_rewards,
-            "Steps": self.eval_steps,
+            "Reward": self.eval_rewards[:self.eval_episodes],  # Fix: Ensure "Reward" array has the same length as "Steps" array
+            "Steps": self.eval_steps[:self.eval_episodes],  # Fix: Ensure "Steps" array has the same length as "Reward" array
         }
         df = pd.DataFrame(results)
         return df, avg_eval_reward, avg_eval_steps, dsp

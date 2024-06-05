@@ -24,7 +24,7 @@ ntpg_infer_csv = "ntpg_inf.csv"
 htpg_infer_csv = "htpg_inf.csv"
 
 # Load the trained model
-model_path = 'RL_Honeypot_1to5_conv1D_simpleinput_linux_ver30000.keras'
+model_path = 'RL_Honeypot_1to5_conv1D_simpleinput_v2_linux_ver44993.keras'
 
 ddqn_loss_fn = ddqn_loss_fn.ddqn_loss_fn
 model_infer = misc.load_trained_model(model_path=model_path, loss_fn=ddqn_loss_fn)
@@ -126,7 +126,7 @@ def predict(network_state, num_honeypots):
     deployment_targets = action
 
     # Return the deployment targets as a JSON response
-    return jsonify({'deployment_targets': deployment_targets})
+    return deployment_targets
 
 if __name__ == '__main__':
     
@@ -145,16 +145,19 @@ if __name__ == '__main__':
         # Chon subnet cho ket qua predict
         subnet_targets = [0] * 4
         for node in predict_result:
-            if node in range(0, 1):
+            subnet = None
+            if node in range(0, 2):
                 subnet = 0
-            elif node in range(2, 4):
+            elif node in range(2, 5):
                 subnet = 1
-            elif node in range(5, 7):
+            elif node in range(5, 8):
                 subnet = 2
-            elif node in range(8, 9):
+            elif node in range(8, 10):
                 subnet = 3
             subnet_targets[subnet] = 1
 
+        print(subnet_targets)
+        
         # Write the subnet_targets to 'output.tmp' file
         with open('output.tmp', 'w') as file:
             for target in subnet_targets:

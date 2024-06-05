@@ -19,4 +19,8 @@ test.py: file chứa hàm test cho mô hình (file lung tung, ko chạy được
 
 UPDATE 02/06/2024: Đã chỉnh cho cả inf_v2 và inf_v3 xuất output ra file
 WARNING 02/06/2024: Tui chưa update ntpg_inf.csv và htpg_inf.csv, hai file này của model 10 node random, cần update lại theo mô hình thật của mình để build đúng môi trường
+
+UPDATE 03/06/2024: Đã update model keras 10 node cho inference code
+Nhớ thay hai cái file ntpg htpg thành của mình
+
 - Ko cần update model keras, chỉ cần update file ntpg_inf.csv và htpg_inf.csv nếu thay môi trường mạng mới nhưng cùng số node
