@@ -101,49 +101,6 @@ class Evaluation:
             self.eval_rewards.append(episode_reward)
             self.eval_steps.append(episode_steps)
 
-    def evaluate_ppo_episodes(self, eval_env, agent):
-        for episode in range(self.eval_episodes):
-            episode_reward = 0
-            episode_steps = 0
-            print("------------------------------------------------------------------------------------------------------------------------")
-            print("Evaluating episode number: ", episode)
-            print("------------------------------------------------------------------------------------------------------------------------")
-            steps_entity = []
-            eval_time_step = eval_env.reset()
-            while not eval_time_step.is_last():
-                action = agent.get_action(eval_time_step.observation)
-                print("ACTION SELECTED:", action)
-                eval_time_step = eval_env.step(action)
-                print("EVAL TIME STEP:", eval_time_step)
-                steps_entity.append({'attacker_node': eval_env._current_attacker_node,
-                                    'nifr_nodes': [list(eval_env._ntpg.keys())[node_index - 1] for node_index in eval_env.nifr_nodes],
-                                    'nicr_nodes': [list(eval_env._ntpg.keys())[node_index - 1] for node_index in eval_env.nicr_nodes], })
-                episode_reward += eval_time_step.reward
-                print("EPISODE REWARD:", episode_reward)
-                episode_steps += 1
-                print("EPISODE STEPS:", episode_steps)
-                self.visualization_data = self.visualization_data._append({'episode': episode, 'steps': episode_steps, 'step_entities': steps_entity}, ignore_index=True)
-                steps_entity = []
-            if episode_reward > 0:
-                self.episodeWon += 1
-            self.step_counter += episode_steps
-
-            self.step_globalcounter.append(self.step_counter)
-
-            dsp = self.episodeWon / (episode + 1)
-            self.dsp_globalcounter.append(dsp)
-
-            print(f"DSP Global Counter after episode {episode}: ", self.dsp_globalcounter)
-
-            # Write dsp_globalcounter to a temporary file
-            with open('dsp_globalcounter.tmp', 'w') as file:
-                for item in self.dsp_globalcounter:
-                    file.write(str(item) + '\n')
-                    print(f"Writing DSP Global Counter: {item}")
-
-            self.eval_rewards.append(episode_reward)
-            self.eval_steps.append(episode_steps)
-
     def visualize_dsp(self):
         ddqn_dsp_visualizer.ddqn_dsp_visual(self.step_globalcounter, self.dsp_globalcounter)
 
@@ -160,13 +117,18 @@ class Evaluation:
         avg_eval_steps = np.mean(self.eval_steps)
         num_successful_defense = sum(reward > 0 for reward in self.eval_rewards)
         dsp = (num_successful_defense / self.eval_episodes)
+        max_len = max(len(self.eval_rewards), len(self.eval_steps), self.eval_episodes)
+        rewards = self.eval_rewards + [0] * (max_len - len(self.eval_rewards))
+        steps = self.eval_steps + [0] * (max_len - len(self.eval_steps))
+        episodes = list(range(1, self.eval_episodes + 1)) + [0] * (max_len - self.eval_episodes)
         results = {
-            "Episode": list(range(1, self.eval_episodes + 1)),
-            "Reward": self.eval_rewards[:self.eval_episodes],  # Fix: Ensure "Reward" array has the same length as "Steps" array
-            "Steps": self.eval_steps[:self.eval_episodes],  # Fix: Ensure "Steps" array has the same length as "Reward" array
+            "Episode": episodes,
+            "Reward": rewards,
+            "Steps": steps,
         }
         df = pd.DataFrame(results)
         return df, avg_eval_reward, avg_eval_steps, dsp
+
 
     def plot_rewards_and_steps(self):
         plt.figure(figsize=(30, 30))
@@ -201,14 +163,15 @@ class Evaluation:
     def evaluate(self, agent, model_path, model_type):
         evaluation = Evaluation()
         evalAgent = agent
-        if model_type == 1 or model_type == 2:
+        if model_type == 1 or model_type == 2 or model_type == 3:
             trained_model = evaluation.load_trained_model(model_path)
+            print("Trained model:", trained_model.summary())
         ntpg, htpg = evaluation.load_tpg_data()
         eval_env = evaluation.create_environment(ntpg, htpg)
         if model_type == 1 or model_type == 2:
             evaluation.evaluate_episodes(eval_env, evalAgent, trained_model)
         elif model_type == 3:
-            evaluation.evaluate_ppo_episodes(eval_env, evalAgent)
+            evaluation.evaluate_episodes(eval_env, evalAgent, trained_model)
         
         # TODO: MAKE THE TPG DATA LOAD CUSTOM TOO
         ntpg, htpg = evaluation.load_tpg_data()
