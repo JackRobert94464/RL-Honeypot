@@ -49,6 +49,9 @@ class PPOAgent:
 
     def retrieveModelPath(self):
         return self._modelPath
+    
+    def retrieveTraintimeDict(self):
+        return {self.getStepCount(): self.time_taken[-1]}
         
     def build_actor_model(self):
         model = Sequential()
@@ -111,6 +114,24 @@ class PPOAgent:
             action_index = np.random.choice(len(action_probs), p=action_probs)
             action_matrix = self.index_to_action(action_index)
             return action_matrix
+        
+    def selectActionEval(self, state, episode, model):
+        randomValue = np.random.random()
+        if episode < 3:
+            action_space_values = list(self.env.action_space().values())        
+            random_action = random.choice(action_space_values)
+            action = np.array(random_action, dtype=np.int32)
+            return action
+        if randomValue < self.epsilon:
+            action_space_values = list(self.env.action_space().values())
+            random_action = random.choice(action_space_values)
+            action = np.array(random_action, dtype=np.int32)
+            return action
+        else:
+            action_probs = model.predict(state)[0]
+            action_index = np.random.choice(len(action_probs), p=action_probs)
+            action_matrix = self.index_to_action(action_index)
+            return action_matrix
 
     def index_to_action(self, index):
         action_matrix = self.env.action_space()[index]
@@ -152,10 +173,11 @@ class PPOAgent:
     def saveModel(self):
         if os.name == 'nt':
             os.makedirs("./TrainedModel/weighted_random_attacker", exist_ok=True)
-            self.actor_model.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_1to5_obsdense_decoy_win_ver{self.getStepCount()}_actor.keras")
-            self.critic_model.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_1to5_obsdense_decoy_win_ver{self.getStepCount()}_critic.keras")
-            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_1to5_obsdense_decoy_win_ver{self.getStepCount()}_actor.keras")
+            self.actor_model.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_actorcrit_win_ver{self.getStepCount()}_actor.keras")
+            self.critic_model.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_actorcrit_win_ver{self.getStepCount()}_critic.keras")
+            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_actorcrit_win_ver{self.getStepCount()}_actor.keras")
         else:
             os.makedirs("./TrainedModel/weighted_random_attacker", exist_ok=True)
-            self.actor_model.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_1to5_obsdense_decoy_linux_ver{self.getStepCount()}_actor.keras")
-            self.critic_model.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_1to5_obsdense_decoy_linux_ver{self.getStepCount()}_critic.keras")
+            self.actor_model.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_actorcrit_linux_ver{self.getStepCount()}_actor.keras")
+            self.critic_model.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_actorcrit_linux_ver{self.getStepCount()}_critic.keras")
+            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_actorcrit_linux_ver{self.getStepCount()}_actor.keras")
