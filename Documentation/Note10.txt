@@ -1,0 +1,53 @@
+A. Inference
+
+Đã hoàn thành xây dựng code inference, huấn luyện được model 10 node để dự đoán
+
+Có hai cách để gọi đến code inference:
+
+1. Chạy code inference như một server flask, gửi curl request đến server. code sẽ nhận request, dự đoán và xuất kết quả ra 1 file output
+
+2. Chạy code inference lặp while liên tục để check + dự đoán liên tục một file input.tmp được trả về từ các tiến trình trước, dự đoán và xuất kết quả ra 1 file output
+
+B. Model
+
+Tạm hoàn thành một mô hình Advantage Actor Critic (A2C) sử dụng chiến thuật khám phá epsilon-greedy.
+
+A2C này cũng sử dụng một replay buffer để thực hiện lưu giữ kinh nghiệm qua từng step.
+
+Sau khi tích trữ đủ replay buffer, A2C sẽ lấy random một số kinh nghiệm ra, tính giá trị advantage, dự đoán xác suất của hành động 
+
+và giá trị hành động dựa trên hai mạng actor network và critic network, sau đó tính toán giá trị loss cho cả hai model actor và critic. 
+
+Sau đó hai model này sẽ được cập nhật lại mạng dựa theo các giá trị loss đã tính.
+
+Hàm tính toán advantage sẽ thực hiện dự đoán giá trị hiện tại và giá trị kế tiếp của hành động dựa trên mạng critic, sau đó tính chênh lệch tạm thời (Temporal Difference)
+
+của hai giá trị đó.
+
+Mạng nơ ron:
+
+- Actor Model
+
+Gồm lớp input (nhận input là trạng thái quan sát được), hai lớp dense 64 relu, và lớp kêt thúc là lớp dense với kích thước bằng không gian hành động và activation softmax để
+
+xem kêt quả xuất ra như tỉ lệ xác suất
+
+- Critic Model
+
+Gồm lớp input (nhận input là trạng thái quan sát được), hai lớp dense 64 relu, và lớp kêt thúc là lớp dense với một neuron duy nhất và không có activation function vì output
+
+của mạng này là một giá trị duy nhất đại diện cho giá trị phỏng đoán của input, thay vì đại diện cho phân bổ xác suất của từng hành động như mạng actor.
+
+Hàm tính loss:
+
+- Đối với mạng actor sẽ tính tỉ lệ giữa xác suất hành động mới và xác suất hành động cũ, cắt nhỏ tỉ lệ để đảm bảo bản cập nhật không quá lớn, sau đó tính giá trị loss
+
+cho actor thông qua giá trị nhỏ nhât của hai tỉ lệ xác suất đã cắt và chưa cắt.
+
+- Đối với mạng critic, hàm loss tính MSE giữa giá trị cũ và giá trị advantage.
+
+Thực hiện huấn luyện và kết quả thu được như sơ đồ canva.
+
+C. Overleaf
+
+Hoàn thành được một số cơ sở lí thuyết cho phần 3 và phần 5, đang thực hiện bổ sung thêm kết quả cho phần 4.
