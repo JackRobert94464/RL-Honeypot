@@ -36,11 +36,11 @@ attack_rate = float(input("Enter the attack rate for the attacker: "))
 
 # Load the TPG data
 if os.name == 'nt':  # If the operating system is Windows
-        ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_10.csv")
-        htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg_10.csv")
+        ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_40.csv")
+        htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg_40.csv")
 else:  # For other operating systems like Linux
-        ntpg = misc.create_dictionary_ntpg("./Development/TPG-Data/ntpg_10.csv")
-        htpg = misc.create_dictionary_htpg("./Development/TPG-Data/htpg_10.csv")
+        ntpg = misc.create_dictionary_ntpg("./Development/TPG-Data/ntpg_40.csv")
+        htpg = misc.create_dictionary_htpg("./Development/TPG-Data/htpg_40.csv")
 
 normal_nodes = misc.count_nodes(ntpg)
 print("Normal nodes:", normal_nodes)
