@@ -54,38 +54,19 @@ class PPOAgent:
         return {self.getStepCount(): self.time_taken[-1]}
         
     def build_actor_model(self):
-        # model = Sequential()
-        # model.add(InputLayer(input_shape=self.stateDimension))
-        # model.add(Dense(64, activation='relu'))
-        # model.add(Dense(64, activation='relu'))
-        # model.add(Dense(self.actionDimension, activation='softmax'))
-
-        input = layers.Input(shape=(self.stateDimension,))
-        x = layers.Dense(64, activation='relu')(input)
-        x = layers.Dense(64, activation='relu')(x)
-        
-        output = layers.Dense(self.actionDimension, activation='softmax')(x)
-
-        model = keras.Model(input, output)
-        # model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.001), loss='categorical_crossentropy')
-
+        model = Sequential()
+        model.add(InputLayer(input_shape=self.stateDimension))
+        model.add(Dense(64, activation='relu'))
+        model.add(Dense(64, activation='relu'))
+        model.add(Dense(self.actionDimension, activation='softmax'))
         return model
     
     def build_critic_model(self):
-        # model = Sequential()
-        # model.add(InputLayer(input_shape=self.stateDimension))
-        # model.add(Dense(64, activation='relu'))
-        # model.add(Dense(64, activation='relu'))
-        # model.add(Dense(1))
-
-        input = layers.Input(shape=(self.stateDimension,))
-        x = layers.Dense(64, activation='relu')(input)
-        x = layers.Dense(64, activation='relu')(x)
-        output = layers.Dense(1)(x)
-
-        model = keras.Model(input, output)
-        # model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.001), loss='mean_squared_error')
-
+        model = Sequential()
+        model.add(InputLayer(input_shape=self.stateDimension))
+        model.add(Dense(64, activation='relu'))
+        model.add(Dense(64, activation='relu'))
+        model.add(Dense(1))
         return model
 
     def trainingSingleEpisodes(self):

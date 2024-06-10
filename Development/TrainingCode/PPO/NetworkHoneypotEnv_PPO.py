@@ -27,6 +27,12 @@ class NetworkHoneypotEnv(gym.Env):
         self._episode_ended = False
         self._current_attacker_node = list(ntpg.keys())[2]
 
+    def get_ntpg(self):
+        return self._ntpg
+    
+    def get_htpg(self):
+        return self._htpg
+
     def reset(self):
         self.current_step = 0
         self.nicr_nodes = [5]
