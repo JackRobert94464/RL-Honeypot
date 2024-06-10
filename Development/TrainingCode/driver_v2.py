@@ -296,7 +296,7 @@ if __name__ == "__main__":
     elif model_choice == '4':
         model_name = "SARSA"
         from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
-        from sarsa.sarsa_agent import SarsaLearning
+        from sarsa.sarsa_agent_3input import SarsaLearning
         model_type = 2
         print("Imported the environment and agent successfully.")
 
@@ -304,7 +304,7 @@ if __name__ == "__main__":
         model_name = "PPO"
         model_type = 3  # Set a new model type for PPO
         from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
-        from PPO.ppo_in_a_box_v4 import PPOAgent
+        from PPO.a2c_3input import PPOAgent
         print("Imported the environment and PPO agent successfully.")
         
     else:

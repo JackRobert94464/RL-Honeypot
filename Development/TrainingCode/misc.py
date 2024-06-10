@@ -126,3 +126,54 @@ def create_environment_from_baseEnv(self, ntpg, htpg, deception_nodes_amount):
 def load_trained_model(model_path, loss_fn):
     trained_model = tf.keras.models.load_model(model_path, custom_objects={'loss': loss_fn})
     return trained_model
+
+
+def ntpg_to_epss_matrix(ntpg):
+  """
+  Converts a Node Threat Penetration Graph (_ntpg) dictionary to a K*K epss matrix.
+
+  Args:
+      ntpg: A dictionary representing the Node Threat Penetration Graph.
+
+  Returns:
+      A K*K numpy matrix representing the epss scores between nodes.
+  """
+  nodes = list(ntpg.keys())
+  K = len(nodes)
+  epss_matrix = [[0 for _ in range(K)] for _ in range(K)]
+
+  for i, node_i in enumerate(nodes):
+    for neighbor, user_epss, root_epss in ntpg[node_i]:
+      j = nodes.index(neighbor)
+      # Average the user_epss and root_epss values
+      avg_epss = (user_epss + root_epss) / 2
+      epss_matrix[i][j] = avg_epss
+
+  # Fill the lower triangle (symmetric matrix)
+  for i in range(K):
+    for j in range(i + 1, K):
+      epss_matrix[j][i] = epss_matrix[i][j]
+
+  return epss_matrix
+
+def ntpg_to_connection_matrix(ntpg):
+  """
+  Converts a Node Threat Penetration Graph (_ntpg) dictionary to a K*K connection matrix.
+
+  Args:
+      ntpg: A dictionary representing the Node Threat Penetration Graph.
+
+  Returns:
+      A K*K numpy matrix representing the connections between nodes (1 for connection, 0 for no connection).
+  """
+  nodes = list(ntpg.keys())
+  K = len(nodes)
+  connection_matrix = [[0 for _ in range(K)] for _ in range(K)]
+
+  for node_i, neighbors in ntpg.items():
+    i = nodes.index(node_i)
+    for neighbor, _, _ in neighbors:
+      j = nodes.index(neighbor)
+      connection_matrix[i][j] = 1  # Mark connection (one-way)
+
+  return connection_matrix

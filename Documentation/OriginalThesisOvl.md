@@ -290,3 +290,68 @@ Chúng tôi có tham khảo các mô hình cải tiến khác như DQEAF của n
 Cải tiến chính của nhóm nằm ở việc đánh giá khả năng thực thi của mẫu sau khi tác tử thực hiện hành động, được trình bày ở Hình \ref{fig:RL model}. Điểm đánh giá khả năng thực thi sẽ ảnh hưởng đến phần thưởng, vì vậy tác tử sẽ học được hành động nào nên sử dụng và hạn chế sử dụng để không ảnh hưởng khả năng thực thi. 
 
 Đầu tiên tệp mã độc sẽ được trích xuất thuộc tính ở dạng các vec tơ. Bộ vec tơ này đóng vai trò như môi trường (environment) của hệ thống học tăng cường. Tác từ nhận được bộ thuộc vec tơ này và đưa ra các hành động nhằm thay đổi tính chất của thuộc tính. Môi trường tiếp nhận hành động và thay đổi trạng thái. Sau đó, môi trường kiểm tra khả năng thực thi của tệp (functionality test) và kiểm tra xem tệp là độc hại hay lành tính (malware detector). Các kết quả liên quan đến khả năng thực thi và lành tính sẽ làm phần thưởng cho tác tử. Cứ như vậy, qua nhiều lần thực hiện hành động trên các mẫu mã độc khác nhau, mạng nơ ron của tác tử sẽ học dần và dự đoán các hành động hợp lí để tối ưu hóa phần thưởng.
+
+
+Khả năng của kẻ tấn công đối với trình phát hiện mã độc được phân loại theo năm khía cạnh như sau:
+\begin{enumerate}
+\item \textbf{Mục đích của kẻ tấn công}: Kẻ tấn công có thể theo đuổi ba hướng (theo mô hình Tính bảo mật - Tính toàn vẹn - Tính sẵn sàng) như sau: 
+\begin{itemize}
+\item Tính bảo mật (confidentiality): Kẻ tấn công muốn lấy thông tin của mô hình phát hiện mã độc.
+\item Tính toàn vẹn (integrity): Kẻ tấn công có thể kiến cho mô hình đưa ra các kết quả sai lệch.
+\item Tính sẵn sàng (availability): Kẻ tấn công có thể làm cho mô hình không hoạt động được hoặc làm gián đoạn các chức năng của mô hình.
+\end{itemize}
+\item \textbf{Kiến thức của kẻ tấn công}: Các phương pháp tấn công sẽ thay đổi tùy vào lượng kiến thức của kẻ tấn công đối với mô hình. Ở đây có ba phương pháp:
+\begin{itemize}
+\item Tấn công hộp đen (black-box attack)  không yêu cầu kiến thức về trình phát hiện  và chỉ cần khả năng truyền dữ liệu đầu vào (mẫu mã độc) và truy xuất dữ liệu đầu ra (nhãn phân loại).
+\item Tấn công hộp xám (gray-box attack) yêu cầu ít kiến thức về trình phát hiện. Kiến thức ở đây có thể bao gồm tập thuộc tính mà mục tiêu sử dụng hoặc  thông số đầu ra cụ thể của mô hình (khác với nhãn đơn thuần).
+\item Tấn công hộp trắng (white-box attack) yêu cầu kiến thức về kiến trúc của trình phát hiện (các lớp của mô hình học máy) và các thông số (hyperparameter) mà mô hình được huấn luyện.
+\end{itemize}
+
+\item \textbf{Khả năng truy cập dữ liệu huấn luyện}: Kẻ tấn công có thể truy cập dữ liệu huấn luyện của trình phát hiện theo bốn chế độ: 
+\begin{itemize}
+\item Đọc được dữ liệu được dùng để huấn luyện.
+\item Thêm dữ liệu mới vào tập huấn luyện.
+\item Thay đổi các mẫu dữ liệu.
+\item Hoàn toàn không truy cập được.
+\end{itemize}
+
+\item \textbf{Giai đoạn tấn công}: Bao gồm giai đoạn huấn luyện và giai đoạn suy luận của mô hình.
+\item \textbf{Mục tiêu tấn công}: Đối với mô hình phát hiện mã độc thì kẻ tấn công có thể có ba mục tiêu:
+\begin{itemize}
+\item Tấn công vào khả năng dự đoán: tạo mẫu đối kháng khiến cho mô hình của hệ thống dán nhãn sai.
+\item Tấn công vào nhãn phân loại: khiến cho mô hình chỉ dự đoán được một số nhãn nhất định.
+\item Tấn công vào thuộc tính: tập trung vào thay đổi một số thuộc tính đầu vào của mẫu. 
+\end{itemize}
+
+\item \textbf{Tấn công thuộc tính}: Trong bối cảnh trình phát hiện mã độc thì mô hình học máy sẽ sử dụng nhiều loại thuộc tính khác nhau. Vì vậy, kẻ tấn công cần đưa ra phương án phù hợp, lựa chọn và thử nghiệm các loại thuộc tính để thay đổi mẫu dữ liệu.
+\item \textbf{Kỳ vọng về kết quả của cuộc tấn công}: Như đã nêu trên, hầu hết các cuộc tấn công hệ thống sẽ tập trung thay đổi thuộc tính. Ở đây kỳ vọng về kết quả sẽ theo hai hướng:
+\begin{itemize}
+\item Tấn công qua vec tơ thuộc tính: Kiểu tấn công này thay đổi thuộc tính của mẫu nhưng không đảm bảo về khả năng hoạt động của mẫu. Mẫu đối kháng dù né tránh được hệ thống phát hiện nhưng lại không khởi chạy được.
+\item Tấn công qui trình đầu cuối (end-to-end): Kiểu tấn công này sẽ hướng tới việc tạo mẫu đối kháng nhưng vẫn giữ được toàn bộ tính năng của mẫu.
+\end{itemize}
+ 
+\end{enumerate}
+
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=17cm]{Images/RL_model.png}
+    \caption{Tổng quan mô hình đề xuất}
+    \label{fig:RL model}
+\end{figure}
+
+\subsection{Giả định về ngữ cảnh tấn công}
+
+Nghiên cứu này được xây dựng trên mô hình tạo đột biến với học tăng cường để thực hiện tạo mẫu đối kháng, mục tiêu là làm cho trình phát hiện mã độc đưa ra phát hiện sai. Các tấn công trong nghiên cứu này sử dụng hoàn toàn phương pháp hộp đen, như đã nêu trong mô hình mối đe dọa. Và cũng xét theo khung của mô hình mối đe dọa, kẻ tấn công trong nghiên cứu này sẽ lựa chọn các phương thức sau:
+\begin{enumerate}
+\item Mục đích của kẻ tấn công là làm ảnh hưởng tới tính toàn vẹn của mô hình phát hiện mã độc.
+\item Kẻ tấn công sẽ sử dụng phương thức hộp đen. Giả định này sát với thực tế khi mà các hệ thống phát hiện mã độc sẽ ở dạng một phần mềm dịch vụ (Security-as-a-Service - Security SaaS), như Norton hay McAfee. Phương thức truy cập duy nhất là giao diện để người dùng nạp vào các tệp mã độc và đầu ra là thông tin tĩnh về tệp.
+\item Kẻ tấn công không thể truy cập dữ liệu huấn luyện. 
+\item Giai đọan tấn công là giai đoạn suy luận của mô hình (sau khi mô hình đã được huấn luyện).
+\item Mục tiêu tấn công là nhắm vào khả năng dự đoán của mô hình.
+\item Kỳ vọng tấn công hướng tới một quy trình đầu cuối. Đối với các công trình nghiên cứu liên quan, việc tạo mẫu chỉ đơn thuần theo dạng xây dựng vec tơ thuộc tính mang tính lý thuyết. Nghiên cứu của chúng tôi khắc phục được nhược điểm đấy: mỗi mẫu tạo được sẽ qua bước kiểm tra tính năng. Mẫu tạo chỉ thành công khi mẫu vừa qua mặt được trình phát hiện, vừa có thể thực thi.
+\end{enumerate}
+
+Ngoài ra, đối tượng tấn công là mô hình phát hiện mã độc ở dạng phân tích tĩnh và kẻ tấn công có khả năng tương tác, phản hồi nhanh từ mô hình hộp đen.
+
+\section{Mô hình phát sinh đột biến mã độc}
