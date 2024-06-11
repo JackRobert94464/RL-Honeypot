@@ -6,7 +6,7 @@ from tf_agents.environments import tf_py_environment
 # import the environment
 from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
 # import evaluation functions
-import evaluation_v2
+import evaluation_headless_v2
 # import miscellaneous funtions
 import misc
 import os
@@ -95,7 +95,7 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
         if currentStep in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000, 50000]:
             
             # Initialize an evalutaion instance
-            evaluator = evaluation_v2.Evaluation()
+            evaluator = evaluation_headless_v2.Evaluation()
             
             # Save models to folder
             agent.saveModel()
@@ -185,7 +185,7 @@ def MultiDecoyTraining(numberEpisodes, model_name, model_type):
             if currentStep in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000, 50000]:
                 
                 # Initialize an evalutaion instance
-                evaluator = evaluation_v2.Evaluation()
+                evaluator = evaluation_headless_v2.Evaluation()
                 
                 # Save models to folder
                 agent.saveModel()
@@ -247,7 +247,7 @@ if __name__ == "__main__":
     print("2: Three Input Conv1D Model")
     print("3: FNR/FPR Rate Model (Deprecated)")
     print("4: SARSA Model")
-    print("5: PPO Model")
+    print("5: A2C Model")
     model_choice = input("Enter the number of the model you want to train: ")
     model_name = None
 
@@ -301,11 +301,11 @@ if __name__ == "__main__":
         print("Imported the environment and agent successfully.")
 
     elif model_choice == '5':
-        model_name = "PPO"
+        model_name = "A2C"
         model_type = 3  # Set a new model type for PPO
         from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
         from PPO.a2c_3input import PPOAgent
-        print("Imported the environment and PPO agent successfully.")
+        print("Imported the environment and A2C agent successfully.")
         
     else:
         print("Invalid selection. Exiting.")
