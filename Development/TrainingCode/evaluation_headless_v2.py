@@ -84,11 +84,16 @@ class Evaluation:
                 steps_entity = []
             if episode_reward > 0:
                 self.episodeWon += 1
+                print("Episode Won Counter: ", self.episodeWon)
+                os.system('pause')
             self.step_counter += episode_steps
             
             self.step_globalcounter.append(self.step_counter)
+
+
             
-            dsp = self.episodeWon / (episode+1)
+            dsp = self.episodeWon / self.eval_episodes
+
             self.dsp_globalcounter.append(dsp)
             
             # print(f"DSP Global Counter after episode {episode}: ", self.dsp_globalcounter)

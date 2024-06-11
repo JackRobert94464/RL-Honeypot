@@ -87,7 +87,7 @@ class Evaluation:
             
             self.step_globalcounter.append(self.step_counter)
             
-            dsp = self.episodeWon / (episode+1)
+            dsp = self.episodeWon / self.eval_episodes
             self.dsp_globalcounter.append(dsp)
             
             print(f"DSP Global Counter after episode {episode}: ", self.dsp_globalcounter)
