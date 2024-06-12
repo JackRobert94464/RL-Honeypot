@@ -38,6 +38,7 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
         self.fnr = fnr
         self.fpr = fpr
         self.attack_rate = attack_rate
+        self.action_dimension = len(self._action_space)
 
     def action_spec(self):
         return self._action_spec

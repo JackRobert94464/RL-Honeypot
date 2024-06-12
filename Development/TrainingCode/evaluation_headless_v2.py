@@ -42,8 +42,8 @@ class Evaluation:
             ntpg_path = ".\\Development\\TPG-Data\\ntpg_40.csv"
             htpg_path = ".\\Development\\TPG-Data\\htpg_40.csv"
         else:
-            ntpg_path = "./Development/TPG-Data/ntpg_40.csv"
-            htpg_path = "./Development/TPG-Data/htpg_40.csv"
+            ntpg_path = "./Development/TPG-Data/ntpg_inf.csv"
+            htpg_path = "./Development/TPG-Data/htpg_inf.csv"
         ntpg = misc.create_dictionary_ntpg(ntpg_path)
         htpg = misc.create_dictionary_htpg(htpg_path)
         return ntpg, htpg
@@ -67,18 +67,19 @@ class Evaluation:
             eval_time_step = eval_env.reset()
             while not eval_time_step.is_last():
                 action = agent.selectActionEval(eval_time_step.observation, episode, trained_model)
-                print("ACTION SELECTED:", action)
+                # print("ACTION SELECTED:", action)
                 if action is None:
-                    print("No action selected. Skipping this step.")
+                    # print("No action selected. Skipping this step.")
+                    continue
                 eval_time_step = eval_env.step(action)
-                print("EVAL TIME STEP:", eval_time_step)
+                # print("EVAL TIME STEP:", eval_time_step)
                 steps_entity.append({'attacker_node': eval_env._current_attacker_node, 
                                      'nifr_nodes': [list(eval_env._ntpg.keys())[node_index-1] for node_index in eval_env.nifr_nodes], 
                                      'nicr_nodes': [list(eval_env._ntpg.keys())[node_index-1] for node_index in eval_env.nicr_nodes],})
                 episode_reward += eval_time_step.reward
-                print("EPISODE REWARD:", episode_reward)
+                # print("EPISODE REWARD:", episode_reward)
                 episode_steps += 1
-                print("EPISODE STEPS:", episode_steps)
+                # print("EPISODE STEPS:", episode_steps)
                 self.visualization_data = self.visualization_data._append({'episode': episode, 'steps': episode_steps, 'step_entities': steps_entity}, ignore_index=True)
                 steps_entity = []
             if episode_reward > 0:
@@ -95,13 +96,13 @@ class Evaluation:
 
             self.dsp_globalcounter.append(dsp)
             
-            print(f"DSP Global Counter after episode {episode}: ", self.dsp_globalcounter)
+            # print(f"DSP Global Counter after episode {episode}: ", self.dsp_globalcounter)
             
             # Write dsp_globalcounter to a temporary file
             with open('dsp_globalcounter.tmp', 'w') as file:
                 for item in self.dsp_globalcounter:
                     file.write(str(item) + '\n')
-                    print(f"Writing DSP Global Counter: {item}")
+                    # print(f"Writing DSP Global Counter: {item}")
             
             self.eval_rewards.append(episode_reward)
             self.eval_steps.append(episode_steps)
@@ -157,7 +158,7 @@ class Evaluation:
             for line in file:
                 dsp_globalcounter.append(float(line.strip()))
                 
-        print(f"Retrieved DSP Global Counter: {dsp_globalcounter}")
+        # print(f"Retrieved DSP Global Counter: {dsp_globalcounter}")
         final_dsp = sum(dsp_globalcounter) / len(dsp_globalcounter)
         
         # Delete the temporary file
@@ -170,7 +171,7 @@ class Evaluation:
         evalAgent = agent
         if model_type == 1 or model_type == 2 or model_type == 3:
             trained_model = evaluation.load_trained_model(model_path)
-            print("Trained model:", trained_model.summary())
+            # print("Trained model:", trained_model.summary())
         ntpg, htpg = evaluation.load_tpg_data()
         eval_env = evaluation.create_environment(ntpg, htpg)
         if model_type == 1 or model_type == 2:
@@ -187,16 +188,16 @@ class Evaluation:
         # evaluation.visualize_steps(ntpg)
         df, avg_eval_reward, avg_eval_steps, dsp = evaluation.calculate_evaluation_results()
         # evaluation.plot_rewards_and_steps()
-        print(df)
-        print("Evaluation Results:")
-        print("Number of Episodes:", evaluation.eval_episodes)
-        print("Total Reward:", np.sum(evaluation.eval_rewards))
-        print("Reward per Episode:", evaluation.eval_rewards)
-        print("Total Steps:", np.sum(evaluation.eval_steps))
-        print("Steps per Episode:", evaluation.eval_steps)
-        print("Average Reward per Episode:", avg_eval_reward)
-        print("Average Steps per Episode:", avg_eval_steps)
-        print("Defense Success Probability (DSP):", dsp)
+        # print(df)
+        # print("Evaluation Results:")
+        # print("Number of Episodes:", evaluation.eval_episodes)
+        # print("Total Reward:", np.sum(evaluation.eval_rewards))
+        # print("Reward per Episode:", evaluation.eval_rewards)
+        # print("Total Steps:", np.sum(evaluation.eval_steps))
+        # print("Steps per Episode:", evaluation.eval_steps)
+        # print("Average Reward per Episode:", avg_eval_reward)
+        # print("Average Steps per Episode:", avg_eval_steps)
+        # print("Defense Success Probability (DSP):", dsp)
         
         
 

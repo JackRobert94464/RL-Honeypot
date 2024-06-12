@@ -6,8 +6,6 @@ import keras
 def ddqn_loss_fn(y_true, y_pred, actionsAppend):
     s1, s2 = y_true.shape
 
-    countact = len(actionsAppend)
-
     num_actions = len(actionsAppend[0])
 
     indices = np.zeros(shape=(s1 * num_actions, 2))

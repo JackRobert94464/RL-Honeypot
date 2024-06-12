@@ -29,9 +29,9 @@ class DoubleDeepQLearning:
         self.totalpermutation = totalpermutation
         self.stateDimension = env.K
         self.actionDimension = factorial(env.K) / (factorial(env.K - env.M) * factorial(env.M))
-        self.replayBufferSize = 300
+        self.replayBufferSize = 500
         self.batchReplayBufferSize = 100
-        self.updateTargetNetworkPeriod = 10
+        self.updateTargetNetworkPeriod = 50
         self.counterUpdateTargetNetwork = 0
         self.sumRewardsEpisode = []
         self.episodeWon = 0
@@ -251,7 +251,7 @@ class DoubleDeepQLearning:
                 outputNetwork[index] = QcurrentStateMainNetwork[index]
                 outputNetwork[index, action] = y
              
-            self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size=self.batchReplayBufferSize, verbose=1, epochs=100)
+            self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size=self.batchReplayBufferSize, verbose=0, epochs=200)
              
             self.counterUpdateTargetNetwork += 1 
             if self.counterUpdateTargetNetwork > (self.updateTargetNetworkPeriod - 1):

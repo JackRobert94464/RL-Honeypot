@@ -23,7 +23,7 @@ ntpg_infer_csv = "ntpg_inf.csv"
 htpg_infer_csv = "htpg_inf.csv"
 
 # Load the trained model
-model_path = 'RL_Honeypot_1to5_conv1D_simpleinput_v2_linux_ver44993.keras'
+model_path = 'RL_Honeypot_1to5_conv1D_simpleinput_v2_linux_ver49890.keras'
 
 ddqn_loss_fn = ddqn_loss_fn.ddqn_loss_fn
 model_infer = misc.load_trained_model(model_path=model_path, loss_fn=ddqn_loss_fn)
@@ -54,7 +54,10 @@ class Agent:
     def index_to_action(self, index):
         # Implement the logic to convert the index to the corresponding action
         # based on your environment and action representation
-        action_matrix = self.env.action_space()[index]
+        print("Action space to pick from: ", self.env.action_space())
+        print("Action Index: ", index-1)
+        print("Action picked: ", self.env.action_space()[index-1])
+        action_matrix = self.env.action_space()[index-1]
         return action_matrix
 
     def selectActionInferenceDDQN(self, state):
@@ -82,8 +85,11 @@ class Agent:
 
         state = np.array(state, dtype=np.float32).reshape(1, -1)  # Reshape the state for model input
         Qvalues = self.model.predict([state, epss_input_reshaped, ntpg_input_reshaped])  # Get the Q-values for the state
+        print(Qvalues)
+        print(np.argmax(Qvalues))
         max_index = np.argmax(Qvalues)  # Get the index of the maximum Q-value
         action_matrix = self.index_to_action(max_index)  # Convert the index to the corresponding action
+        
         return action_matrix
     
     def selectActionInferenceSARSA(self, state, trained_model):

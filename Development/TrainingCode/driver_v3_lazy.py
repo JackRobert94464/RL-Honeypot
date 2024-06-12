@@ -10,6 +10,7 @@ import evaluation_headless_v2
 # import miscellaneous funtions
 import misc
 import os
+import gc
 
 # def __init__(self, gamma, epsilon, numberEpisodes, normal_nodes, total_permutations, fnr, fpr):
 
@@ -28,11 +29,16 @@ alpha_sarsa = 0.1
 # fpr = [float(input("Enter FPR value: "))]
 
 # FNR and FPR values as single input
-fnr = float(input("Enter FNR value: "))
-fpr = float(input("Enter FPR value: "))
+# fnr = float(input("Enter FNR value: "))
+# fpr = float(input("Enter FPR value: "))
+
+# fix FNR and FPR as static array according to 2020 paper
+fnr = [0.05, 0.1, 0.15, 0.2]
+fpr = [0.02, 0.06, 0.1, 0.14]
 
 # Attack rate for attacker (To determine whether to take the node or not)
-attack_rate = float(input("Enter the attack rate for the attacker: "))
+# attack_rate = float(input("Enter the attack rate for the attacker: "))
+attack_rate = 0.8 # fixed
 
 # Load the TPG data
 if os.name == 'nt':  # If the operating system is Windows
@@ -47,7 +53,7 @@ print("Normal nodes:", normal_nodes)
 # Load the TPG data
 
 
-def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type):
+def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type, fnr, fpr, attack_rate):
     '''
     Short training for testing out the dsp graphing function
 
@@ -127,6 +133,10 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
                 
             print("Training Time and DSP saved to file.")
             print(f"File name: result_fnr{fnr}_fpr{fpr}_model_{model_name}.txt")
+            
+        if currentStep == 30000:
+            gc.collect()
+            break
 
     #  summarize the model
     if(model_type == 1):
@@ -137,7 +147,7 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
         agent.mainNetwork.model.summary()
         agent.saveModel()
 
-def MultiDecoyTraining(numberEpisodes, model_name, model_type):
+def MultiDecoyTraining(numberEpisodes, model_name, model_type, fnr, fpr, attack_rate):
     '''
     For loop for long training
     The training will start from giving the agent only 1 deception node and increase the number of deception nodes by 1 in each iteration.
@@ -217,6 +227,10 @@ def MultiDecoyTraining(numberEpisodes, model_name, model_type):
                     
                 print("Training Time and DSP saved to file.")
                 print(f"File name: result_fnr{fnr}_fpr{fpr}_model_{model_name}.txt")
+                
+            if currentStep == 30000:
+                gc.collect()
+                break
 
         #  summarize the model
         if(model_type == 1):
@@ -305,6 +319,7 @@ if __name__ == "__main__":
         model_type = 3  # Set a new model type for PPO
         from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
         from PPO.a2c_3input import PPOAgent
+
         print("Imported the environment and A2C agent successfully.")
         
     else:
@@ -323,12 +338,22 @@ if __name__ == "__main__":
         numberEpisodes = int(input("Enter the number of episodes: "))
         print("And how many decoy nodes will be available?")
         deception_nodes = int(input("Enter the number of deception nodes: "))
-        SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
+        for fnr_val, fpr_val in zip(fnr, fpr):
+            fnr = fnr_val
+            fpr = fpr_val
+            print("FNR: ", fnr)
+            print("FPR: ", fpr)
+            SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type, fnr, fpr, attack_rate)
+        # SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
     elif training_choice == '2':
         print("Enter the number of episodes you want to train for each number of decoy nodes:")
         print("BEWARE: Try to keep this low as the training will take a long time if there's many counts of decoy nodes.")
         numberEpisodes = int(input("Enter the number of episodes: "))
-        MultiDecoyTraining(numberEpisodes, model_name, model_type)
+        for fnr_val, fpr_val in zip(fnr, fpr):
+            fnr = fnr_val
+            fpr = fpr_val
+            MultiDecoyTraining(numberEpisodes, model_name, model_type, fnr, fpr, attack_rate)
+        # MultiDecoyTraining(numberEpisodes, model_name, model_type)
     else:
         print("Invalid selection. Exiting.")
         exit()
