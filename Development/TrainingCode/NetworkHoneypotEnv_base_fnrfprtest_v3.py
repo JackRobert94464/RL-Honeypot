@@ -112,15 +112,15 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
             # Update the true state
             if state_type in ['TP', 'FN']:
                 self._state[next_node_index] = 1
-            else:
-                self._state[next_node_index] = 0
+            # else:
+            #    self._state[next_node_index] = 0
 
             # Update the alerted state
             # Set cho nay thanh next node 30 05 2024
             if state_type in ['TP', 'FP']:
                 self._alerted_state[next_node_index] = 1
-            else:
-                self._alerted_state[next_node_index] = 0
+            # else:
+            #    self._alerted_state[next_node_index] = 0
 
             if state_type in ['TP', 'FN']:
                 self._current_attacker_node = next_node

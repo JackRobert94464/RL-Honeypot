@@ -42,8 +42,8 @@ class Evaluation:
             ntpg_path = ".\\Development\\TPG-Data\\ntpg_40.csv"
             htpg_path = ".\\Development\\TPG-Data\\htpg_40.csv"
         else:
-            ntpg_path = "./Development/TPG-Data/ntpg_40.csv"
-            htpg_path = "./Development/TPG-Data/htpg_40.csv"
+            ntpg_path = "./Development/TPG-Data/ntpg_inf.csv"
+            htpg_path = "./Development/TPG-Data/htpg_inf.csv"
         ntpg = misc.create_dictionary_ntpg(ntpg_path)
         htpg = misc.create_dictionary_htpg(htpg_path)
         return ntpg, htpg
