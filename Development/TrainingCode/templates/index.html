@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Honeypot Training</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Honeypot Training Setup</h1>
+        <div style="text-align: center;">
+            <img src="/static/images/honey-10.png" alt="Honeypot" style="width:494px;height:294px;">
+        </div>
+        <form action="/train" method="post">
+            <label for="fnr">FNR:</label>
+            <input type="text" id="fnr" name="fnr" required><br>
+
+            <label for="fpr">FPR:</label>
+            <input type="text" id="fpr" name="fpr" required><br>
+
+            <label for="attack_rate">Attack Rate:</label>
+            <input type="text" id="attack_rate" name="attack_rate" required><br>
+
+            <label for="tpg_dir">TPG Directory:</label>
+            <input type="text" id="tpg_dir" name="tpg_dir" required><br>
+
+            <label for="ntpg_name">NTPG File Name:</label>
+            <input type="text" id="ntpg_name" name="ntpg_name" required><br>
+
+            <label for="htpg_name">HTPG File Name:</label>
+            <input type="text" id="htpg_name" name="htpg_name" required><br>
+
+            <label for="model_choice">Model:</label>
+            <select id="model_choice" name="model_choice" required>
+                <option value="1">Standard Model</option>
+                <option value="2">Three Input Conv1D Model</option>
+                <option value="4">SARSA Model</option>
+                <option value="5">A2C Model</option>
+            </select><br>
+
+            <label for="training_choice">Training Method:</label>
+            <select id="training_choice" name="training_choice" required>
+                <option value="1">Single Deception Node Training</option>
+                <option value="2">Multiple Deception Node Training</option>
+            </select><br>
+
+            <label for="number_episodes">Number of Episodes:</label>
+            <input type="text" id="number_episodes" name="number_episodes" required><br>
+
+            <label for="deception_nodes">Number of Deception Nodes:</label>
+            <input type="text" id="deception_nodes" name="deception_nodes" required><br>
+
+            <button type="submit">Start Training</button>
+        </form>
+    </div>
+</body>
+</html>
