@@ -1,0 +1,13 @@
+so sanh ket qua cua cac model 3 input voi nhau
+
+so sanh ket qua cua cac model 3 input voi cac model 1 input (tung cap)
+
+chay lai ket qua cua cac model chua ghi nhan du 30000 step (1 input)
+
+test 2 truong hop suy luan
+
+- mo hinh tinh (ko hoc, chi suy luan) dua vao du doan
+
+- vua hoc vua du doan dong bo
+
+- vua hoc vua du doan bat dong bo (neu duoc)

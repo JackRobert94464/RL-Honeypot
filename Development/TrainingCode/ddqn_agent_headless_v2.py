@@ -283,11 +283,11 @@ class DoubleDeepQLearning:
         
     def saveModel(self):
         if os.name == 'nt':
-            os.makedirs("./TrainedModel/weighted_random_attacker", exist_ok=True)
-            self.mainNetwork.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_1to5_obsdense_decoy_win_ver{self.getStepCount()}.keras")
-            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_1to5_obsdense_decoy_win_ver{self.getStepCount()}.keras")
+            os.makedirs("./TrainedModel/weighted_random_attacker/DDQN_1_INPUT", exist_ok=True)
+            self.mainNetwork.save(f"./TrainedModel/weighted_random_attacker/DDQN_1_INPUT/RL_Honeypot_DDQN_1_INPUT_win_ver{self.getStepCount()}.keras")
+            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/DDQN_1_INPUT/RL_Honeypot_DDQN_1_INPUT_win_ver{self.getStepCount()}.keras")
             
         else:
-            os.makedirs("./TrainedModel/weighted_random_attacker", exist_ok=True)
-            self.mainNetwork.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_1to5_obsdense_decoy_linux_ver{self.getStepCount()}.keras")
-            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_1to5_obsdense_decoy_linux_ver{self.getStepCount()}.keras")
+            os.makedirs("./TrainedModel/weighted_random_attacker/DDQN_1_INPUT", exist_ok=True)
+            self.mainNetwork.save(f"./TrainedModel/weighted_random_attacker/DDQN_1_INPUT/RL_Honeypot_DDQN_1_INPUT_linux_ver{self.getStepCount()}.keras")
+            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/DDQN_1_INPUT/RL_Honeypot_DDQN_1_INPUT_linux_ver{self.getStepCount()}.keras")
