@@ -295,12 +295,12 @@ class PPOAgent:
 
     def saveModel(self):
         if os.name == 'nt':
-            os.makedirs("./TrainedModel/weighted_random_attacker", exist_ok=True)
-            self.actor_model.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_actorcrit_win_ver{self.getStepCount()}_actor.keras")
-            self.critic_model.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_actorcrit_win_ver{self.getStepCount()}_critic.keras")
-            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_actorcrit_win_ver{self.getStepCount()}_actor.keras")
+            os.makedirs("./TrainedModel/weighted_random_attacker/A2C_3_INPUT", exist_ok=True)
+            self.actor_model.save(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/RL_Honeypot_actorcrit_win_ver{self.getStepCount()}_actor.keras")
+            self.critic_model.save(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/RL_Honeypot_actorcrit_win_ver{self.getStepCount()}_critic.keras")
+            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/RL_Honeypot_actorcrit_win_ver{self.getStepCount()}_actor.keras")
         else:
-            os.makedirs("./TrainedModel/weighted_random_attacker", exist_ok=True)
-            self.actor_model.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_actorcrit_linux_ver{self.getStepCount()}_actor.keras")
-            self.critic_model.save(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_actorcrit_linux_ver{self.getStepCount()}_critic.keras")
-            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/RL_Honeypot_actorcrit_linux_ver{self.getStepCount()}_actor.keras")
+            os.makedirs("./TrainedModel/weighted_random_attacker/A2C_3_INPUT/", exist_ok=True)
+            self.actor_model.save(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/RL_Honeypot_actorcrit_linux_ver{self.getStepCount()}_actor.keras")
+            self.critic_model.save(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/RL_Honeypot_actorcrit_linux_ver{self.getStepCount()}_critic.keras")
+            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/RL_Honeypot_actorcrit_linux_ver{self.getStepCount()}_actor.keras")
