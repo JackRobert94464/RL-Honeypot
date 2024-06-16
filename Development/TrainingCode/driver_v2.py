@@ -10,6 +10,7 @@ import evaluation_headless_v2
 # import miscellaneous funtions
 import misc
 import os
+import gc
 
 # def __init__(self, gamma, epsilon, numberEpisodes, normal_nodes, total_permutations, fnr, fpr):
 
@@ -127,6 +128,10 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
                 
             print("Training Time and DSP saved to file.")
             print(f"File name: result_fnr{fnr}_fpr{fpr}_model_{model_name}.txt")
+            
+        if currentStep == 30000:
+            gc.collect()
+            break
 
     #  summarize the model
     if(model_type == 1):

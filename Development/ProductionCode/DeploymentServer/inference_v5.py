@@ -40,6 +40,7 @@ def predict():
     network_state = request_data['network_state']
     num_honeypots = request_data['num_honeypots']
     
+    start_time = time.time()
     
     # saving state for continuous learning
     rt_buffer.append(network_state)
@@ -82,6 +83,9 @@ def predict():
     
     # Uncomment for synchronous test (will get some lag in prediction)
     update_model(rt_buffer, rt_action_buffer)
+    
+    elapsed_time = time.time() - start_time
+    print("Elapsed time:", elapsed_time)
 
     return jsonify({'deployment_targets': deployment_targets, 'subnet': subnet_targets})
 
