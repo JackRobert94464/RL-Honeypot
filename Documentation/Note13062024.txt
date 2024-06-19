@@ -2,9 +2,9 @@ so sanh ket qua cua cac model 3 input voi nhau
 
 so sanh ket qua cua cac model 3 input voi cac model 1 input (tung cap)
 
-chay lai ket qua cua cac model chua ghi nhan du 30000 step (1 input)
+chay lai ket qua cua cac model chua ghi nhan du 30000 step (1 input) done
 
-test 2 truong hop suy luan
+test 2 truong hop suy luan (tren 3 luong di chuyen cua Truong dua ra) (Thong so nao?? chac lay ket qua du doan truoc)
 
 - mo hinh tinh (ko hoc, chi suy luan) dua vao du doan
 
