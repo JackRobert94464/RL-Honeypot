@@ -34,9 +34,14 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
         self._ntpg = ntpg
         self._htpg = htpg
         self._episode_ended = False
+<<<<<<< Updated upstream
         # self._current_attacker_node = list(ntpg.keys())[2]
         # chua chay
         self._current_attacker_node = list(self._ntpg.keys())[2]
+=======
+        self._current_attacker_node = list(ntpg.keys())[2]
+        print("Initial compromised node: ", self._current_attacker_node)
+>>>>>>> Stashed changes
         self.fnr = fnr
         self.fpr = fpr
         self.attack_rate = attack_rate
