@@ -72,7 +72,7 @@ class Evaluation:
             if episode_reward > 0:
                 self.episodeWon += 1
                 print("Episode Won Counter: ", self.episodeWon)
-                os.system('pause')
+                # os.system('pause')
             self.step_counter += episode_steps
             
             self.step_globalcounter.append(self.step_counter)

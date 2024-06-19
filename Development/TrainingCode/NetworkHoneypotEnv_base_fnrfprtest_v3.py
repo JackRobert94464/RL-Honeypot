@@ -34,14 +34,16 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
         self._ntpg = ntpg
         self._htpg = htpg
         self._episode_ended = False
-<<<<<<< Updated upstream
         # self._current_attacker_node = list(ntpg.keys())[2]
-        # chua chay
-        self._current_attacker_node = list(self._ntpg.keys())[2]
-=======
-        self._current_attacker_node = list(ntpg.keys())[2]
-        print("Initial compromised node: ", self._current_attacker_node)
->>>>>>> Stashed changes
+        # chua chay, co bao nhieu lo hong tren 3 node nay thi cong lai lay trung binh epss lam weight
+        print("NTPG:", self._ntpg.keys())
+        self._current_attacker_node = random.choices(
+            population=[list(self._ntpg.keys())[0], list(self._ntpg.keys())[1], list(self._ntpg.keys())[6]],
+            weights=[0.00834, 0.00338, 0.00612],
+            k=1
+        )[0]
+        print("Initial attacker node: ", self._current_attacker_node)
+        # os.system('pause')
         self.fnr = fnr
         self.fpr = fpr
         self.attack_rate = attack_rate
@@ -70,7 +72,14 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
         self.nifr_nodes = []
         self._state = np.zeros(self.K, dtype=np.int32)
         self._episode_ended = False
-        self._current_attacker_node = list(self._ntpg.keys())[2]
+        # chua chay, co bao nhieu lo hong tren 3 node nay thi cong lai lay trung binh epss lam weight
+        self._current_attacker_node = random.choices(
+            population=[list(self._ntpg.keys())[0], list(self._ntpg.keys())[1], list(self._ntpg.keys())[6]],
+            weights=[0.00834, 0.00338, 0.00612],
+            k=1
+        )[0]
+        print("Reset attacker node: ", self._current_attacker_node)
+        # os.system('pause')
         return ts.restart(np.array([self._state], dtype=np.int32))
     
     def __is_action_valid(self, action):
