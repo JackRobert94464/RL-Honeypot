@@ -36,12 +36,16 @@ fpr = float(input("Enter FPR value: "))
 attack_rate = float(input("Enter the attack rate for the attacker: "))
 
 # Load the TPG data
-if os.name == 'nt':  # If the operating system is Windows
-        ntpg = misc.create_dictionary_ntpg(".\\Development\\TPG-Data\\ntpg_40.csv")
-        htpg = misc.create_dictionary_htpg(".\\Development\\TPG-Data\\htpg_40.csv")
-else:  # For other operating systems like Linux
-        ntpg = misc.create_dictionary_ntpg("./Development/TPG-Data/ntpg_inf.csv")
-        htpg = misc.create_dictionary_htpg("./Development/TPG-Data/htpg_inf.csv")
+filename_ntpg = input("Enter the name of the NTPG file to load: ")
+filename_htpg = input("Enter the name of the HTPG file to load: ")
+
+# Set the environment variables
+os.environ['NTPG_TRAINING'] = './Development/TPG-Data/' + filename_ntpg + '.csv'
+os.environ['HTPG_TRAINING'] = './Development/TPG-Data/' + filename_htpg + '.csv'
+
+
+ntpg = misc.create_dictionary_ntpg(os.environ['NTPG_TRAINING'])
+htpg = misc.create_dictionary_htpg(os.environ['HTPG_TRAINING'])
 
 normal_nodes = misc.count_nodes(ntpg)
 print("Normal nodes:", normal_nodes)
@@ -114,9 +118,9 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
             # Save the training time dict and DSP dict to a text file
             output_folder = "output_dsp_trainingtime/"
             if os.name == 'nt':
-                output_folder = ".\\output_dsp_trainingtime\\"
+                output_folder = f".\\output_dsp_trainingtime\\{model_name}"
             else:
-                output_folder = "./output_dsp_trainingtime/"
+                output_folder = f"./output_dsp_trainingtime/{model_name}"
             
             # Create the output folder if it doesn't exist
             if not os.path.exists(output_folder):
@@ -208,9 +212,9 @@ def MultiDecoyTraining(numberEpisodes, model_name, model_type):
                 # Save the training time dict and DSP dict to a text file
                 output_folder = "output_dsp_trainingtime/"
                 if os.name == 'nt':
-                    output_folder = ".\\output_dsp_trainingtime\\"
+                    output_folder = f".\\output_dsp_trainingtime\\{model_name}"
                 else:
-                    output_folder = "./output_dsp_trainingtime/"
+                    output_folder = f"./output_dsp_trainingtime/{model_name}"
                 
                 # Create the output folder if it doesn't exist
                 if not os.path.exists(output_folder):
@@ -252,13 +256,15 @@ if __name__ == "__main__":
     print("2: Three Input Conv1D Model")
     print("3: FNR/FPR Rate Model (Deprecated)")
     print("4: SARSA Model")
-    print("5: A2C Model")
+    print("5: SARSA Model 3 Input")
+    print("6: A2C Model")
+    print("7: A2C Model 3 Input")
     model_choice = input("Enter the number of the model you want to train: ")
     model_name = None
 
     # Based on the user's choice, import the appropriate environment and agent
     if model_choice == '1':
-        model_name = "Base"
+        model_name = "DDQN_1_INPUT"
         model_type = 1
         from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
         from ddqn_agent_headless_v2 import DoubleDeepQLearning
@@ -270,19 +276,19 @@ if __name__ == "__main__":
         from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
         
         print("Which input type would you like to use?")
-        print("1: Single Input v1 - quickly process observation state using one dense layer")
-        print("2: Single Input v2 - reduce to 1 conv1D and apply batch normailzation - 29/05/2024")
-        print("3: Multi Input - a LTSM for observation state will be used")
+        print("1: Three Input v1 - quickly process observation state using one dense layer")
+        print("2: Three Input v2 - reduce to 1 conv1D and apply batch normailzation - 29/05/2024")
+        print("3: Three Input LTSM - a LTSM for observation state will be used")
         input_choice = input("Enter the number of the input type you want to use: ")
         
         if input_choice == '1':
-            model_name = "3xConv1D_v1"
+            model_name = "DDQN_3_INPUT_v1"
             from MatrixTest3.ddqn_agent_3x_simple_state_fnrfpr import DoubleDeepQLearning
         elif input_choice == '2':
-            model_name = "3xConv1D_v2"
+            model_name = "DDQN_3_INPUT_v2"
             from MatrixTest3.ddqn_agent_3x_simple_state_fnrfpr_v2 import DoubleDeepQLearning
         elif input_choice == '3':
-            model_name = "3xConv1D_LTSM"
+            model_name = "DDQN_3_INPUT_LTSM"
             from MatrixTest3.ddqn_agent_3x_multi_input_fnrfpr import DoubleDeepQLearning
         
         print("Imported the environment and agent successfully.")
@@ -299,14 +305,28 @@ if __name__ == "__main__":
         # print("Imported the environment and agent successfully.")
         
     elif model_choice == '4':
-        model_name = "SARSA"
+        model_name = "SARSA_1_INPUT"
+        from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
+        from sarsa.sarsa_agent import SarsaLearning
+        model_type = 2
+        print("Imported the environment and agent successfully.")
+        
+    elif model_choice == '5':
+        model_name = "SARSA_3_INPUT"
         from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
         from sarsa.sarsa_agent_3input import SarsaLearning
         model_type = 2
         print("Imported the environment and agent successfully.")
 
-    elif model_choice == '5':
-        model_name = "A2C"
+    elif model_choice == '6':
+        model_name = "A2C_1_INPUT"
+        model_type = 3  # Set a new model type for PPO
+        from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
+        from PPO.a2c import PPOAgent
+        print("Imported the environment and A2C agent successfully.")
+        
+    elif model_choice == '7':
+        model_name = "A2C_3_INPUT"
         model_type = 3  # Set a new model type for PPO
         from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
         from PPO.a2c_3input import PPOAgent

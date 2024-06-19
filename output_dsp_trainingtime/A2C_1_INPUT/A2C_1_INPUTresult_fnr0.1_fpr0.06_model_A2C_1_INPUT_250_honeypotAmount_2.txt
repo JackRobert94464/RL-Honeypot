@@ -1,0 +1,15 @@
+Training Time Dict: {250: 11.860638856887817}
+DSP Dict: {250: 0.8360000000000001}
+@article{HORAK2019101579,
+title = {Optimizing honeypot strategies against dynamic lateral movement using partially observable stochastic games},
+journal = {Computers & Security},
+volume = {87},
+pages = {101579},
+year = {2019},
+issn = {0167-4048},
+doi = {https://doi.org/10.1016/j.cose.2019.101579},
+url = {https://www.sciencedirect.com/science/article/pii/S0167404819300665},
+author = {Karel Horák and Branislav Bošanský and Petr Tomášek and Christopher Kiekintveld and Charles Kamhoua},
+keywords = {Dynamic honeypot allocation, Lateral movement, Partially observable stochastic games, Compact representation, Incremental strategy generation},
+abstract = {Partially observable stochastic games (POSGs) are a general game-theoretic model for capturing dynamic interactions where players have partial information. The existing algorithms for solving subclasses of POSGs have theoretical guarantees for converging to approximate optimal strategies, however, their scalability is limited and they cannot be directly used to solve games of realistic sizes. In our problem, the attacker uses lateral movement through the network in order to reach a specific host, while the defender wants to discover the attacker by dynamically reallocating honeypots. We demonstrate that restricting to a specific domain allows us to substantially improve existing algorithms: (1) we formulate a compact representation of uncertainty the defender faces, (2) we exploit the incremental strategy-generation method that over iterations expands the possible actions for players. The experimental evaluation shows that our novel algorithms scale several orders of magnitude better compared to the existing state of the art.}
+}

@@ -31,21 +31,8 @@ class Evaluation:
         return trained_model
 
     def load_tpg_data(self):
-        ##########################
-        
-        ########################
-        
-        # MUST FIX MUST FIX
-        
-        #######################
-        if os.name == 'nt':
-            ntpg_path = ".\\Development\\TPG-Data\\ntpg_40.csv"
-            htpg_path = ".\\Development\\TPG-Data\\htpg_40.csv"
-        else:
-            ntpg_path = "./Development/TPG-Data/ntpg_inf.csv"
-            htpg_path = "./Development/TPG-Data/htpg_inf.csv"
-        ntpg = misc.create_dictionary_ntpg(ntpg_path)
-        htpg = misc.create_dictionary_htpg(htpg_path)
+        ntpg = misc.create_dictionary_ntpg(os.environ['NTPG_TRAINING'])
+        htpg = misc.create_dictionary_htpg(os.environ['HTPG_TRAINING'])
         return ntpg, htpg
 
     def create_environment(self, ntpg, htpg):

@@ -34,7 +34,9 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
         self._ntpg = ntpg
         self._htpg = htpg
         self._episode_ended = False
-        self._current_attacker_node = list(ntpg.keys())[2]
+        # self._current_attacker_node = list(ntpg.keys())[2]
+        # chua chay
+        self._current_attacker_node = list(self._ntpg.keys())[2]
         self.fnr = fnr
         self.fpr = fpr
         self.attack_rate = attack_rate
