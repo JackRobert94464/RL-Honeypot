@@ -15,6 +15,7 @@ import tensorflow as tf
 from . import test_3_field_01_epss_matrix
 from . import test_3_field_02_ntpg_matrix
 import math
+import string
 
 # import FNR FPR simulation code
 from fnr_fpr_test.fnrfpr_calc_v2 import simulate_alert_training
@@ -341,7 +342,7 @@ class DoubleDeepQLearning:
                 self.episodeWon += 1
                 
             self.step_counter += 1
-            if self.step_counter in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000, 50000]:
+            if self.step_counter in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000, 49890]:
                 break
             
             self.clock_counter += time.time() - start_time
@@ -677,12 +678,14 @@ class DoubleDeepQLearning:
         
         
     def saveModel(self):
+        random_token = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=8))
+        
         if os.name == 'nt':
-            os.makedirs("./TrainedModel/weighted_random_attacker/DDQN_3_INPUT", exist_ok=True)
-            self.mainNetwork.save(f".\\TrainedModel\\weighted_random_attacker\\DDQN_3_INPUT\\RL_Honeypot_DDQN_3INPUT_win_ver{self.getStepCount()}.keras")
-            self.updateModelPath(f".\\TrainedModel\\weighted_random_attacker\\DDQN_3_INPUT\\RL_Honeypot_DDQN_3INPUT_win_ver{self.getStepCount()}.keras")
+            os.makedirs(f"./TrainedModel/weighted_random_attacker/DDQN_3_INPUT/{random_token}", exist_ok=True)
+            self.mainNetwork.save(f".\\TrainedModel\\weighted_random_attacker\\DDQN_3_INPUT\\{random_token}\\RL_Honeypot_DDQN_3INPUT_win_ver{self.getStepCount()}.keras")
+            self.updateModelPath(f".\\TrainedModel\\weighted_random_attacker\\DDQN_3_INPUT\\{random_token}\\RL_Honeypot_DDQN_3INPUT_win_ver{self.getStepCount()}.keras")
             
         else:
-            os.makedirs("./TrainedModel/weighted_random_attacker/DDQN_3_INPUT", exist_ok=True)
-            self.mainNetwork.save(f"./TrainedModel/weighted_random_attacker/DDQN_3_INPUT/RL_Honeypot_DDQN_3INPUT_linux_ver{self.getStepCount()}.keras")
-            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/DDQN_3_INPUT/RL_Honeypot_DDQN_3INPUT_linux_ver{self.getStepCount()}.keras")
+            os.makedirs(f"./TrainedModel/weighted_random_attacker/DDQN_3_INPUT/{random_token}", exist_ok=True)
+            self.mainNetwork.save(f"./TrainedModel/weighted_random_attacker/DDQN_3_INPUT/{random_token}/RL_Honeypot_DDQN_3INPUT_linux_ver{self.getStepCount()}_inf.keras")
+            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/DDQN_3_INPUT/{random_token}/RL_Honeypot_DDQN_3INPUT_linux_ver{self.getStepCount()}_inf.keras")

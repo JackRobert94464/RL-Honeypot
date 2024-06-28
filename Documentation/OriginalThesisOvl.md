@@ -355,3 +355,449 @@ Nghiên cứu này được xây dựng trên mô hình tạo đột biến vớ
 Ngoài ra, đối tượng tấn công là mô hình phát hiện mã độc ở dạng phân tích tĩnh và kẻ tấn công có khả năng tương tác, phản hồi nhanh từ mô hình hộp đen.
 
 \section{Mô hình phát sinh đột biến mã độc}
+
+\textbf{Tạo môi trường học tăng cường}:
+
+\subsubsection{Tạo môi trường học tăng cường}
+
+Như đã giới thiệu ở Chương 2, trạng thái của môi trường chính là tệp mã độc được trích xuất thành dạng các vec tơ thuộc tính. Để trích xuất các thuộc tính của tệp PE, chúng tôi sử dụng thư viện LIEF của Quarkslab \cite{thomas2017lief}. Các vec tơ thuộc tính bao gồm:
+
+\textbf{Thuộc tính liên quan đến tệp PE}:
+
+\begin{enumerate}
+\item Trường siêu dữ liệu (metadata) của tệp PE (62 chiều): Được trích xuất từ đầu mục tệp PE, như thông tin về hệ điều hành, thông tin về linker.
+\item Trường siêu dữ liệu của các đoạn (section metadata) (255 chiều): Lưu trữ thông tin về tên các đoạn, kích cỡ, và thống kê phân phối của các byte (entropy). 
+\item Trường siêu dữ liệu của bảng nhập (import table) (1280 chiều): Chứa thông tin về các hàm mà tệp thực thi sử dụng từ thư viện bên ngoài (DLL).
+\item Trường siêu dữ liệu về bảng xuất (export table) (128 chiều): Chứa thông tin về các hàm mà tệp thực thi xuất ra.
+\item Số lượng chuỗi có thể đọc được (104 chiều): Số lượng các chuỗi như URL (https://), các registry key trong Windows (HKEY\_) và các đường dẫn thư mục (c:{\textbackslash\textbackslash}).
+\item Thông tin chung về tệp (general file information) (10 chiều): Thông tin chung về tệp, như là tệp có chứa mục sửa lỗi (debug), chữ ký (signature), hoặc độ dài của bảng nhập và xuất.
+ 
+\end{enumerate}
+\textbf{Thuộc tính liên quan đến phân phối của byte}:
+\begin{enumerate}
+\item Bảng tầng suất (byte histogram) (256 chiều): Tạo một bảng để thống kê số lần xuất hiện của các byte. 
+\item Ma trận thống kê phân phối của các byte (2D byte-entropy histogram) (256 chiều): Để tính toán được ma trận này, chương trình thực hiện quét tuần tự các byte trong tệp theo kích cỡ 1024 trên mỗi lần quét. 
+\end{enumerate}
+Hai loại thuộc tính này sẽ tạo thành không gian vec tơ vởi tổng cộng 2351 chiều.
+
+\subsubsection{Tạo phần thưởng}
+Phần thưởng là một trong những yếu tố quan trọng nhất của hệ thống học tăng cường, bởi nó ảnh hưởng trực tiếp việc xây dựng chính sách cho tác tử. Trong nghiên cứu này, chúng tôi tính toán phần thưởng qua một hàm tuyến tính với ba tham số:
+
+\begin{equation} \label{eq:eq-reward}
+   R = R_{det}  * \omega_{det}  + R_{dis} * \omega_{dis} + R_{func} * \omega_{func}
+\end{equation}
+
+Với $R_{max} = 10$, phần thưởng sẽ có các tham số và trọng số như sau:
+\begin{itemize}
+\item $R_{det}$: Giá trị trả về của trình phát hiện mã độc. Vì đây là mô hình hộp đen nên giá trị đầu ra của trình phát hiện sẽ chỉ có \textit{độc hại} hoặc \textit{lành tính}. $R_{det} = 10$ khi mẫu lành tính (vượt mặt thành công) và $R_{det} = 0$ khi mẫu vẫn độc hại. 
+\item $R_{dis}$: Đây là tham số thể hiện số lần thực hiện hành động (distance). Tham số này được tính như sau: \begin{equation} \label{eq: Rdis}
+R_{dis} = \frac{R_{max}}{t_{max}} * t
+\end{equation}$t$ là số lượt tác tử đã thực hiện và $t_{max}$ là số lượt tối đa mà ta muốn tác tử thực hiện. Như vậy ta có thể tùy chỉnh giá trị $t_{max}$ để khuyến khích tác tử giới hạn số hành động tới một ngưỡng nhất định.
+\item $R_{func}$: Đây là giá thể hiện khả năng thực thi của mẫu sau khi chèn. Giá trị này sẽ được tính toán khi mẫu được thử nghiệm trên môi trường máy ảo. $R_{func} = 10$ khi mẫu khởi chạy thành công và $R_{func} = 0$ khi mẫu hỏng.
+\end{itemize}
+Để tinh chỉnh giá trị phần thưởng dựa trên độ quan trọng của ba tham số, chúng tôi thêm vào các trọng số $\omega$.
+
+Trong thực nghiệm, các trọng số sẽ có giá trị $\omega_{det} = \omega_{dis} = \omega_{func} = 0.33$.
+
+Bên cạnh đó, qua quan sát  chúng tôi nhận thấy tác tử có xu hướng chọn lại liên tục các hành động, vì vậy, chúng tôi thêm vào cơ chế \textit{phạt} cho tác tử. Cụ thể, nếu tác tử sử dụng lặp lại các một hành động $p$ lần thì phần thưởng sẽ là:
+
+\begin{equation}
+    R = 
+\begin{cases} \label{eq:penalty}
+    R,&   \text{khi } p = 0\\
+    0 * 0.8,&    \text{khi } p = 1\\
+    R * 0.6, &  \text{khi } p \geq 1
+\end{cases}
+\end{equation}
+\subsubsection{Tạo không gian hành động}
+
+Trong nghiên cứu này chúng tôi giữ nguyên không gian hành động của toán tử được nhắc đến ở Mục \ref{gym-malware}. 
+
+\subsubsection{Tạo tác tử}
+
+Trong nhóm Anderson sử dụng thuật toán ACER, một thuật toán dựa trên chính sách (policy-based), cho mô hình gym-malware, thì nhóm Fang DQEAF và  Castro AIMED-RL chỉ ra thuật toán dựa trên giá trị (value-based) cũng cho kết quả thực nghiệm khả quan. Vì vậy tác tử trong mô hình của chúng tôi sử dụng một biến thể của DQN mà nhóm Castro sử dụng: Distributional DQN (DiDQN) \cite{bellemare2017distributional}. Mô hình sẽ tập trung vào học các phân phối của phần thưởng thay vì dự đoán giá trị phần thưởng.
+
+Bảng \ref{tab:approach} so sánh các tác tử được sử dụng trong nghiên cứu này với các nghiên cứu liên quan. Ở đây chúng tôi sử dụng phương pháp khám phá Noisy Nets \cite{fortunato2017noisy}, được chính minh là cho hiệu năng cao về mặt khám phá không gian hành động và đa dạng hóa việc thay đổi vec tơ thuộc tính.
+
+\begin{table}
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+Approach     & Agent & Optimizer & Explorer\\ \hline
+Fang, 2019     & DDQN   & Adam                     & \epsilon-greedy                          \\ \hline
+Anderson, 2018 & ACER   & Adam                     & Boltzmann                       \\ \hline
+AIMED-RL       & DiDQN  & Adam                     & Noisy Nets                      \\ \hline
+Ours & DiDQN  & Adam                     & Noisy Nets                      \\ \hline
+\end{tabular}
+\caption{Bảng so sánh tác tử của các nghiên cứu liên quan.}
+\label{tab:approach}
+\end{table}
+
+\subsection{Trình phát hiện mã độc}
+Trong hệ thống được xây dựng, chúng tôi sử dụng 3 mô hình phát hiện mã độc dựa trên học máy là LightGBM, MalConv và Random Forest. Các mô hình này được xem như là mục tiêu tấn công của mã độc và được dùng để đo lường khả năng xâm nhập và tỉ lệ biến đổi thành công của chúng. Nội dung tiếp theo của phần này sẽ mô tả cách thức hoạt động của 3 mô hình trên.
+
+\subsubsection{LightGBM}
+Mô hình này được phát triển dựa trên thuật toán Cây quyểt định tăng cường gradient (Gradient boosting decision tree - GBDT), là một thuật toán được sử dụng rộng rãi do sự hiệu quả và độ chính xác cao. Tuy nhiên, thuật toán gặp phải một vấn đề lớn về việc đánh đổi tài nguyên và thời gian xử lý với hiệu năng cao khi phải xử lý một lượng dữ liệu lớn. Cụ thể, thuật toán GBDT cần phải quét tất cả các phiên bản dữ liệu để ước tính mức tăng thông tin của tất cả các điểm phân tách có thể có. Do đó, độ phức tạp tính toán của chúng sẽ tỷ lệ thuận với số lượng thuộc tính và số lượng thực thể dữ liệu. Điều này làm cho việc triển khai này rất tốn thời gian khi xử lý một lượng lớn dữ liệu.
+
+Mô hình LGBM được áp dụng để giải quyết vấn đề trên của thuật toán GBDT bằng hai kỹ thuật chính, Kỹ thuật Lấy mẫu một phần dựa trên gradient (Gradient based One Side Sampling - GOSS) và Kỹ thuật Nhóm thuộc tính độc quyền (Exclusive Feature Bundling - EFB). Với phương pháp này, mô hình được chứng minh đã làm giảm quá trình huấn luyện khoảng 20 lần nhưng vẫn giữ nguyên độ chính xác khi thực hiện trên các tập dữ liệu như Allstate, FlighDelay, LETOR, KDD10, KDD12.
+
+Kỹ thuật Lấy mẫu một phần dựa trên độ dốc: Là một phương pháp lấy mẫu dựa trên cơ sở gradient. Một phương pháp thông thường để giảm mẫu là loại bỏ các trường hợp có gradient nhỏ bằng cách chỉ tập tủng vào các trường hợp có gradient lớn, nhưng điều này sẽ làm thay ododir phân phối liệu. Tóm lại, GOSS giữ lại các trường hợp có gradient lớn trong khi thực hiện lấy mẫu ngẫu nhiên các trường hợp có gradientn nhỏ.
+
+Kỹ thuật Nhóm thuộc tính độc quyền: Là một phương pháp giảm số lượng thuộc tính một cách hiệu quả mà gần như không làm mất mát dữ liệu. Trong một không gian đối tượng thưa thớt, nhiều đối tượng gần như là độc quyền, ngụ ý rằng chúng hiếm khi nhận các giá trị khác không đồng thời. Các tính năng được mã hóa một lần là một ví dụ hoàn hảo về các tính năng độc quyền. EFB kết hợp các tính năng này, giảm kích thước để cải thiện hiệu quả trong khi vẫn duy trì mức độ chính xác cao.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=17cm]{Images/LightGBM.png}
+    \caption{Luồng hoạt động của mô hình LGBM}
+    \label{fig:model-flow}
+\end{figure}
+\subsubsection{MalConv}
+Mô hình phát hiện mã độc MalCon được phát triển dựa trên thuật toán Mạng Nơ-ron với 3 tiêu chí:
+\begin{itemize}
+\item Khả năng mở rộng tốt cùng với độ dài chuỗi
+\item Khả năng xem xét toàn bộ nội dung cục bộ hoặc toàn cục của tập tin
+\item Khả năng hỗ trợ phân tích với các mã độc bị gắn cờ.
+\end{itemize}
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=17cm]{Images/MalConv.png}
+    \caption{Kiến trúc của mô hình MalConv}
+    \label{fig:model-flow}
+\end{figure}
+
+Tập tin ban đầu được truyền vào cho lớp nhúng, sau đó, kết quả được xử lý bởi lớp này được đưa qua 2 lớp chập đồng thời. Kết quả đầu ra của hai lớp được nhân từng phần tử và tùy chọn chuyển sang một đơn vị tuyến tính được chỉnh lưu (ReLU). Sau đó, một lớp tổng hợp tối đa tạm thời sẽ lấy giá trị tối đa chung của mỗi kênh trong số 128 kênh. Phần cuối cùng là mạng nơ-ron được kết nối đầy đủ (với kích hoạt ReLU tùy chọn) có 128 nút đầu vào và chín nút đầu ra softmax tương ứng với các lớp độc hại khác nhau của phần mềm độc hại.
+
+\subsubsection{Random Forest}
+Random forest là một thuật toán học máy giám sát, thường được ứng dụng để giải quyết các bài toán dạng hồi quy hoặc phân loại. Ý tưởng cơ bản của thuật toán là xây dựng các cây quyết định dựa trên các tập con độc lập nhau thuộc tập dữ liệu cho trước. Tại mỗi nút, một số gái trị được lựa chọn ngẫu nhiên cho tới khi tìm được cách phân chia tốt nhất.
+
+Trong trình phát hiện dựa trên thuật toán Random Forest này, các tập tin dạng nhị phân sẽ được phân tích thành 2381 trường dựa trên các thuộc tính như các đoạn mã, dữ liệu, liên kết động, kích thước, hình ảnh, số lượng ký tự, và vân vân.Các siêu tham số được dùng để tinh chỉnh mô hình bao gồm số lượng cây quyết định, độ sâu, số lượng thuộc tính được lựa chọn ngẫu nhiên, số lượng thực thể tối thiểu ở mỗi lá, tỉ lệ biến số lớp tối thiểu
+
+\subsection{Trình xác thực khả năng thực thi}
+Thông thường, nếu muốn phân tích khả năng thực thi và đầy đủ các tính năng, ta sẽ sử dụng một trình phân tích động dạng \textit{Hộp cát} (Sandbox). Hệ thống này sẽ khởi chạy mã độc trong một môi trường ảo và phân tích các đặc tính động của tệp, đưa ra một bảng phân tích khả đầy đủ. Nổi tiếng nhất là VirusTotal (https://www.virustotal.com/)  - một trình phân tích mã độc qua giao diện web. Ngoài ra còn có dự án mã nguồn mở như Cuckoo (https://cuckoosandbox.org/). Tuy nhiên, qua thực nghiệm nhóm chúng tôi nhận thấy các trình phát hiện này tốn nhiều thời gian để phân tích một mẫu, không thích hợp để thử nghiệm khả năng thực thi trong hệ thống đề xuất. Vì vậy chúng tôi lựa chọn phương án sử dụng máy ảo.
+
+Trình xác thực khả năng thực thi ở đây sẽ là một máy ảo chạy Windows. Sau khi trình phát hiện mã độc phân tích xong mẫu thì mẫu này sẽ được nạp vào máy ảo. Ở đây, chúng tôi chỉ kiểm tra khả năng khởi chạy của mã độc.
+
+\section{Luồng hoạt động mô hình đề xuất}
+
+Hình \ref{fig:model-flow} là sơ đồ của luồng hoạt động của mô hình. Tuần tự các bước như sau:
+
+\begin{enumerate}
+\item Môi trường sẽ lựa chọn một mẫu mã độc và đặt giới hạn số lần chèn các hành động là $N$ lần.
+\item Môi trường sẽ  trích xuất thuộc tính của mã độc thành một bộ vec tơ thuộc tính. Sau đó tác tử của hệ thống sẽ nhận bộ vec tơ này và đưa ra hành động để thay đổi tập thuộc tính này.
+\item Môi trường chuyển bộ vec tơ thuộc tính lại thành dạng tệp thực thi.
+\item Tệp thực thi sau đó được đưa vào trình phát hiện mã độc.
+\item Nếu trình phát hiện đưa ra đánh giá lành tính cho tệp (né tránh thành công) thì mẫu sẽ được chuyển sang trình xác thực khả năng thực thi.
+\item Trình xác định khả năng thực thi (máy ảo) sẽ nhận mẫu và kiểm tra. Nếu mẫu có khả năng thực thi ổn định thì xem như mẫu đối kháng được tạo thành công. Ngược lại, mẫu đối kháng không thực thi được thì xem như thất bại.
+\end{enumerate}
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=17cm]{Images/model-flow.png}
+    \caption{Luồng hoạt động của mô hình}
+    \label{fig:model-flow}
+\end{figure}
+
+Chi tiết quá trình huấn luyện mô hình được trình bày trong Thuật toán \ref{alg:training-algorithm}. Như đã nêu trên, chúng tôi sử dụng mô hình Distributional DQN cho tác tử \cite{bellemare2017distributional}, cụ thể là hàm CategoricalDQN \ref{alg:categoricaldqn}. Hàm này sẽ tính toán phân phối của các giá trị $Q$ thay vì chỉ tối đa hóa giá trị kỳ vọng như trong phương trình Bellman. 
+
+\begin{algorithm}
+\begin{algorithmic}[1]
+\caption{Huấn luyện mô hình tạo đột biến}\label{alg:training-algorithm}
+\STATE Initialize Memory $M$ with size $M_{max}$\\
+\STATE Initialize Network $Q$ with weight $\theta$\\
+\FOR{$episode \gets 1$ to $EPISODES$}
+    \STATE Select a binary $bin_{original}$ randomly from folder of malwares
+    \STATE Extract binary features $s_{orignial} = ExtractBinaryFeatures(bin_{original})$
+    \FOR{$t \gets 1$ to $MAXTURNS$}
+        \STATE With noise parameter $\epsilon$ select an action $a_t$ 
+        \STATE Modify $bin_t$ by action $a_t$ to make $bin_{t+1}$ and $s_{t+1} = ExtractBinaryFeatures(bin_{t+1})$, observe reward $r_{t+1}$
+        \STATE Store transition $(s_t, a_t, r_{t+1}, s_{t+1})$
+        \IF{ $sizeof(M) > batchSize$}
+            \FOR{$i \gets 1$ to $K$}
+                \STATE Sample transition $X_i ~ P(X_i) = p_{x_i} / {\sum jp_j}$    
+                \STATE Calculate $CategoricalDQN(X_i)$ ( \ref{alg:categoricaldqn})
+            \ENDFOR
+            \STATE Exert Adam optimizer to optimize parameter $\theta$
+        \ENDIF
+    \ENDFOR
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm} \caption{CategoricalDQN trong DiDQN}\label{alg:categoricaldqn}
+\begin{algorithmic}[1]
+\STATE $X_t = (x_t, a_t, r_t, x_{t+1}), \gamma \in [0, 1]$
+\STATE $Q(x_{t+1}, a) := \sum z_ip_i(x_{t+1}, a)$
+\STATE $a^{\ast} \gets arg \max_a Q(x_{t+1}, a)$
+\STATE $m_i = 0, i \in 0,...,N-1$
+\FOR{$j \in 0,...,N-1 $}
+	\STATE $\hat{T}z_j \gets [r_t + \gamma_tz_j]_{V_{min}}^{V_{max}}$
+        \STATE $b_j \gets (\hat{T}z_j - V_{min}) / \delta z$ \Comment{ #$b_j \in [0,N-1]$}
+        \STATE $l \gets \lfloor b_j \rfloor , u \gets \lceil b_j \rceil$
+        \STATE $m_l \gets m_l + p_j(x_{t+1}, a^{\ast})(u - b_j)$
+        \STATE $m_u \gets m_u + p_j(x_{t+1}, a^{\ast})(b_j - l)$
+\ENDFOR
+\RETURN $-\sum_i m_i \log p_i(x_t, a_t)$
+\end{algorithmic}
+\end{algorithm}
+
+
+Theo kết quả của nhóm Anderson thì hệ thống có khả năng né tránh trình phát hiện mã độc lên tới 24 \%. Nghĩa là với 100 mã độc thì hệ thống sẽ tạo ra được 24 mẫu đối kháng né tránh thành công. Ở bước đánh giá với 200 mẫu, khả năng né tránh là 16.25\%. Mặc dù các hành động được cho là sẽ không làm ảnh hưởng tới chức năng của mã độc, công trình của nhóm chưa có bước kiểm tra lại tính năng của mã được sinh ra.
+
+Cũng dựa vào phương thức tương tự mà nhóm tác giả Fang đã xây dựng hệ thống tạo mẫu đối kháng sử dụng học máy DQEAF \cite{fang2019evading}. Nhóm này cho rằng với dữ liệu đầu vào cỡ nhỏ thì hiệu quả tạo mẫu sẽ tốt hơn. Không gian hành động của công trình này được giảm xuống chỉ còn bốn hành động. Tuy nhiên, như nhóm tác giả Anderson, việc kiểm tra lại tính năng của mã vẫn chưa được thực hiện. Mặc khác, với mỗi mã độc, hệ thống của Fang chỉ có bốn hành động khác nhau, nhưng số lần thực hiện lại lên tới 80 lần. Việc này vô tình tạo nên đặc tính cho mã độc tạo bởi DQEAF, giúp trình phát hiện học lại đặc tính và cuối cùng phát hiện được mẫu đối kháng.
+
+Tiếp nối DQEAF là hệ thống AIMED-RL \cite{labaca2021aimed} do nhóm tác giả Raphael Labaca-Castro xây dựng. Hệ thống này sử dụng lại mô hình của gym-malware; nhóm đã cải tiến nhiều hơn về mặc đảm bảo tính năng cho mã độc. Cụ thể, AIMED-RL sẽ đánh giá thêm mức độ tương đồng giữa mẫu đối kháng và mẫu gốc. Bởi họ xác định rằng nếu muốn giữ cho mẫu hoạt động được sau khi chèn thì phải đảm bảo mẫu không bị thay đổi nhiều. Vì vậy, phần thưởng của hệ thống AIMED-RL sẽ tính toán cả mức độ tương đồng. Hành động giữ được độ tương đồng với mẫu gốc càng cao thì phần thưởng sẽ càng cao. Cải tiến này khích lệ tác tử lựa chọn những hành động để bảo toàn khả năng thực thi của mẫu.
+
+Tuy nhiên, các công trình kể trên chỉ đánh giá lại số lượng mẫu đột biến có khả năng thực thi sau khi huấn luyện mô hình học tăng cường. Vì vậy, mô hình học tăng cường không chú trọng vào việc tạo mẫu có khả năng thực thi mà chỉ đơn thuần giúp mẫu vượt mặt trình phát hiện. Nhận thấy được điều đấy, nhóm chúng tôi quyết định nghiên cứu và xây dựng một mô hình tạo đột biến có khả năng thực thi. 
+
+-----------------------------------------------------------------------------------------------------
+
+
+
+
+\subsection{Tập dữ liệu}
+
+\subsubsection{EMBER}
+
+Tập dữ liệu EMBER là một tập hợp các thuộc tính được trích xuất từ tập tin PE với sự hỗ trợ của thư viện LIEF của Quarkslab \cite{thomas2017lief}. EMBER chứa 1.1 triệu tập tin nhị phân,
+trong đó bao gồm 400,000 mã độc, 400,000 tập tin lành tính và còn lại chưa dán nhãn.
+Các thuộc tính được trích xuất từ các tập tin bao gôm các loại như:
+\begin{itemize}
+\item Dữ liệu chung của tập tin
+\item Dữ liệu của các trường tiêu đề
+\item Dữ liệu về các hàm nhập
+\item Dữ liệu về các hàm xuất
+\item Dữ liệu về các phân đoạn
+\item Byte histogram
+\item Byte-entropy histogram
+\item Dữ liệu về các chuỗi
+\end{itemize}
+
+\subsubsection{Virus Total}
+Chúng tôi thực hiện việc huấn luyện mô hình học tăng cường qua tập dữ liệu mã độc bao gồm 16068 tệp thực thi trên hệ điều hành Windows 32 bit (Windows PE32)  được lọc ra từ bộ dữ liệu gốc bao gồm hơn 200 000 mẫu chứa cả PE32 và PE32+. Trong đó, các tệp lành tính được thu thập từ hệ thống của hệ điều hành Windows 7, 8, 10 và một số tệp cài đặt phần mềm. Bên cạnh đó, các tệp độc hại được thu thập từ nguồn VirusTotal, những tập tin này đều được phát hiện bởi ít nhất một nửa trên tổng số trình phát hiện mã độc trên VirusTotal. Các mẫu độc hại bao gồm các loại Adware (DownloadHelper, StartPage,...), Backdoor (Androm, Nanobot,...), Ransomware (Gandcrab, Locker,...), Trojan (Emotet, Coinminer,...), Virus (Virut, Lamer,...), Worm (Allape, Sobig,...). 
+
+\subsection{Trình phát hiện mã độc}
+Như đã trình bày trong Chương 3, chúng tôi sử dụng hai trình phát hiện mã độc với phương pháp phân tích tĩnh là LGBM, MalConv và RandomForest. Ba trình phát hiện này đều được huấn luyện với tập dữ liệu EMBER và cho ra kết quả khá khả quan.
+
+Chúng tôi đã tiến hành xác thực lại 3 mô hình trên với mục đích kiểm tra khả năng phát hiện mã độc. Mỗi mô hình được huấn luyện với tập dữ liệu EMBER và kiểm tra khả năng phát hiện mới với tập dữ liệu VirusToal. Kết quả được mô tả ở Bảng \label{tab:verify-detector} cho thấy rằng 3 mô hình mục tiêu đều có khả năng phát hiện các loại mã độc tương đối tốt, với ngưỡng tỉ lệ phát hiện chính xác giao động từ $93.74\%$ tới $96.51\%$, trong đó, kết quả cao nhất thuộc về mô hình ứng dụng thuật toán LGBM.
+
+Trong quá trình thực nghiệm, nhóm đã kiểm tra và đưa ra ngưỡng phát hiện mã độc (threshold) cho hai hệ thống này: nếu trình phát hiện trả về thông số (confidence score) lớn hơn ngưỡng phát hiện thì được cho là độc hại, ngược lại mẫu sẽ là lành tính. Việc đưa ra ngưỡng phát hiện chỉ đơn thuần tuân theo giả định tấn công hộp đen. Vì vậy, kết quả huấn luyện hệ thống học tăng cường phụ thuộc nhiều vào ngưỡng phát hiện.
+
+Cụ thể, chúng tôi đặt ngưỡng phát hiện như trong Bảng \ref{tab:thresholds}
+\begin{center}
+\begin{table}
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+Detector & Accuracy & AUC \\ \hline
+LGBM              &   96.51\%       &   98.50\%                \\ \hline
+MalConv                &    93.74\%          &    97.92\%               \\ \hline
+RandomForest                &    95.81\%          &    92.86\%               \\ \hline
+\end{tabular}
+\caption{Bảng kết quả tỉ lệ né tránh của trình tạo đột biến so với 3 mô hình khi không sử dụng trình phát hiện.}
+\label{tab:verify-detector}
+\end{table}
+\end{center}
+
+\begin{center}
+\begin{table}
+\centering
+\begin{tabular}{|c|c|}
+\hline
+Detector & Threshold \\ \hline
+ LGBM       & 0.9  \\ \hline
+ MalConv    &  0.7  \\ \hline
+ RandomForest & 0.9 \\ \hline
+\end{tabular}
+\caption{Bảng tham số ngưỡng phát hiện của 3 mô hình.}
+\label{tab:thresholds}
+\end{table}
+\end{center}
+\subsection{Trình xác thực khả năng thực thi}
+
+Ở đây chúng tôi thiết lập một máy ảo của VirtualBox chạy hệ điều hành Windows 7 như ở hình \ref{fig:vm-windows7}. Qua thử nghiệm, hầu hết các mã độc trong tập dữ liệu chạy ổn định trên hệ điều hành này. 
+
+Trong thực nghiệm, máy ảo này sẽ chạy ở chế độ ngầm (headless), vì vậy hao tốn tài nguyên là không đáng kể. Hệ thống học tăng cường sẽ điều khiển máy ảo qua công cụ VBoxManage của VirtualBox với các đoạn lệnh như:
+
+\begin{itemize}
+\item \textit{VBoxManage showvminfo} - Lệnh xác định trạng thái của máy ảo (bật/tắt).
+\item \textit{VBoxManage startvm <VM> --type headless} - Lệnh khởi chạy máy ảo. Mỗi mẫu mã độc nạp vào thì chúng tôi sẽ khởi động lại máy ảo.
+\item \textit{VBoxManage guestcontrol <VM> --username <username> --password <password> run --exe <path>}: Lệnh thực thi tệp. Đây là lệnh quan trọng nhất trong hệ thống, lệnh này sẽ điều khiển máy ảo thực thi mẫu sau khi được chèn và trả về mã trạng thái (tệp có khởi chạy được hay không).
+\end{itemize}
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=10cm]{Images/VirtualBox-injected.png}
+    \caption{Máy ảo VirtualBox với hệ điều hành Windows 7 đang được trình tạo đột biến nạp mẫu và thực thi}
+    \label{fig:vm-windows7}
+\end{figure}
+
+\subsection{Hệ thống tạo đột biến}
+
+Chúng tôi thực hiện hệ thống tạo đột biến được trình bày ở Chương 3.
+
+\subsubsection{Trích xuất và thay đổi thuộc tính của tập mã độc}
+
+Như đã nêu, chúng tôi sử dụng thư viện LIEF của Quarkslab \cite{thomas2017lief} để tùy chỉnh tệp mã độc.  Luồng hoạt động của thư viện LIEF được trình bày qua Hình \ref{fig:lief-library}. Thư viện này nhận vào một tập thực thi và cung cấp các API để người dùng có thể tùy biến tập theo ý muốn. Dựa vào những API này mà chúng tôi có thể tác động các hành động chỉ định bởi tác tử học tăng cường lên tập mã độc.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=10cm]{Images/lief-library.png}
+    \caption{Luồng hoạt động của thư viện LIEF.}
+    \label{fig:lief-library}
+\end{figure}
+
+\subsubsection{Xây dựng hệ thống học tăng cường}
+
+Để xây dựng hệ thống học tăng cường, chúng tôi sử dụng thư viện chainerrl \cite{fujita2019chainerrl}. Thư viện này cung cấp đa dạng các thuật toán học tăng cường và các cơ chế học sâu liên quan. Trong nghiên cứu này, chúng tôi chỉ sử dụng DiDQN để thực hiện hóa hệ thống. DiDQN được chứng mình là cho hiệu quả cao nhất so với các biến thể khác của DQN. Các tham số của hệ thống học tăng cường được trình bày trong Bảng \ref{tab:RL-parameter}.
+
+\begin{table}
+	\centering
+	\caption{Bảng các tham số được sử dụng trong mô hình học tăng cường.}
+	\label{tab:RL-parameter}
+	\begin{tabular}{l l p{8cm}}
+		\toprule[0.125em]
+		{\textsc{Parameter}} & {\textsc{Value}} & \textsc{{Description}}\\\toprule[0.125em]%\hline% \midrule
+		EPISODES    &  1000      &   Số mẫu mã độc tối đa được nạp vào\\  \midrule
+		MAXTURNS    &  10      &  Số lượt thực hiện hành động tối đa đối với một mẫu mã độc\\\midrule
+		adam\textunderscore epsilon   &   1e-2      &  Tham số của thuật toán  tối ưu Adam được sử dụng\\\midrule
+      $\gamma$    &  0.95     &   Chiết khấu cho giá trị phần thưởng\\\midrule
+        $M_{max}$    &   1000      &   Số mục kinh nghiệm trong mô hình DQN\\\midrule
+        training files count & 3700 & Số lượng tệp trong tập dữ liệu huấn luyện\\\midrule
+        testing files count & 300 & Số lượng tệp trong tập dữ liệu kiểm tra        \\\bottomrule[0.125em]
+	\end{tabular}
+\end{table}
+
+\section{Kết quả thí nghiệm}
+
+Ở mục này, nhóm sẽ trình bày các kết quả thực nghiệm và đưa ra đánh giá.
+
+Nhóm tập trung trả lời hai câu hỏi sau:
+
+Câu hỏi 1: Với việc tích hợp trình xác định khả năng thực thi thì tỉ lệ né tránh thành công trình phát hiện mã độ là bao nhiêu và so sánh với kết quả của các nghiên cứu liên quan?
+
+Câu hỏi 2: Liệu hệ thống học tăng cường có khả năng sử dụng đa dạng các hành động thay vì chỉ tập trung vào một số hành động như trong các nghiên cứu liên quan?
+
+\subsection{Tỉ lệ né tránh thành công không sử dụng trình xác thực}
+
+Bảng \ref{tab:result-lgbm-malconv-no-vm} là kết quả về tỉ lệ né tránh thành công các trình phát hiện khi không sử dụng trình xác thực. Kết quả thu được khá cao. Với tác tử DiDQN, ba mô hình LGBM, MalConv, và RandomForest cho kết quả lần lượt là 42.7\%, 43.8\%, 33.4\%. Kết quả này cao tương ứng với các nghiên cứu trước đó, được trình bày ở Bảng \ref{tab:result-comparison}. Hầu hết các hệ thống thu được kết quả trên 40\% tỉ lệ né tránh khi không có trình xác thực thực thi.
+
+\begin{center}
+\begin{table}
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+Detector & DiDQN Agent & Random Agent \\ \hline
+LGBM              &   42.7\%       &   6.8\%                \\ \hline
+MalConv                &    43.8\%          &    7.8\%               \\ \hline
+RandomForest                &    33.4\%          &    5.4\%               \\ \hline
+\end{tabular}
+\caption{Bảng kết quả tỉ lệ né tránh của trình tạo đột biến so với hai mô hình LGBM và MalConv  khikhông sử dụng trình phát hiện.}
+\label{tab:result-lgbm-malconv-no-vm}
+\end{table}
+\end{center}
+
+\subsection{Tỉ lệ né tránh thành công có trình xác thực}
+
+Bảng \ref{tab:result-lgbm-malconv} là kết quả về tỉ lệ né tránh thành công các trình phát hiện. Tỉ lệ này được so sánh với hệ thống sử dụng tác tử ngẫu nhiên. Cụ thể, với mô hình LGBM, tác tử DiDQN đạt tỉ lệ tạo mẫu đột biến là 14.6\%; với mô hình MalConv tỉ lệ này đạt 18.6\%. Có thể thấy, tác tử sử dụng thuật toán DiDQN cho kết quả tốt hơn so với tác tử ngẫu nhiên. Khác biệt về tỉ lệ mẫu tạo cho LGBM so với MalConv nằm ở việc lựa chọn ngưỡng phát hiện.
+
+Bảng \ref{tab:result-comparison} là kết quả so sánh tỉ lệ né tránh với các nghiên cứu liên quan. Kết quả bảng này cho thấy tỉ lệ né tránh khi áp dụng trình phát hiện LGBM, với ngưỡng phát hiện như nhau (0.9).  Nhóm chúng tôi nhận thấy tỉ lệ né tránh trong nghiên cứu này (14.6\%)  thấp hơn so với các nghiên cứu khác, nhưng tỉ lệ này đại diện cho tỉ lệ mẫu đột biến thành công và có thể thực thi được. Điều này chứng minh rằng các nghiên cứu trước đó mang lại hiệu quả cao về mặt né tránh trình phát hiện, nhưng chưa thực tế khi không có khả năng xác thực lại khả năng thực thi của mẫu. 
+
+Bên cạnh đó, các kết quả ở Bảng \label{tab:change-maxturns} cho thấy rằng tỉ lệ vượt mặt trình phát hiện dựa trên học máy có xu hướng tăng dần khi điều chỉnh thông số về lượt chèn hành động tối đa từ 10, 20, 40 tới 80 hành động, với khả năng vượt mặt giao động từ $42.7\%$ tới $47.47\%$. Tuy nhiên, khả năng thực thi và vượt mặt không tỉ lệ thuận với kết quả vừa được nếu ra. Với cấu hình $MaxTurn = 10$, khả năng thực thi và vượt mặt đồng thời là $14.65\%$, và với cầu hình $MaxTurn=80$ thì tỉ lệ đó là $13.18\%$. Nguyên nhân cho sự giảm này là việc nhiều hành động được thực thi trên một tập tin dẫn tới tập tin bị hư hại và mất khả năng thực thi.
+
+\begin{center}
+\begin{table}
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+Detector & DiDQN Agent & Random Agent \\ \hline
+LGBM              &   14.6\%       &   5.6\%                \\ \hline
+MalConv                &    18.6\%          &    7.8\%               \\ \hline
+RandomForest                &    12.3\%          &    6.7\%               \\ \hline
+\end{tabular}
+\caption{Bảng kết quả tỉ lệ né tránh của trình tạo đột biến so với hai mô hình LGBM và MalConv.}
+\label{tab:result-lgbm-malconv}
+\end{table}
+\end{center}
+
+\begin{table}
+    \begin{tabular}{|c|c|c|c|c|} \hline
+        Approach            & Action Space   & Max Turn & Evasion Rate & \multicolumn{1}{m{3cm}|}{Evasion and Execution Rate} \\ \hline
+        Aderson	et al, 2018 & 11             & 10       & 16.25\%      & - \\ \hline
+        Fang et al, 2019	& 4              & 80       & 46.56\%      & - \\ \hline
+        Castro et al, 2021	& 10             & 5        & 42.13\%      & - \\ \hline
+        Ours            	& 10             & 10       & 42.70\%      & 14.65\% \\ \hline
+    \end{tabular}
+    \caption{Bảng so sánh tỉ lệ né tránh với các nghiên cứu liên quan khi sử dụng mô hình phát hiện LGBM.}
+\label{tab:result-comparison}
+\end{table}
+
+\begin{table}
+    \begin{tabular}{|c|c|c|c|c|} \hline
+        Action Space   & Max Turn & Evasion Rate & \multicolumn{1}{m{3cm}|}{Evasion and Execution Rate} & \multicolumn{1}{m{3cm}|}{Training Time (minutes)} \\ \hline
+        10             & 10       & 42.70\%      & 14.65\%                    & 330         \\ \hline
+        10             & 20       & 42.84\%      & 14.72\%                    & 612         \\ \hline
+        10             & 40       & 44.23\%      & 14.59\%                    & 1187         \\ \hline
+        10             & 80       & 47.57\%      & 13.18\%                    & 2136         \\ \hline
+    \end{tabular}
+    \caption{Bảng so sánh tỉ lệ né tránh khi thay đổi thông số Max Turn0 trên đối tượng LGBM}
+    \label{tab:change-maxturns}
+\end{table}
+
+\subsection{Mức độ đa dạng của các hành động}
+Như đã trình bày trong mục \ref{sec:related-works} Khi hệ thống học tăng cường chỉ tập trung vào thực hiện một số hành động mà nó cho là hiệu quả thì cũng tạo ra các đặc tính riêng. Hệ quả là trình phát hiên mã độc có thể học lại các đặc tính này và cải thiện khả năng của nó. Mô hình DQEAF của nhóm Fang là một ví dụ. Nghiên cứu của Fang sử dụng tới 80 thực hiện hành động với không gian chỉ 4 hành động riêng biệt. Vì vậy, nhóm chúng tôi thêm vào cơ chế phạt, được đề cập ở hàm \ref{eq:penalty}. Tỉ lệ sử dụng các hành động của tác tử  được trình bày trong hình \ref{fig:actions-percentage}. 
+
+Tương tự như các nghiên cứu trước đó, upx\textunderscore pack là hành động phổ biến nhất để tạo mẫu đột biến. Bởi cơ chế nén sẽ thay đổi cấu trúc của tệp mã độc, làm thay đổi toàn bộ vec tơ thuộc tính của tệp. Trong thực tế, các nhà phát hành ứng dụng thường nén các tệp thực thi để giảm kích cỡ chương trình. Các trình phát hiện thường sẽ không xét cơ chế nén là một thuộc tính của mã độc, vì làm như vậy sẽ tạo ra nhiều dương tính giả (false positive) \cite{demetrio2021functionality}. Vì vậy, việc tạo mẫu đột biến qua upx\textunderscore pack vẫn được xem là an toàn.
+
+Theo như kết quả ở bảng \label{tab:evasion-and-execution-malware-result}, hành động upx_pack xuất hiện ở hầu hết các tập tin mã độc được tạo đột biến có khả năng vượt mặt và thực thi thành công. Các lượt huấn luyện tạo ra mã độc thỏa mãn hai tiêu chí về thực thi và vượt mặt có số điểm tương đối cao, từ 6.93 tới 9.9. Với 6.93 tương ứng với mã độc đột biến được tạo từ 1 hành động upx_pack và 9.9 tương ứng với 10 hành động tác động trên tập tin mã độc, trong đó, các hành động thay đổi giá trị kiểm tra header_checksum hoặc thay đổi các phân đoạn được sử dụng phổ biến. Với những mã độc được tạo đột biến này, khả năng phát hiện của các trình phát hiện mã độc dựa trên học máy giảm đáng kể, từ ngưỡng xấp xỉ $96\%$ xuống còn khoảng $77.71\%$ tới $89.48\%$ với mô hình phát hiện sử dụng thuật toán LGBM.
+
+Ở bảng \label{tab:evasion-malware-result}, chúng ta có thể thấy rằng điểm phần thưởng cho những tập tin mã độc đột biến chỉ có khả năng vượt mặt thấp hơn rõ rệt khi so sánh với các tập tin vừa có khả năng vượt mặt vừa có khả năng thực thi. Cụ thể, điểm giao động từ 3.63 tới 6.27, với 3.63 tương ứng với mã độc được thêm các phân đoạn và 6.27 tương ứng với tập hợp các hành động như upx_pack, remove_debug, imports_append, .... Tuy nhiên, các tập tin này vẫn đảm bảo khả năng vượt mặt khi giảm được đáng kể khả năng kiểm tra của trình phát hiện mã độc xuống còn ngưỡng 80\% tới gần 90\%, đặc biệt, có trường hợp xuống còn 69.13\%.
+
+\begin{table}
+    \begin{tabular}{|c|c|c|c|} \hline
+           & Detection Value & Reward & Actions taken \\ \hline
+        1 & 80.94\% & 6.93 & \multicolumn{1}{m{7cm}|}{upx\_pack} \\ \hline
+        2 & 88.74\% & 7.26 & \multicolumn{1}{m{7cm}|}{upx\_unpack; upx\_pack} \\ \hline
+        3 & 88.06\% & 7.26 & \multicolumn{1}{m{7cm}|}{overlay\_append; upx\_pack} \\ \hline
+        4 & 89.48\% & 7.26 & \multicolumn{1}{m{7cm}|}{imports\_append; upx\_pack} \\ \hline
+        5 & 77.71\% & 7.26 & \multicolumn{1}{m{7cm}|}{section\_rename; upx\_pack} \\ \hline
+        6 & 88.75\% & 7.26 & \multicolumn{1}{m{7cm}|}{break\_optional\_header\_checksum; upx\_pack} \\ \hline
+        7 & 85.05\% & 7.59 & \multicolumn{1}{m{7cm}|}{imports\_append; break\_optional\_header\_checksum; upx\_pack} \\ \hline
+        8 & 88.01\% & 7.92 & \multicolumn{1}{m{7cm}|}{imports\_append; break\_optional\_header\_checksum; imports\_append; upx\_pack} \\ \hline
+        9 & 88.34\% & 8.25 & \multicolumn{1}{m{7cm}|}{section\_rename; imports\_append; break\_optional\_header\_checksum; section\_rename; upx\_pack} \\ \hline
+        10 & 88.94\% & 8.25 & \multicolumn{1}{m{7cm}|}{imports\_append; section\_rename; break\_optional\_header\_checksum; break\_optional\_header\_checksum; upx\_pack} \\ \hline
+        11 & 79.54\% & 9.9 & \multicolumn{1}{m{7cm}|}{section\_rename; upx\_pack; upx\_pack; overlay\_append; upx\_unpack; section\_rename; section\_append; upx\_unpack; break\_optional\_header\_checksum; upx\_pack} \\ \hline
+    \end{tabular}
+    \caption{Bảng mô tả thông số của các mã độc được tạo đột biến có khả năng vượt mặt và thực thi}
+    \label{tab:evasion-and-execution-malware-result}
+\end{table} 
+
+
+\begin{table}
+    \begin{tabular}{|c|c|c|c|} \hline
+             & Detection Value & Reward & Actions taken \\ \hline
+        1	& 86.82\% & 3.63 & \multicolumn{1}{m{7cm}|}{section\_add} \\ \hline
+        2	& 89.29\% & 3.63 & \multicolumn{1}{m{7cm}|}{remove\_signature} \\ \hline
+        3	& 89.31\% & 4.29 & \multicolumn{1}{m{7cm}|}{imports\_append; remove\_debug; section\_add} \\ \hline
+        4	& 89.45\% & 3.96 & \multicolumn{1}{m{7cm}|}{break\_optional\_header\_checksum; section\_add} \\ \hline
+        5	& 89.05\% & 4.62 & \multicolumn{1}{m{7cm}|}{section\_rename; upx\_pack; upx\_pack; section\_add} \\ \hline
+        6	& 69.13\% & 4.62 & \multicolumn{1}{m{7cm}|}{upx\_unpack; section\_rename; section\_append; section\_add} \\ \hline
+        7	& 88.59\% & 4.95 & \multicolumn{1}{m{7cm}|}{section\_rename; imports\_append; section\_append; upx\_pack; section\_add} \\ \hline
+        8	& 89.44\% & 5.28 & \multicolumn{1}{m{7cm}|}{imports\_append; imports\_append; upx\_pack; imports\_append; imports\_append; section\_add} \\ \hline
+        9	& 89.29\% & 5.61 & \multicolumn{1}{m{7cm}|}{section\_rename; upx\_pack; upx\_pack; upx\_unpack; upx\_pack; imports\_append; section\_add} \\ \hline
+        10	& 88.65\% & 5.61 & \multicolumn{1}{m{7cm}|}{imports\_append; upx\_pack; imports\_append; upx\_unpack; upx\_pack; imports\_append; section\_add} \\ \hline
+        11	& 89.98\% & 6.27 & \multicolumn{1}{m{7cm}|}{upx\_pack; remove\_debug; overlay\_append; imports\_append; imports\_append; section\_append; upx\_unpack; upx\_pack; section\_add} \\ \hline
+        12	& 86.88\% & 5.61 & \multicolumn{1}{m{7cm}|}{break\_optional\_header\_checksum; section\_append; overlay\_append; overlay\_append; remove\_signature; break\_optional\_header\_checksum; section\_add} \\ \hline
+    \end{tabular}
+    \caption{Bảng mô tả thông số của các mã độc được tạo đột biến có khả năng vượt mặt}
+    \label{tab:evasion-malware-result}
+\end{table}
+
+\subsection{Hành động làm ảnh hưởng khả năng thực thi}
+Bên cạnh việc đánh giá độ thông dụng của các hành động, chúng tôi còn tập trung vào tìm hiểu những hành động làm ảnh thưởng đến khả năng thực thi của mẫu. Với kết quả huấn luyện qua 1000 episode đối với cả hai mô hình phát hiện là LGBM và MalConv, chúng tôi nhận thấy có đến 98\%. mẫu không thực thi sau khi tác tử thực hiện hàn động thêm mục vào tệp (section\textunderscore add). Tác tử sau khi huấn luyện cũng hạn chế thực hiện hành động này và chủ yếu tập trung vào upx\textunderscore pack.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=17cm]{Images/actions-percentage.png}
+    \caption{Tỉ lệ của các hành động thực hiện bởi tác tử }
+    \label{fig:actions-percentage}
+\end{figure}

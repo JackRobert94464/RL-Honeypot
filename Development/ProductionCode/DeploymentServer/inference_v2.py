@@ -17,6 +17,7 @@ import tensorflow as tf
 from flask import Flask, request, jsonify
 import misc
 import ddqn_loss_fn
+import time
 
 # Default value
 ntpg_infer_csv = "ntpg_inf.csv"
@@ -43,7 +44,7 @@ class Agent:
         # Create the inference environment from baseEnv
         # If you're unsure about attack rate, you can set it to 0.7
         # TODO: Remove fnr, fpr and attack rate for inference environment/ take it from json request send from NMS server
-        self.env = misc.create_environment_from_baseEnv(ntpg, htpg, honeypotAvailable, NMS_fnr, NMS_fpr, assume_attack_rate)
+        self.env = misc.create_environment_from_baseEnv(ntpg, htpg, honeypotAvailable, NMS_fnr, NMS_fpr, assume_attack_rate, 5)
 
         self.epssMatrix = misc.ntpg_to_epss_matrix(self.env.get_ntpg())
         self.connectionMatrix = misc.ntpg_to_connection_matrix(self.env.get_ntpg())
@@ -113,6 +114,8 @@ def predict():
     # Get the network state from the request
     network_state = request.get_json()['network_state']
     num_honeypots = request.get_json()['num_honeypots']
+    
+    start_time = time.time()
 
     # Create an instance of your agent
     agent = Agent(model=model_infer, ntpg_dir=ntpg_infer_csv, htpg_dir=htpg_infer_csv, honeypotAvailable=num_honeypots)  # Initialize with the appropriate arguments
@@ -152,9 +155,27 @@ def predict():
     with open('output.tmp', 'w') as file:
         for target in subnet_targets:
             file.write(str(target) + '\n')
-
+            
+    # Check hit condition
+    # Determine which subnets have '1' in the network_state
+    subnet_with_one = [0] * 4
+    for i, state in enumerate(network_state):
+        if state == 1:
+            subnet = 0 if i in range(0, 2) else 1 if i in range(2, 5) else 2 if i in range(5, 8) else 3
+            subnet_with_one[subnet] = 1
+    
+    # Check for hits
+    hit = False
+    for node in deployment_targets:
+        subnet = 0 if node in range(0, 2) else 1 if node in range(2, 5) else 2 if node in range(5, 8) else 3
+        if subnet_with_one[subnet] == 1:
+            hit = True
+            break
+    
+    elapsed_time = time.time() - start_time
+    
     # Return the deployment targets as a JSON response
-    return jsonify({'deployment_targets': deployment_targets, 'subnet': subnet_targets})
+    return jsonify({'deployment_targets': deployment_targets, 'subnet': subnet_targets, elapsed_time: elapsed_time, 'hit': hit})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=35025)

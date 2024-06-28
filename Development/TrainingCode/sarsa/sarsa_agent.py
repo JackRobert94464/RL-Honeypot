@@ -11,6 +11,8 @@ import time
 
 # import FNR FPR simulation code
 from fnr_fpr_test.fnrfpr_calc_v2 import simulate_alert_training
+import random
+import string
 
 # Policy
 # - The policy is a function that maps states to actions.
@@ -390,11 +392,12 @@ class SarsaLearning:
     def saveModel(self):
         if os.name == 'nt':
             os.makedirs("./TrainedModel/weighted_random_attacker/SARSA_1_INPUT", exist_ok=True)
-            self.mainNetwork.model.save(f"./TrainedModel/weighted_random_attacker/SARSA_1_INPUT/RL_Honeypot_SARSA_win_ver{self.getStepCount()}.keras")
-            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/SARSA_1_INPUT/RL_Honeypot_SARSA_win_ver{self.getStepCount()}.keras")
-            
+            token = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+            self.mainNetwork.model.save(f"./TrainedModel/weighted_random_attacker/SARSA_1_INPUT/RL_Honeypot_SARSA_win_ver{self.getStepCount()}_{token}.keras")
+            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/SARSA_1_INPUT/RL_Honeypot_SARSA_win_ver{self.getStepCount()}_{token}.keras")
         else:
             os.makedirs("./TrainedModel/weighted_random_attacker/SARSA_1_INPUT", exist_ok=True)
-            self.mainNetwork.model.save(f"./TrainedModel/weighted_random_attacker/SARSA_1_INPUT/RL_Honeypot_SARSA_linux_ver{self.getStepCount()}.keras")
-            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/SARSA_1_INPUT/RL_Honeypot_SARSA_linux_ver{self.getStepCount()}.keras")
+            token = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+            self.mainNetwork.model.save(f"./TrainedModel/weighted_random_attacker/SARSA_1_INPUT/RL_Honeypot_SARSA_linux_ver{self.getStepCount()}_{token}.keras")
+            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/SARSA_1_INPUT/RL_Honeypot_SARSA_linux_ver{self.getStepCount()}_{token}.keras")
     
