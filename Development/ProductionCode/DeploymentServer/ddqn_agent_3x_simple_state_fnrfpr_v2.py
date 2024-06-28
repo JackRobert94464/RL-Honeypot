@@ -149,7 +149,7 @@ class DoubleDeepQLearning:
             currentState = nextState
         self.time_taken.append(self.clock_counter)
         
-    def trainingInference(self, rt_buffer, rt_action_buffer):
+    def trainingInferenceSync(self, rt_buffer, rt_action_buffer):
         for i in range(len(rt_buffer) - 1):
             currentState = rt_buffer[i]
             currentAction = rt_action_buffer[i]
@@ -163,6 +163,22 @@ class DoubleDeepQLearning:
             
             # Save after train
             self.saveModelInference()
+            
+            currentState = nextState
+            
+    def trainingInferenceAsync(self, rt_buffer, rt_action_buffer):
+        for i in range(len(rt_buffer) - 1):
+            currentState = rt_buffer[i]
+            currentAction = rt_action_buffer[i]
+            nextState = rt_buffer[i+1]
+            
+            currentReward = -1 if currentState[7] == 1 else -0.1 if any(currentState[i] == 1 for i, a in enumerate(currentAction) if a == 1) else 0
+            currentTerminal = True if currentState[7] == 1 or any(currentState[i] == 1 for i, a in enumerate(currentAction) if a == 1) else False
+            
+            self.replayBuffer.append((currentState, self.epss_input_reshaped, self.ntpg_input_reshaped, currentAction, currentReward, nextState, currentTerminal))
+            self.trainNetwork()
+            
+            # Currently async cant save model yet
             
             currentState = nextState
                        
@@ -225,7 +241,7 @@ class DoubleDeepQLearning:
                 actionsAppend.append(action)
                 outputNetwork[index] = QcurrentStateMainNetwork[index]
                 outputNetwork[index, action] = y
-            self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size=self.batchReplayBufferSize, verbose=0, epochs=200)
+            self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size=self.batchReplayBufferSize, verbose=0, epochs=2)
             self.counterUpdateTargetNetwork += 1
             if self.counterUpdateTargetNetwork > (self.updateTargetNetworkPeriod - 1):
                 self.targetNetwork.set_weights(self.mainNetwork.get_weights())
@@ -278,6 +294,55 @@ class DoubleDeepQLearning:
         max_index = np.argmax(Qvalues)
         action_matrix = self.index_to_action(max_index)
         return action_matrix
+    
+    def selectActionInferenceConv1Dv2(self, state, model):
+        epss_matrix = np.array(self.epssMatrix)        
+        ntpg_matrix = np.array(self.connectionMatrix)
+        if len(epss_matrix.shape) > 2:
+            epss_matrix = np.stack(epss_matrix)
+        if len(ntpg_matrix.shape) > 2:
+            ntpg_matrix = np.stack(ntpg_matrix)
+        epss_input = np.expand_dims(epss_matrix, axis=-1)
+        ntpg_input = np.expand_dims(ntpg_matrix, axis=-1)
+        epss_input_reshaped = np.array(epss_input).reshape(-1, len(state), len(state))
+        ntpg_input_reshaped = np.array(ntpg_input).reshape(-1, len(state), len(state))
+        state = np.array(state, dtype=np.float32).reshape(1, -1)
+        Qvalues = model.predict([state, epss_input_reshaped, ntpg_input_reshaped])
+        max_index = np.argmax(Qvalues)
+        action_matrix = self.index_to_action(max_index)
+
+        # Ensure honeypot position does not align with compromised nodes
+        compromised_nodes = [i for i, x in enumerate(state[0]) if x == 1]
+
+        # Determine the subnets of all nodes
+        def get_subnet(node):
+            return 0 if node in range(0, 2) else 1 if node in range(2, 5) else 2 if node in range(5, 8) else 3
+
+        # Determine the subnets of compromised nodes
+        compromised_subnets = {get_subnet(node) for node in compromised_nodes}
+
+        # Adjust action to place honeypot within the same subnet as the compromised nodes
+        adjusted_action_matrix = []
+        for action in action_matrix:
+            if action not in compromised_nodes and get_subnet(action) in compromised_subnets:
+                adjusted_action_matrix.append(action)
+            else:
+                # Find an alternative within the same subnet
+                for alt_action in range(len(state[0])):
+                    if alt_action not in compromised_nodes and get_subnet(alt_action) == get_subnet(action):
+                        adjusted_action_matrix.append(alt_action)
+                        break
+                else:
+                    # If no alternative found, keep the original action
+                    adjusted_action_matrix.append(action)
+        
+        # Ensure the final_action has the same shape and type as the original action_matrix
+        final_action = adjusted_action_matrix
+        
+        return final_action
+
+
+
         
     def saveModel(self):
         if os.name == 'nt':

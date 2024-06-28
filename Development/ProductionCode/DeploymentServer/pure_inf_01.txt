@@ -1,0 +1,176 @@
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.9763283729553223,"hit":false,"subnet":[1,1,0,0]}
+[0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.5227456092834473,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.6356606483459473,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 0, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.5094473361968994,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 0, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.5175166130065918,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 0, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.8217380046844482,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 0, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.4461405277252197,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 0, 1, 0, 0, 0, 1, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.4976532459259033,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 0, 1, 0, 0, 0, 1, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.9674510955810547,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 0, 1, 0, 0, 0, 1, 0, 1]
+{"deployment_targets":[1,4],"elapsed_time":0.4453847408294678,"hit":true,"subnet":[1,1,0,0]}
+[1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[6,7],"elapsed_time":0.6069943904876709,"hit":false,"subnet":[0,0,1,0]}
+[1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[6,7],"elapsed_time":0.9760539531707764,"hit":false,"subnet":[0,0,1,0]}
+[1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[6,7],"elapsed_time":0.5343585014343262,"hit":false,"subnet":[0,0,1,0]}
+[1, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[5,6],"elapsed_time":0.7278187274932861,"hit":false,"subnet":[0,0,1,0]}
+[1, 0, 0, 1, 1, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.4720127582550049,"hit":true,"subnet":[1,1,0,0]}
+[1, 0, 0, 1, 1, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.621241569519043,"hit":true,"subnet":[1,1,0,0]}
+[1, 0, 0, 1, 1, 0, 1, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.7185540199279785,"hit":true,"subnet":[1,1,0,0]}
+[1, 0, 0, 1, 1, 0, 1, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.49991273880004883,"hit":true,"subnet":[1,1,0,0]}
+[1, 0, 0, 1, 1, 0, 1, 0, 1, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.6105446815490723,"hit":true,"subnet":[1,1,0,0]}
+[1, 0, 0, 1, 1, 0, 1, 0, 1, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.6773440837860107,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.44391298294067383,"hit":false,"subnet":[1,1,0,0]}
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.6600484848022461,"hit":false,"subnet":[1,1,0,0]}
+[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.713953971862793,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.4729933738708496,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 1, 0, 1, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.5588352680206299,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 1, 0, 1, 1, 0, 0, 0, 0]
+Important resource Node 5 is attacked!
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.6278660297393799,"hit":false,"subnet":[1,1,0,0]}
+[0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.5865261554718018,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.6877217292785645,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.49928975105285645,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.5066874027252197,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.8522918224334717,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.4435734748840332,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 1, 0, 0, 0, 0, 1, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.5122888088226318,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 1, 0, 0, 0, 0, 1, 1, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.7816970348358154,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 1, 0, 0, 0, 0, 1, 1, 1]
+{"deployment_targets":[1,4],"elapsed_time":0.4526052474975586,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.5755088329315186,"hit":false,"subnet":[1,1,0,0]}
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.6748425960540771,"hit":false,"subnet":[1,1,0,0]}
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.4622635841369629,"hit":false,"subnet":[1,1,0,0]}
+[0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.5560586452484131,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":1.03497314453125,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.5487332344055176,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.7098348140716553,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.4701962471008301,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.519866943359375,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 0, 1, 0, 0, 0, 0, 0, 1]
+{"deployment_targets":[1,4],"elapsed_time":0.7276520729064941,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.44069790840148926,"hit":false,"subnet":[1,1,0,0]}
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.592710018157959,"hit":false,"subnet":[1,1,0,0]}
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.7355053424835205,"hit":false,"subnet":[1,1,0,0]}
+[0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.4905519485473633,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 0, 1, 1, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.7887043952941895,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 0, 1, 1, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.5159659385681152,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 0, 1, 1, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.5205435752868652,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 0, 1, 1, 0, 0, 1, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.6372401714324951,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 0, 1, 1, 0, 0, 1, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.5285711288452148,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 0, 1, 1, 0, 0, 1, 0, 1]
+{"deployment_targets":[1,4],"elapsed_time":0.49945926666259766,"hit":true,"subnet":[1,1,0,0]}
+[1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[6,7],"elapsed_time":0.5904288291931152,"hit":false,"subnet":[0,0,1,0]}
+[1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[5,6],"elapsed_time":0.5253221988677979,"hit":false,"subnet":[0,0,1,0]}
+[1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[5,6],"elapsed_time":0.5032134056091309,"hit":false,"subnet":[0,0,1,0]}
+[1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[5,6],"elapsed_time":0.8841712474822998,"hit":false,"subnet":[0,0,1,0]}
+[1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[5,6],"elapsed_time":0.6241912841796875,"hit":false,"subnet":[0,0,1,0]}
+[1, 1, 0, 0, 0, 1, 0, 0, 0, 0]
+Important resource Node 5 is attacked!
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":1.1062617301940918,"hit":false,"subnet":[1,1,0,0]}
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.48578381538391113,"hit":false,"subnet":[1,1,0,0]}
+[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.53472900390625,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 1, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.6483948230743408,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 1, 0, 1, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.7589926719665527,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 1, 0, 1, 1, 0, 0, 0, 0]
+Important resource Node 5 is attacked!
+[1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[6,7],"elapsed_time":0.762664794921875,"hit":false,"subnet":[0,0,1,0]}
+[1, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[5,6],"elapsed_time":0.4533653259277344,"hit":false,"subnet":[0,0,1,0]}
+[1, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.5668439865112305,"hit":true,"subnet":[1,1,0,0]}
+[1, 1, 1, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[5,6],"elapsed_time":0.7989833354949951,"hit":false,"subnet":[0,0,1,0]}
+[1, 1, 1, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[5,6],"elapsed_time":0.460770845413208,"hit":false,"subnet":[0,0,1,0]}
+[1, 1, 1, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[5,6],"elapsed_time":0.5361580848693848,"hit":false,"subnet":[0,0,1,0]}
+[1, 1, 1, 1, 0, 0, 1, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.8455839157104492,"hit":true,"subnet":[1,1,0,0]}
+[1, 1, 1, 1, 0, 0, 1, 1, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.474597692489624,"hit":true,"subnet":[1,1,0,0]}
+[1, 1, 1, 1, 0, 0, 1, 1, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.6453025341033936,"hit":true,"subnet":[1,1,0,0]}
+[1, 1, 1, 1, 0, 0, 1, 1, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.8447005748748779,"hit":true,"subnet":[1,1,0,0]}
+[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.47571754455566406,"hit":false,"subnet":[1,1,0,0]}
+[0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.5106093883514404,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.6631393432617188,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 0, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.4845707416534424,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 0, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.7380409240722656,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 0, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.5358898639678955,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 0, 1, 0, 0, 0, 0, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.5325016975402832,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 0, 1, 0, 0, 0, 1, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.7541160583496094,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 0, 1, 0, 0, 0, 1, 0, 0]
+{"deployment_targets":[1,4],"elapsed_time":0.5114898681640625,"hit":true,"subnet":[1,1,0,0]}
+[0, 1, 0, 1, 0, 0, 0, 1, 0, 1]
+{"deployment_targets":[1,4],"elapsed_time":0.6172387599945068,"hit":true,"subnet":[1,1,0,0]}

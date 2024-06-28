@@ -11,6 +11,7 @@ import pandas as pd
 import time
 import tensorflow as tf
 from keras import layers
+import string
 
 # Define the PPO Agent class
 class PPOAgent:
@@ -171,13 +172,14 @@ class PPOAgent:
         return self.currentTrainingEpisode
 
     def saveModel(self):
+        random_token = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
         if os.name == 'nt':
-            os.makedirs("./TrainedModel/weighted_random_attacker/A2C_1_INPUT", exist_ok=True)
-            self.actor_model.save(f"./TrainedModel/weighted_random_attacker/A2C_1_INPUT/RL_Honeypot_actorcrit_win_ver{self.getStepCount()}_actor.keras")
-            self.critic_model.save(f"./TrainedModel/weighted_random_attacker/A2C_1_INPUT/RL_Honeypot_actorcrit_win_ver{self.getStepCount()}_critic.keras")
-            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/A2C_1_INPUT/RL_Honeypot_actorcrit_win_ver{self.getStepCount()}_actor.keras")
+            os.makedirs(f"./TrainedModel/weighted_random_attacker/A2C_1_INPUT/{random_token}", exist_ok=True)
+            self.actor_model.save(f"./TrainedModel/weighted_random_attacker/A2C_1_INPUT/{random_token}/RL_Honeypot_actorcrit_win_ver{self.getStepCount()}_actor.keras")
+            self.critic_model.save(f"./TrainedModel/weighted_random_attacker/A2C_1_INPUT/{random_token}/RL_Honeypot_actorcrit_win_ver{self.getStepCount()}_critic.keras")
+            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/A2C_1_INPUT/{random_token}/RL_Honeypot_actorcrit_win_ver{self.getStepCount()}_actor.keras")
         else:
-            os.makedirs("./TrainedModel/weighted_random_attacker/A2C_1_INPUT", exist_ok=True)
-            self.actor_model.save(f"./TrainedModel/weighted_random_attacker/A2C_1_INPUT/RL_Honeypot_actorcrit_linux_ver{self.getStepCount()}_actor.keras")
-            self.critic_model.save(f"./TrainedModel/weighted_random_attacker/A2C_1_INPUT/RL_Honeypot_actorcrit_linux_ver{self.getStepCount()}_critic.keras")
-            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/A2C_1_INPUT/RL_Honeypot_actorcrit_linux_ver{self.getStepCount()}_actor.keras")
+            os.makedirs(f"./TrainedModel/weighted_random_attacker/A2C_1_INPUT/{random_token}", exist_ok=True)
+            self.actor_model.save(f"./TrainedModel/weighted_random_attacker/A2C_1_INPUT/{random_token}/RL_Honeypot_actorcrit_linux_ver{self.getStepCount()}_actor.keras")
+            self.critic_model.save(f"./TrainedModel/weighted_random_attacker/A2C_1_INPUT/{random_token}/RL_Honeypot_actorcrit_linux_ver{self.getStepCount()}_critic.keras")
+            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/A2C_1_INPUT/{random_token}/RL_Honeypot_actorcrit_linux_ver{self.getStepCount()}_actor.keras")

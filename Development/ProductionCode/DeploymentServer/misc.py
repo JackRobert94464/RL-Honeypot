@@ -116,11 +116,11 @@ def load_tpg_data(ntpg_dir, htpg_dir):
 
 from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
 
-def create_environment_from_baseEnv(ntpg, htpg, deception_nodes_amount, fnr, fpr, attack_rate):
+def create_environment_from_baseEnv(ntpg, htpg, deception_nodes_amount, fnr, fpr, attack_rate, nicr_nodes):
     normal_nodes = count_nodes(ntpg)
     first_parameter = calculate_first_parameter(deception_nodes_amount, normal_nodes)
     total_permutations = calculate_permutation(normal_nodes, deception_nodes_amount)
-    inference_env = NetworkHoneypotEnv(first_parameter, deception_nodes_amount, normal_nodes, ntpg, htpg, fnr, fpr, attack_rate)
+    inference_env = NetworkHoneypotEnv(first_parameter, deception_nodes_amount, normal_nodes, ntpg, htpg, fnr, fpr, attack_rate, [nicr_nodes])
     return inference_env
 
 def load_trained_model(model_path, loss_fn):

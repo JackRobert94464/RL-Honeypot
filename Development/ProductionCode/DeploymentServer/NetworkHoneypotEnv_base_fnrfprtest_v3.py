@@ -12,11 +12,11 @@ import itertools
 
 class NetworkHoneypotEnv(py_environment.PyEnvironment):
 
-    def __init__(self, N, M, K, ntpg, htpg, fnr, fpr, attack_rate):
+    def __init__(self, N, M, K, ntpg, htpg, fnr, fpr, attack_rate, nicr_nodes):
         self.N = N
         self.M = M
         self.K = K
-        self.nicr_nodes = [5]
+        self.nicr_nodes = nicr_nodes
         self.nifr_nodes = []
         my_list = list(range(1, K+1))
         combinations = list(itertools.combinations(my_list, M))
@@ -60,7 +60,6 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
 
     def _reset(self):
         self.current_step = 0
-        self.nicr_nodes = [5]
         self.nifr_nodes = []
         self._state = np.zeros(self.K, dtype=np.int32)
         self._episode_ended = False

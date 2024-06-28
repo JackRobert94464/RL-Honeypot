@@ -4,13 +4,15 @@
 
 from tf_agents.environments import tf_py_environment
 # import the environment
-from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
+from NetworkHoneypotEnv_base_v4 import NetworkHoneypotEnv
 # import evaluation functions
 import evaluation_headless_v2
 # import miscellaneous funtions
 import misc
 import os
 import gc
+import random
+import string
 
 # def __init__(self, gamma, epsilon, numberEpisodes, normal_nodes, total_permutations, fnr, fpr):
 
@@ -45,6 +47,7 @@ os.environ['HTPG_TRAINING'] = './Development/TPG-Data/' + filename_htpg + '.csv'
 
 
 ntpg = misc.create_dictionary_ntpg(os.environ['NTPG_TRAINING'])
+print("NTPG loaded successfully.", ntpg)
 htpg = misc.create_dictionary_htpg(os.environ['HTPG_TRAINING'])
 
 normal_nodes = misc.count_nodes(ntpg)
@@ -97,7 +100,7 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
         currentStep = agent.getStepCount()
         print("Current Step: ", currentStep)
         
-        if currentStep in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000, 50000]:
+        if currentStep in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000]:
             
             # Initialize an evalutaion instance
             evaluator = evaluation_headless_v2.Evaluation()
@@ -126,16 +129,15 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
             if not os.path.exists(output_folder):
                 os.makedirs(output_folder)
                 
-            with open(output_folder + f"result_fnr{fnr}_fpr{fpr}_model_{model_name}_{currentStep}_honeypotAmount_{deception_nodes}.txt", "w") as file:
+            random_token = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=8))
+
+            with open(output_folder + f"result_fnr{fnr}_fpr{fpr}_model_{model_name}_{currentStep}_honeypotAmount_{deception_nodes}_{random_token}.txt", "w") as file:
                 file.write(f"Training Time Dict: {training_time_dict}\n")
                 file.write(f"DSP Dict: {dsp_dict}\n")
                 
             print("Training Time and DSP saved to file.")
             print(f"File name: result_fnr{fnr}_fpr{fpr}_model_{model_name}.txt")
             
-        if currentStep == 30000:
-            gc.collect()
-            break
 
     #  summarize the model
     if(model_type == 1):
@@ -191,7 +193,7 @@ def MultiDecoyTraining(numberEpisodes, model_name, model_type):
             currentStep = agent.getStepCount()
             print("Current Step: ", currentStep)
             
-            if currentStep in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000, 50000]:
+            if currentStep in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000, 49890]:
                 
                 # Initialize an evalutaion instance
                 evaluator = evaluation_headless_v2.Evaluation()
@@ -220,7 +222,9 @@ def MultiDecoyTraining(numberEpisodes, model_name, model_type):
                 if not os.path.exists(output_folder):
                     os.makedirs(output_folder)
                     
-                with open(output_folder + f"result_fnr{fnr}_fpr{fpr}_model_{model_name}_{currentStep}_honeypotAmount_{deception_nodes}.txt", "w") as file:
+                random_token = str(random.randint(1000, 9999))
+
+                with open(output_folder + f"result_fnr{fnr}_fpr{fpr}_model_{model_name}_{currentStep}_honeypotAmount_{deception_nodes}_{random_token}.txt", "w") as file:
                     file.write(f"Training Time Dict: {training_time_dict}\n")
                     file.write(f"DSP Dict: {dsp_dict}\n")
                     
@@ -266,14 +270,14 @@ if __name__ == "__main__":
     if model_choice == '1':
         model_name = "DDQN_1_INPUT"
         model_type = 1
-        from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
+        from NetworkHoneypotEnv_base_v4 import NetworkHoneypotEnv
         from ddqn_agent_headless_v2 import DoubleDeepQLearning
         print("Imported the environment and agent successfully.")
         
     elif model_choice == '2':
         
         model_type = 1
-        from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
+        from NetworkHoneypotEnv_base_v4 import NetworkHoneypotEnv
         
         print("Which input type would you like to use?")
         print("1: Three Input v1 - quickly process observation state using one dense layer")
@@ -306,14 +310,14 @@ if __name__ == "__main__":
         
     elif model_choice == '4':
         model_name = "SARSA_1_INPUT"
-        from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
+        from NetworkHoneypotEnv_base_v4 import NetworkHoneypotEnv
         from sarsa.sarsa_agent import SarsaLearning
         model_type = 2
         print("Imported the environment and agent successfully.")
         
     elif model_choice == '5':
         model_name = "SARSA_3_INPUT"
-        from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
+        from NetworkHoneypotEnv_base_v4 import NetworkHoneypotEnv
         from sarsa.sarsa_agent_3input import SarsaLearning
         model_type = 2
         print("Imported the environment and agent successfully.")
@@ -321,15 +325,16 @@ if __name__ == "__main__":
     elif model_choice == '6':
         model_name = "A2C_1_INPUT"
         model_type = 3  # Set a new model type for PPO
-        from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
+        from NetworkHoneypotEnv_base_v4 import NetworkHoneypotEnv
         from PPO.a2c import PPOAgent
         print("Imported the environment and A2C agent successfully.")
         
     elif model_choice == '7':
         model_name = "A2C_3_INPUT"
         model_type = 3  # Set a new model type for PPO
-        from NetworkHoneypotEnv_base_fnrfprtest_v3 import NetworkHoneypotEnv
+        from NetworkHoneypotEnv_base_v4 import NetworkHoneypotEnv
         from PPO.a2c_3input import PPOAgent
+
         print("Imported the environment and A2C agent successfully.")
         
     else:

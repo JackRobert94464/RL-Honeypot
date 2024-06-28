@@ -10,4 +10,4 @@ test 2 truong hop suy luan (tren 3 luong di chuyen cua Truong dua ra) (Thong so 
 
 - vua hoc vua du doan dong bo
 
-- vua hoc vua du doan bat dong bo (neu duoc)
+- vua hoc vua du doan bat dong bo (cu lam them neu duoc)
