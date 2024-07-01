@@ -19,3 +19,5 @@ Development/TPG-Data/HTPG.csv
 Development/TPG-Data/NTPG.csv
 *.pyc
 pyvenv.cfg
+visualization_data.csv
+visualization_data.csv
