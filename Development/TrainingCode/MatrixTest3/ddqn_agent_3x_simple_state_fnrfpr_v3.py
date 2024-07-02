@@ -101,7 +101,7 @@ class DoubleDeepQLearning:
         indices[:, 1] = np.tile(np.arange(num_actions), s1)
 
 
-        loss = keras.losses.categorical_crossentropy(keras.backend.gather(y_true, indices=indices.astype(int)),
+        loss = keras.losses.mean_squared_error(keras.backend.gather(y_true, indices=indices.astype(int)),
                                             keras.backend.gather(y_pred, indices=indices.astype(int)))
         return loss
 
@@ -658,11 +658,11 @@ class DoubleDeepQLearning:
         random_token = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=8))
         
         if os.name == 'nt':
-            os.makedirs(f"./TrainedModel/weighted_random_attacker/DDQN_3_INPUT/{random_token}", exist_ok=True)
-            self.mainNetwork.save(f".\\TrainedModel\\weighted_random_attacker\\DDQN_3_INPUT\\{random_token}\\RL_Honeypot_DDQN_3INPUT_win_ver{self.getStepCount()}.keras")
-            self.updateModelPath(f".\\TrainedModel\\weighted_random_attacker\\DDQN_3_INPUT\\{random_token}\\RL_Honeypot_DDQN_3INPUT_win_ver{self.getStepCount()}.keras")
+            os.makedirs(f"./TrainedModel/weighted_random_attacker/DDQN_3_INPUT", exist_ok=True)
+            self.mainNetwork.save(f".\\TrainedModel\\weighted_random_attacker\\DDQN_3_INPUT\\RL_Honeypot_DDQN_3INPUT_win_ver3_{self.getStepCount()}_{random_token}.keras")
+            self.updateModelPath(f".\\TrainedModel\\weighted_random_attacker\\DDQN_3_INPUT\\RL_Honeypot_DDQN_3INPUT_win_ver3_{self.getStepCount()}_{random_token}.keras")
             
         else:
-            os.makedirs(f"./TrainedModel/weighted_random_attacker/DDQN_3_INPUT/{random_token}", exist_ok=True)
-            self.mainNetwork.save(f"./TrainedModel/weighted_random_attacker/DDQN_3_INPUT/{random_token}/RL_Honeypot_DDQN_3INPUT_linux_ver{self.getStepCount()}_inf.keras")
-            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/DDQN_3_INPUT/{random_token}/RL_Honeypot_DDQN_3INPUT_linux_ver{self.getStepCount()}_inf.keras")
+            os.makedirs(f"./TrainedModel/weighted_random_attacker/DDQN_3_INPUT", exist_ok=True)
+            self.mainNetwork.save(f"./TrainedModel/weighted_random_attacker/DDQN_3_INPUT/RL_Honeypot_DDQN_3INPUT_linux_ver3_{self.getStepCount()}_{random_token}.keras")
+            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/DDQN_3_INPUT/RL_Honeypot_DDQN_3INPUT_linux_ver3_{self.getStepCount()}_{random_token}.keras")
