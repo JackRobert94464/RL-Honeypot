@@ -1,0 +1,2 @@
+Training Time Dict: {250: 107.83708882331848}
+DSP Dict: {250: 0.5936}
