@@ -282,7 +282,8 @@ if __name__ == "__main__":
         print("Which input type would you like to use?")
         print("1: Three Input v1 - quickly process observation state using one dense layer")
         print("2: Three Input v2 - reduce to 1 conv1D and apply batch normailzation - 29/05/2024")
-        print("3: Three Input LTSM - a LTSM for observation state will be used")
+        print("3: Three Input v3 - Flatten the 2D matrices into 1D and process using Dense - 01/07/2024")
+        print("4: Three Input LTSM - a LTSM for observation state will be used")
         input_choice = input("Enter the number of the input type you want to use: ")
         
         if input_choice == '1':
@@ -292,6 +293,9 @@ if __name__ == "__main__":
             model_name = "DDQN_3_INPUT_v2"
             from MatrixTest3.ddqn_agent_3x_simple_state_fnrfpr_v2 import DoubleDeepQLearning
         elif input_choice == '3':
+            model_name = "DDQN_3_INPUT_v3"
+            from MatrixTest3.ddqn_agent_3x_simple_state_fnrfpr_v3 import DoubleDeepQLearning
+        elif input_choice == '4':
             model_name = "DDQN_3_INPUT_LTSM"
             from MatrixTest3.ddqn_agent_3x_multi_input_fnrfpr import DoubleDeepQLearning
         
