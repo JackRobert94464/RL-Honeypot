@@ -40,7 +40,7 @@ class DoubleDeepQLearning:
         self.epssMatrix = test_3_field_01_epss_matrix.ntpg_to_epss_matrix(env.get_ntpg())
         self.connectionMatrix = test_3_field_02_ntpg_matrix.ntpg_to_connection_matrix(env.get_ntpg())
 
-        self.replayBufferSize = 500
+        self.replayBufferSize = 300
         self.batchReplayBufferSize = 100
         self.updateTargetNetworkPeriod = 50
         self.counterUpdateTargetNetwork = 0
