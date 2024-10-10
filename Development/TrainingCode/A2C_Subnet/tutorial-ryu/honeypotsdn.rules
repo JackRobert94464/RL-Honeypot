@@ -1,0 +1,17 @@
+config classification: attempted-recon,Attempted Information Leak,2
+config classification: attempted-admin,Attempted Administrator Privilege Gain,1
+
+# Alert rules to check if snort working
+
+alert icmp any any -> any any (msg:"Pinging...";sid:1000004;)
+alert tcp any any -> any 80 (msg:"Port 80 is accessing"; sid:1000003;)
+alert icmp any any -> any any (msg:"Someone hacking"; itype:8; sid:1000001; classtype:attempted-recon; rev:1)
+
+
+# Node compromising status rule check
+alert tcp any any -> [10.0.0.1/32,10.0.0.2/32,10.0.0.3/32,10.0.0.4/32,10.0.0.5/32,10.0.0.6/32,10.0.0.7/32,10.0.0.8/32,10.0.0.9/32,10.0.0.10/32] 15000 (msg:"Node compromised"; sid:1000005; classtype:attempted-admin; rev:1;)
+
+
+
+# Actual Output rule to be export to json
+
