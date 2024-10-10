@@ -328,7 +328,7 @@ if __name__ == "__main__":
 
     elif model_choice == '6':
         model_name = "A2C_1_INPUT"
-        model_type = 3  # Set a new model type for PPO
+        model_type = 3  # Set a new model type for A2C
         from NetworkHoneypotEnv_base_v4 import NetworkHoneypotEnv
         from PPO.a2c import PPOAgent
         print("Imported the environment and A2C agent successfully.")
