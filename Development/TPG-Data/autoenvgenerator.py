@@ -27,7 +27,6 @@ min_cves = 2
 max_cves = 4
 '''
 
-
 def generate_tpg(cve_file, epss_file, ntpg_file, htpg_file, min_nodes, max_nodes, min_cves, max_cves):
 
     # Define a list to store the CVEs and their EPSS scores
@@ -74,14 +73,14 @@ def generate_tpg(cve_file, epss_file, ntpg_file, htpg_file, min_nodes, max_nodes
 
     # Generate random IP addresses for the nodes and store them in the node_list
     for i in range(num_nodes):
-        # Generate a random IP address in the form of 192.168.x.y
-        ip_address = "192.168." + str(random.randint(0, 255)) + "." + str(random.randint(0, 255))
+        # Generate a random IP address in the form of 10.0.x.y
+        ip_address = "10.0." + str(random.randint(0, 255)) + "." + str(random.randint(0, 255))
 
         # Check if the IP address is already in the node_list
         if ip_address in node_list:
             # If yes, generate a new IP address until it is unique
             while ip_address in node_list:
-                ip_address = "192.168." + str(random.randint(0, 255)) + "." + str(random.randint(0, 255))
+                ip_address = "10.0." + str(random.randint(0, 255)) + "." + str(random.randint(0, 255))
         
         # Store the IP address in the node_list
         node_list.append(ip_address)

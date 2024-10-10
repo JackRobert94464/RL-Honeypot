@@ -5,12 +5,13 @@ import misc
 import os
 from visualizer import visualize_steps
 import ddqn_dsp_visualizer
+import random
 
 # Import loss function
 from ddqn_loss_fn import ddqn_loss_fn
 
 # Import environment
-from NetworkHoneypotEnv_base import NetworkHoneypotEnv
+from A2C_Subnet.NetworkHoneypotEnv_AdaptiveTraining_AC import NetworkHoneypotEnv
 
 
 import matplotlib.pyplot as plt
@@ -32,15 +33,15 @@ class Evaluation:
 
     def load_tpg_data(self):
         ntpg = misc.create_dictionary_ntpg(os.environ['NTPG_TRAINING'])
-        htpg = misc.create_dictionary_htpg(os.environ['HTPG_TRAINING'])
-        return ntpg, htpg
+        # htpg = misc.create_dictionary_htpg(os.environ['HTPG_TRAINING'])
+        return ntpg
 
-    def create_environment(self, ntpg, htpg):
+    def create_environment(self, ntpg):
         deception_nodes = 2 # misc.get_deception_nodes()
         normal_nodes = misc.count_nodes(ntpg)
         first_parameter = misc.calculate_first_parameter(deception_nodes, normal_nodes)
         total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
-        eval_env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, htpg)
+        eval_env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, 0.25, 0.2, 0.9, random.choice(list(misc.create_dictionary_ntpg(os.environ['NTPG_TRAINING']).keys())))
         return eval_env
 
     def evaluate_episodes(self, eval_env, agent, trained_model):
@@ -159,16 +160,16 @@ class Evaluation:
         if model_type == 1 or model_type == 2 or model_type == 3:
             trained_model = evaluation.load_trained_model(model_path)
             # print("Trained model:", trained_model.summary())
-        ntpg, htpg = evaluation.load_tpg_data()
-        eval_env = evaluation.create_environment(ntpg, htpg)
+        ntpg = evaluation.load_tpg_data()
+        eval_env = evaluation.create_environment(ntpg)
         if model_type == 1 or model_type == 2:
             evaluation.evaluate_episodes(eval_env, evalAgent, trained_model)
         elif model_type == 3:
             evaluation.evaluate_episodes(eval_env, evalAgent, trained_model)
         
         # TODO: MAKE THE TPG DATA LOAD CUSTOM TOO
-        ntpg, htpg = evaluation.load_tpg_data()
-        eval_env = evaluation.create_environment(ntpg, htpg)
+        ntpg = evaluation.load_tpg_data()
+        eval_env = evaluation.create_environment(ntpg)
         evaluation.evaluate_episodes(eval_env, evalAgent, trained_model)
         # evaluation.visualize_dsp()
         evaluation.save_visualization_data()

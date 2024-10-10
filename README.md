@@ -22,17 +22,19 @@ Enter FPR value: Điền vào giá trị False Positive Rate mong muốn (mặc 
 
 Enter the attack rate for the attacker: Điền vào tỷ lệ sẽ thực hiện tấn công của attacker (mặc định 0.8)
 
+Thu muc chua cac file TPG la Development/TPG-Data
+
 Enter the name of the NTPG file to load: Điền vào tên file NTPG muốn load (string)
 
 - Các file NTPG được tạo sinh ngẫu nhiên theo code sẽ được đánh số theo format: ntpg_xx (xx là số lượng node trong mạng)
 
-- File NTPG được tạo dựa trên mạng thật có tên là: ntpg_inf
+- File NTPG được tạo dựa trên mạng thật có tên là: ntpg_inf (10 node)
 
 Enter the name of the HTPG file to load: Điền vào tên file HTPG muốn load (string)
 
 - Các file HTPG được tạo sinh ngẫu nhiên theo code sẽ được đánh số theo format: htpg_xx (xx là số lượng node trong mạng)
 
-- File HTPG được tạo dựa trên mạng thật có tên là: htpg_inf
+- File HTPG được tạo dựa trên mạng thật có tên là: htpg_inf (10 node)
 
 Sau các lựa chọn này, driver code sẽ thực hiện xây dựng môi trường và show kết quả ra console như sau:
 

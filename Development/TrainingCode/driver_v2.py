@@ -39,23 +39,23 @@ attack_rate = float(input("Enter the attack rate for the attacker: "))
 
 # Load the TPG data
 filename_ntpg = input("Enter the name of the NTPG file to load: ")
-filename_htpg = input("Enter the name of the HTPG file to load: ")
+# filename_htpg = input("Enter the name of the HTPG file to load: ")
 
 # Set the environment variables
 os.environ['NTPG_TRAINING'] = './Development/TPG-Data/' + filename_ntpg + '.csv'
-os.environ['HTPG_TRAINING'] = './Development/TPG-Data/' + filename_htpg + '.csv'
+# os.environ['HTPG_TRAINING'] = './Development/TPG-Data/' + filename_htpg + '.csv'
 
 
 ntpg = misc.create_dictionary_ntpg(os.environ['NTPG_TRAINING'])
 print("NTPG loaded successfully.", ntpg)
-htpg = misc.create_dictionary_htpg(os.environ['HTPG_TRAINING'])
+# htpg = misc.create_dictionary_htpg(os.environ['HTPG_TRAINING'])
 
 normal_nodes = misc.count_nodes(ntpg)
 print("Normal nodes:", normal_nodes)
 # Load the TPG data
 
 
-def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type):
+def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type, model_filename):
     '''
     Short training for testing out the dsp graphing function
 
@@ -67,7 +67,7 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
     first_parameter = misc.calculate_first_parameter(deception_nodes, normal_nodes)
 
     # Create the environment
-    env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, htpg, fnr, fpr, attack_rate)
+    env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, fnr, fpr, attack_rate, random.choice(list(ntpg.keys())))
 
     numberEpisodes = numberEpisodes
 
@@ -87,7 +87,7 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
         agent=SarsaLearning(env, epsilon, numberEpisodes, max_steps_sarsa, alpha_sarsa, gamma, total_permutations, fnr, fpr)
     if(model_type == 3):
         # PPO
-        agent = PPOAgent(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations, fnr, fpr)
+        agent = PPOAgent(model_filename,env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations, fnr, fpr)
     
     
     # run the learning process
@@ -100,7 +100,8 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
         currentStep = agent.getStepCount()
         print("Current Step: ", currentStep)
         
-        if currentStep in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000]:
+        # For evaluation results
+        if currentStep in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000, 50000, 60000, 70000, 80000, 90000, 100000]:
             
             # Initialize an evalutaion instance
             evaluator = evaluation_headless_v2.Evaluation()
@@ -148,7 +149,7 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
         agent.mainNetwork.model.summary()
         agent.saveModel()
 
-def MultiDecoyTraining(numberEpisodes, model_name, model_type):
+def MultiDecoyTraining(numberEpisodes, model_name, model_type, model_filename):
     '''
     For loop for long training
     The training will start from giving the agent only 1 deception node and increase the number of deception nodes by 1 in each iteration.
@@ -160,7 +161,7 @@ def MultiDecoyTraining(numberEpisodes, model_name, model_type):
         first_parameter = misc.calculate_first_parameter(deception_nodes, normal_nodes)
 
         # Create the environment
-        env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, htpg, fnr, fpr, attack_rate)
+        env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, fnr, fpr, attack_rate)
 
         numberEpisodes = numberEpisodes
 
@@ -180,7 +181,7 @@ def MultiDecoyTraining(numberEpisodes, model_name, model_type):
             agent=SarsaLearning(env, epsilon, numberEpisodes, max_steps_sarsa, alpha_sarsa, gamma, total_permutations, fnr, fpr)
         if(model_type == 3):
             # PPO
-            agent = PPOAgent(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations, fnr, fpr)
+            agent = PPOAgent(model_filename, env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations, fnr, fpr)
         
         
         # run the learning process
@@ -254,6 +255,9 @@ if __name__ == "__main__":
     
     model_type = 1 # Default to DQN
     
+    # Ask the user for model name
+    model_filename = input("Enter the name of the model file: ")
+    
     # Ask the user which model they want to use for training
     print("Select the model for training:")
     print("1: Standard Model")
@@ -263,6 +267,7 @@ if __name__ == "__main__":
     print("5: SARSA Model 3 Input")
     print("6: A2C Model")
     print("7: A2C Model 3 Input")
+    print("8: A2C Model Adaptive Training")
     model_choice = input("Enter the number of the model you want to train: ")
     model_name = None
 
@@ -335,10 +340,18 @@ if __name__ == "__main__":
         
     elif model_choice == '7':
         model_name = "A2C_3_INPUT"
-        model_type = 3  # Set a new model type for PPO
+        model_type = 3  # Set a new model type for A2C
         from NetworkHoneypotEnv_base_v4 import NetworkHoneypotEnv
         from PPO.a2c_3input import PPOAgent
 
+        print("Imported the environment and A2C agent successfully.")
+        
+    elif model_choice == '8':
+        model_name = "A2C_ADAPTIVE"
+        model_type = 3  # Set a new model type for A2C
+        from A2C_Subnet.NetworkHoneypotEnv_AdaptiveTraining_AC import NetworkHoneypotEnv
+        from A2C_Subnet.a2c_adaptive import PPOAgent
+        
         print("Imported the environment and A2C agent successfully.")
         
     else:
@@ -357,12 +370,12 @@ if __name__ == "__main__":
         numberEpisodes = int(input("Enter the number of episodes: "))
         print("And how many decoy nodes will be available?")
         deception_nodes = int(input("Enter the number of deception nodes: "))
-        SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type)
+        SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type, model_filename)
     elif training_choice == '2':
         print("Enter the number of episodes you want to train for each number of decoy nodes:")
         print("BEWARE: Try to keep this low as the training will take a long time if there's many counts of decoy nodes.")
         numberEpisodes = int(input("Enter the number of episodes: "))
-        MultiDecoyTraining(numberEpisodes, model_name, model_type)
+        MultiDecoyTraining(numberEpisodes, model_name, model_type, model_filename)
     else:
         print("Invalid selection. Exiting.")
         exit()

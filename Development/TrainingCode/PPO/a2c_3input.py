@@ -16,7 +16,7 @@ import string
 
 # Define the PPO Agent class
 class PPOAgent:
-    def __init__(self, env, gamma, epsilon, numberEpisodes, nodecount, totalpermutation, fnr, fpr):
+    def __init__(self, model_filename, env, gamma, epsilon, numberEpisodes, nodecount, totalpermutation, fnr, fpr):
         self.env = env
         self.gamma = gamma
         self.epsilon = epsilon
@@ -42,6 +42,7 @@ class PPOAgent:
         self.actor_model = self.build_actor_model()
         self.critic_model = self.build_critic_model()
         self._modelPath = None
+        self.model_filename = model_filename
 
 
 
@@ -293,16 +294,16 @@ class PPOAgent:
         
     def retrieveTrainingEpisode(self):
         return self.currentTrainingEpisode
-
+            
     def saveModel(self):
-        random_token = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+        random_token = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=10))
         if os.name == 'nt':
             os.makedirs(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/{random_token}", exist_ok=True)
-            self.actor_model.save(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/{random_token}/RL_Honeypot_actorcrit_win_ver{self.getStepCount()}_actor.keras")
-            self.critic_model.save(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/{random_token}/RL_Honeypot_actorcrit_win_ver{self.getStepCount()}_critic.keras")
-            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/{random_token}/RL_Honeypot_actorcrit_win_ver{self.getStepCount()}_actor.keras")
+            self.actor_model.save(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/{random_token}/{self.model_filename}_actor.keras")
+            self.critic_model.save(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/{random_token}/{self.model_filename}_critic.keras")
+            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/{random_token}/{self.model_filename}_actor.keras")
         else:
-            os.makedirs(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/{random_token}/", exist_ok=True)
-            self.actor_model.save(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/{random_token}/RL_Honeypot_actorcrit_linux_ver{self.getStepCount()}_actor.keras")
-            self.critic_model.save(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/{random_token}/RL_Honeypot_actorcrit_linux_ver{self.getStepCount()}_critic.keras")
-            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/{random_token}/RL_Honeypot_actorcrit_linux_ver{self.getStepCount()}_actor.keras")
+            os.makedirs(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/{random_token}", exist_ok=True)
+            self.actor_model.save(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/{random_token}/{self.model_filename}_actor.keras")
+            self.critic_model.save(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/{random_token}/{self.model_filename}_critic.keras")
+            self.updateModelPath(f"./TrainedModel/weighted_random_attacker/A2C_3_INPUT/{random_token}/{self.model_filename}_actor.keras")

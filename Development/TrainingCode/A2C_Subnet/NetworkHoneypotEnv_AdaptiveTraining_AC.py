@@ -18,7 +18,13 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
         self.K = K
         self.nicr_nodes = nicr_nodes
         self.nifr_nodes = []
-        my_list = list(range(1, K+1))
+        
+        # For node guessing
+        # my_list = list(range(1, K+1))
+        
+        # For subnet guessing (static placeholder, MUST CHANGE, implement subnet retrieval from NTPG)
+        my_list = list(range(1, 5))
+        
         combinations = list(itertools.combinations(my_list, M))
         self._action_space = dict(enumerate(combinations))
         self._action_spec = array_spec.BoundedArraySpec(
@@ -36,16 +42,16 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
         # self._current_attacker_node = list(ntpg.keys())[2]
         # chua chay, co bao nhieu lo hong tren 3 node nay thi cong lai lay trung binh epss lam weight
         print("NTPG:", self._ntpg.keys())
-        self._current_attacker_node = random.choices(
-            population=[list(self._ntpg.keys())[0], list(self._ntpg.keys())[1], list(self._ntpg.keys())[6]],
-            weights=[0.00834, 0.00338, 0.00612],
-            k=1
-        )[0]
+        self._current_attacker_node = self.random_initial_attacker_node()
         print("Initial attacker node: ", self._current_attacker_node)
         # os.system('pause')
         self.fnr = fnr
         self.fpr = fpr
         self.attack_rate = attack_rate
+        
+    def random_initial_attacker_node(self):
+        # Randomly select an initial attacker node from the NTPG keys
+        return random.choice(list(self._ntpg.keys()))
 
     def action_spec(self):
         return self._action_spec
@@ -56,11 +62,35 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
     def observation_spec(self):
         return self._observation_spec
     
+    def observation_space(self):
+        return self._state
+    
     def get_ntpg(self):
         return self._ntpg
     
+    def get_htpg(self):
+        return self._htpg
+    
     def get_alerted_state(self):
         return self._alerted_state
+    
+    import os
+    
+    def generate_random_ntpg(self):
+        # Generate a new NTPG with the same number of nodes (K)
+        new_ntpg = {}
+        for i in range(1, self.K + 1):
+            connections = []
+            for j in range(random.randint(1, self.K // 2)):
+                target_node = random.randint(1, self.K)
+                weight1 = random.random()
+                weight2 = random.random()
+                connections.append((target_node, weight1, weight2))
+            new_ntpg[i] = connections
+        self._ntpg = new_ntpg
+        # print("New NTPG: ", new_ntpg)
+        # os.system('pause')
+        self._current_attacker_node = list(new_ntpg.keys())[2]
 
     def _reset(self):
         self.current_step = 0
@@ -68,26 +98,13 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
         self.nifr_nodes = []
         self._state = np.zeros(self.K, dtype=np.int32)
         self._episode_ended = False
-        # chua chay, co bao nhieu lo hong tren 3 node nay thi cong lai lay trung binh epss lam weight
-        self._current_attacker_node = random.choices(
-            population=[list(self._ntpg.keys())[0], list(self._ntpg.keys())[1], list(self._ntpg.keys())[6]],
-            weights=[0.00834, 0.00338, 0.00612],
-            k=1
-        )[0]
+        self._current_attacker_node = self.random_initial_attacker_node()  # Randomize initial attacker node
         print("Reset attacker node: ", self._current_attacker_node)
+        self.generate_random_ntpg()  # Generate a new NTPG for each episode
         # os.system('pause')
         return ts.restart(np.array([self._state], dtype=np.int32))
-    
-    def __is_action_valid(self, action):
-        if isinstance(action, (list, np.ndarray)):
-            action = tuple(sorted(action)) if action.ndim > 1 else (action[0],)
-        sorted_action_space = {k: tuple(sorted(v)) for k, v in self.action_space().items()}
-        if action not in sorted_action_space.values():
-            return False
-        return len(action) == self._action_spec.shape[1]
 
     def __attacker_move_step_fnrfpr(self, fnr, fpr, attack_rate):
-
         non_attack_rate = 1 - attack_rate
 
         # FN, FP, TP, TN rates

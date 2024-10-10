@@ -30,6 +30,7 @@ dockerpty==0.4.1
 docopt==0.6.2
 duplicity==0.8.12.0
 entrypoints==0.3
+Farama-Notifications==0.0.4
 fasteners==0.14.1
 filelock==3.13.3
 flask==3.0.3
@@ -44,6 +45,7 @@ google-pasta==0.2.0
 grpcio==1.63.0
 gym==0.23.0
 gym-notices==0.0.8
+gymnasium==0.29.1
 h5py==3.11.0
 httplib2==0.14.0
 idna==2.8
@@ -108,6 +110,7 @@ requests==2.22.0
 requests-oauthlib==2.0.0
 requests-unixsocket==0.2.0
 rsa==4.9
+scipy==1.10.1
 SecretStorage==2.3.1
 simplejson==3.16.0
 six==1.14.0
