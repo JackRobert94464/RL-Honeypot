@@ -113,7 +113,7 @@ class PPOAgent:
             action = np.array(random_action, dtype=np.int32)
             return action
         else:
-            action_probs = self.actor_model.predict(state)[0]
+            action_probs = self.actor_model.predict_on_batch(state)[0]  # FIX: predict_on_batch/train_on_batch instead of predict/fit; calling predict/fit every step leaked memory (24 GB by step 19k) and was slow
             action_index = np.random.choice(len(action_probs), p=action_probs)
             action_matrix = self.index_to_action(action_index)
             return action_matrix
@@ -131,7 +131,7 @@ class PPOAgent:
             action = np.array(random_action, dtype=np.int32)
             return action
         else:
-            action_probs = model.predict(state)[0]
+            action_probs = model.predict_on_batch(state)[0]
             action_index = np.random.choice(len(action_probs), p=action_probs)
             action_matrix = self.index_to_action(action_index)
             return action_matrix

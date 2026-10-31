@@ -225,7 +225,7 @@ class PPOAgent:
             inputs = [state, self.epss_input_reshaped, self.ntpg_input_reshaped]
             
             # Get action probabilities from the actor model
-            action_probs = self.actor_model.predict(inputs)[0]
+            action_probs = self.actor_model.predict_on_batch(inputs)[0]  # FIX: predict_on_batch/train_on_batch instead of predict/fit; calling predict/fit every step leaked memory (24 GB by step 19k) and was slow
             
             # Select action based on the probabilities
             action_index = np.random.choice(len(action_probs), p=action_probs)
@@ -249,7 +249,7 @@ class PPOAgent:
             inputs = [state, self.epss_input_reshaped, self.ntpg_input_reshaped]
             
             # Get action probabilities from the model
-            action_probs = model.predict(inputs)[0]
+            action_probs = model.predict_on_batch(inputs)[0]
             
             # Select action based on the probabilities
             action_index = np.random.choice(len(action_probs), p=action_probs)

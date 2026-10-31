@@ -29,7 +29,7 @@ class DoubleDeepQLearning:
         self.nodecount = nodecount
         self.totalpermutation = totalpermutation
         self.stateDimension = env.K
-        self.actionDimension = factorial(env.K) / (factorial(env.K - env.M) * factorial(env.M))
+        self.actionDimension = len(env.action_space())  # FIX: count the env's real actions (honeypots on the critical node are no longer offered)
         self.replayBufferSize = 500
         self.batchReplayBufferSize = 100
         self.updateTargetNetworkPeriod = 50
@@ -80,8 +80,8 @@ class DoubleDeepQLearning:
         model.add(InputLayer(input_shape=self.stateDimension))
         model.add(Dense(64, activation='relu'))
         model.add(Dense(64, activation='relu'))
-        model.add(Dense(self.actionDimension, activation='softmax'))
-        model.compile(loss=DoubleDeepQLearning.ddqn_loss_fn, optimizer=RMSprop(), metrics=['accuracy'])
+        model.add(Dense(self.actionDimension, activation='linear'))  # FIX: Q-values need a linear output; softmax squeezed them into 0..1 summing to 1, so the -1 for losing could not be learned
+        model.compile(loss='mse', optimizer=RMSprop(), metrics=['accuracy'])  # FIX: plain MSE on the target vector; the old loss read a global actionsAppend list that grew by 100 entries every step and was never cleared
         return model
     
     def trainingEpisodes(self):
@@ -198,6 +198,8 @@ class DoubleDeepQLearning:
     
     def selectAction(self, state, episode):
         randomValue = np.random.random()
+        if episode > 20:
+            self.epsilon = max(0.05, 0.999 * self.epsilon)  # FIX: keep at least 5% exploration (this agent never decayed epsilon)
         if episode < 3:
             action_space_values = list(self.env.action_space().values())        
             random_action = random.choice(action_space_values)
@@ -211,7 +213,7 @@ class DoubleDeepQLearning:
             return action
 
         else:
-            Qvalues = self.mainNetwork.predict(state)
+            Qvalues = self.mainNetwork.predict_on_batch(state)  # FIX: predict_on_batch/train_on_batch instead of predict/fit; calling predict/fit every step leaked memory (24 GB by step 19k) and was slow
             max_index = np.argmax(Qvalues)
             action_matrix = self.index_to_action(max_index)
             return action_matrix
@@ -235,8 +237,8 @@ class DoubleDeepQLearning:
                 currentStateBatch[index, :] = currentState
                 nextStateBatch[index, :] = nextState
              
-            QnextStateTargetNetwork = self.targetNetwork.predict(nextStateBatch)
-            QcurrentStateMainNetwork = self.mainNetwork.predict(currentStateBatch)
+            QnextStateTargetNetwork = self.targetNetwork.predict_on_batch(nextStateBatch)
+            QcurrentStateMainNetwork = self.mainNetwork.predict_on_batch(currentStateBatch)
              
             inputNetwork = currentStateBatch
             outputNetwork = np.zeros(shape=(self.batchReplayBufferSize, int(self.totalpermutation)))
@@ -247,12 +249,11 @@ class DoubleDeepQLearning:
                 else:
                     y = reward + self.gamma * np.max(QnextStateTargetNetwork[index])
                  
-                actionsAppend.append(action)
                 
                 outputNetwork[index] = QcurrentStateMainNetwork[index]
                 outputNetwork[index, self.action_to_index(action)] = y  # FIX: was indexed by node IDs
              
-            self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size=self.batchReplayBufferSize, verbose=0, epochs=1)  # FIX: was 200 epochs per step, which overfits each minibatch
+            self.mainNetwork.train_on_batch(inputNetwork, outputNetwork)  # FIX: was 200 epochs per step, which overfits each minibatch
              
             self.counterUpdateTargetNetwork += 1 
             if self.counterUpdateTargetNetwork > (self.updateTargetNetworkPeriod - 1):
@@ -277,7 +278,7 @@ class DoubleDeepQLearning:
             return action
 
         else:
-            Qvalues = model.predict(state)
+            Qvalues = model.predict_on_batch(state)
             max_index = np.argmax(Qvalues)
             action_matrix = self.index_to_action(max_index)
             return action_matrix

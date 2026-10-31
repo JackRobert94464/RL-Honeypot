@@ -31,7 +31,7 @@ class DoubleDeepQLearning:
         self.totalpermutation = totalpermutation
         
         self.stateDimension = env.K
-        self.actionDimension = factorial(env.K) / (factorial(env.K - env.M) * factorial(env.M))
+        self.actionDimension = len(env.action_space())  # FIX: count the env's real actions (honeypots on the critical node are no longer offered)
         self.epssDimension = env.K * env.K
         self.ntpgDimension = env.K * env.K
         
@@ -191,13 +191,13 @@ class DoubleDeepQLearning:
         hidden_1 = Dense(self.stateDimension * self.stateDimension, activation='relu')(concatenated)
         hidden_2 = Dense(self.stateDimension * self.stateDimension, activation='relu')(hidden_1)
         hidden_3 = Dense(self.stateDimension, activation='relu')(hidden_2)
-        output = Dense(self.actionDimension, activation='softmax')(hidden_3)
+        output = Dense(self.actionDimension, activation='linear')(hidden_3)  # FIX: Q-values need a linear output; softmax squeezed them into 0..1 summing to 1, so the -1 for losing could not be learned
 
         # Create model
         model = Model(inputs=[observable_input, epss_input, ntpg_input], outputs=output)
 
         # Compile model
-        model.compile(loss=DoubleDeepQLearning.ddqn_loss_fn, optimizer=RMSprop(), metrics=['accuracy'])
+        model.compile(loss='mse', optimizer=RMSprop(), metrics=['accuracy'])  # FIX: plain MSE on the target vector; the old loss read a global actionsAppend list that grew by 100 entries every step and was never cleared
         print("Created network:", model.summary())
         # os.system("pause")
         return model
@@ -440,7 +440,7 @@ class DoubleDeepQLearning:
         # Epsilon-greedy approach
         randomValue = np.random.random()
         if episode > 20:
-            self.epsilon = 0.999 * self.epsilon
+            self.epsilon = max(0.05, 0.999 * self.epsilon)  # FIX: keep at least 5% exploration
         
         # Exploration phase
         if episode < 3:
@@ -496,7 +496,7 @@ class DoubleDeepQLearning:
 
             # os.system("pause")
 
-            Qvalues = self.mainNetwork.predict([state, epss_input_reshaped, ntpg_input_reshaped])
+            Qvalues = self.mainNetwork.predict_on_batch([state, epss_input_reshaped, ntpg_input_reshaped])  # FIX: predict_on_batch/train_on_batch instead of predict/fit; calling predict/fit every step leaked memory (24 GB by step 19k) and was slow
 
 
             # print("STATE TO PREDICT:", state)
@@ -563,8 +563,8 @@ class DoubleDeepQLearning:
                 ntpgBatch[index, :, :] = ntpgMatrix
                 nextStateBatch[index, :] = nextState
             
-            QnextStateTargetNetwork = self.targetNetwork.predict([nextStateBatch, epsBatch, ntpgBatch])
-            QcurrentStateMainNetwork = self.mainNetwork.predict([currentStateBatch, epsBatch, ntpgBatch])
+            QnextStateTargetNetwork = self.targetNetwork.predict_on_batch([nextStateBatch, epsBatch, ntpgBatch])
+            QcurrentStateMainNetwork = self.mainNetwork.predict_on_batch([currentStateBatch, epsBatch, ntpgBatch])
             
             inputNetwork = [currentStateBatch, epsBatch, ntpgBatch]
             outputNetwork = np.zeros(shape=(self.batchReplayBufferSize, int(self.totalpermutation)))
@@ -572,11 +572,10 @@ class DoubleDeepQLearning:
             for index, (currentState, epsMatrix, ntpgMatrix, action, reward, nextState, terminated) in enumerate(randomSampleBatch):
                 # FIX: no bootstrapping past a terminal state
                 y = reward if terminated else reward + self.gamma * np.max(QnextStateTargetNetwork[index])
-                actionsAppend.append(action)
                 outputNetwork[index] = QcurrentStateMainNetwork[index]
                 outputNetwork[index, self.action_to_index(action)] = y  # FIX: was indexed by node IDs
             
-            self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size=self.batchReplayBufferSize, verbose=0, epochs=1)  # FIX: was 200 epochs per step, which overfits each minibatch
+            self.mainNetwork.train_on_batch(inputNetwork, outputNetwork)  # FIX: was 200 epochs per step, which overfits each minibatch
             print("Main network trained!")
             
             self.counterUpdateTargetNetwork += 1
@@ -657,7 +656,7 @@ class DoubleDeepQLearning:
 
             # os.system("pause")
 
-            Qvalues = self.mainNetwork.predict([state, epss_input_reshaped, ntpg_input_reshaped])
+            Qvalues = self.mainNetwork.predict_on_batch([state, epss_input_reshaped, ntpg_input_reshaped])
 
 
             # print("STATE TO PREDICT:", state)

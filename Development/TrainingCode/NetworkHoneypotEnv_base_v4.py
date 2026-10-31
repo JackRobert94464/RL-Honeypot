@@ -27,7 +27,8 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
         self._initial_nicr_nodes = list(nicr_nodes)
         self.nicr_nodes = list(self._initial_nicr_nodes)
         self.nifr_nodes = []
-        my_list = list(range(1, K+1))
+        # FIX: no honeypot on the critical node: it is the asset being protected, and a honeypot there was a free win
+        my_list = [n for n in range(1, K+1) if n not in self._initial_nicr_nodes]
         combinations = list(itertools.combinations(my_list, M))
         self._action_space = dict(enumerate(combinations))
         self._action_spec = array_spec.BoundedArraySpec(
@@ -65,12 +66,19 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
         return self._alerted_state
 
     def pick_initial_attacker_node(self):
-        # chua chay, co bao nhieu lo hong tren 3 node nay thi cong lai lay trung binh epss lam weight
-        return random.choices(
-            population=[list(self._ntpg.keys())[0], list(self._ntpg.keys())[1], list(self._ntpg.keys())[6]],
-            weights=[0.00834, 0.00338, 0.00612],
-            k=1
-        )[0]
+        # FIX: start on a random non-critical node that has a real outgoing edge. The old choice (node IDs 1, 2, 7 weighted
+        # 0.00834/0.00338/0.00612) put the attacker on a dead-end node (1 or 7 in ntpg_inf) about 80% of the time, where
+        # any honeypot on its own node "caught" it. That is why a random policy scored ~0.87.
+        return random.choice(self.__start_candidates())
+
+    def __start_candidates(self):
+        keys = list(self._ntpg.keys())
+        candidates = [k for k in keys if self.__routes(k) and keys.index(k) + 1 not in self._initial_nicr_nodes]
+        return candidates or keys
+
+    # FIX: the NTPG files write "no outgoing edges" as a self-loop (X -> X), so a self-loop is not a move
+    def __routes(self, node):
+        return [route for route in self._ntpg.get(node, []) if route[0] != node]
 
     def __node_id(self, node):
         return list(self._ntpg.keys()).index(node) + 1
@@ -126,12 +134,13 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
 
         current_node = self._current_attacker_node
 
-        if not self._ntpg.get(current_node):
+        routes = self.__routes(current_node)  # FIX: ignore self-loops; on a dead-end node the attacker stays put
+        if not routes:
             return None
 
         # Pick next node based on weighted random choice
-        pop = [route[0] for route in self._ntpg.get(current_node)]
-        wei = [(route[1] + route[2])/2 for route in self._ntpg.get(current_node)]
+        pop = [route[0] for route in routes]
+        wei = [(route[1] + route[2])/2 for route in routes]
 
         # Adjust weights to reduce the chance of always falling into a honeypot
         adjusted_weights = []

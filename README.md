@@ -1,5 +1,101 @@
 Em xin hướng dẫn thầy phương pháp chạy code huấn luyện và suy luận của model
 
+# CẬP NHẬT 31/10/2026: SỬA LỖI VÀ HUẤN LUYỆN LẠI (Claude, Anthropic)
+
+*Phần này do **Claude** (mô hình AI của Anthropic) viết, ngày 31/10/2026. Chi tiết từng thay đổi (tiếng Anh) nằm trong [FIXES.md](FIXES.md). Mọi dòng code đã sửa đều có comment `# FIX:`, tìm nhanh bằng lệnh `git grep -n "# FIX:"`.*
+
+## Tóm tắt
+
+Kết quả FNR/FPR trước đây không phản ánh đúng chất lượng model, vì các lý do sau:
+
+- Không model nào thực sự được huấn luyện.
+- Môi trường cho agent thấy trạng thái thật thay vì trạng thái qua IDS.
+- Phần đánh giá đo sai cách.
+
+Sau khi sửa, cả 6 model đã được huấn luyện lại từ đầu (24 lần chạy, mỗi lần 30.000 step). Các model 1 input (DDQN, SARSA) giờ đặt honeypot tốt gần bằng một luật heuristic viết tay. Các model 3 input của DDQN/SARSA vẫn chưa học được gì đáng kể sau 30.000 step.
+
+## Các lỗi đã sửa
+
+### Đợt 1: vòng lặp huấn luyện, môi trường, đánh giá
+
+1. **Không model nào được huấn luyện (lỗi quan trọng nhất).** Trong `trainingSingleEpisodes()` của mọi agent, các lệnh `if terminalState: break` / `if not terminalState: continue` thoát vòng lặp trước khi lưu transition vào replay buffer và gọi `trainNetwork()`. Vì vậy mọi checkpoint đã lưu đều là mạng chưa học.
+2. **FNR/FPR không ảnh hưởng tới thứ agent thấy.** Môi trường trả về trạng thái thật (`_state`) làm observation. Giờ observation là `_alerted_state`, tức góc nhìn của IDS có nhiễu FNR/FPR, và trạng thái này được xóa sau mỗi lần `reset()`.
+3. **Lệch chỉ số node.** Action dùng ID node bắt đầu từ 1, còn các kiểm tra `_state[i]` lại bắt đầu từ 0. Node quan trọng (critical node) bị gán cứng trong `reset()`. Giờ mọi chỗ dùng ID từ 1, và node quan trọng mặc định là node 6, chính là node mà các lần chạy cũ thực sự dùng.
+4. **Thứ tự trong một step.** Code cũ kiểm tra bắt được attacker *trước* khi đặt honeypot mới và cho attacker di chuyển, nên reward đến trễ một step. Giờ thứ tự là: đặt honeypot → attacker di chuyển → kiểm tra → reward. Chỉ tính là bắt được khi attacker *vừa bước vào* node honeypot.
+5. **`trainNetwork()` của DDQN** ghi Q-target vào sai vị trí (dùng tuple node làm chỉ số). Code cũ cũng chạy `epochs=200` trên mỗi minibatch, nên rất chậm và overfit; giờ là 1 epoch.
+6. **A2C:** viết lại `trainNetwork()` thành bản cập nhật actor-critic một bước đúng nghĩa.
+7. **SARSA:** bỏ dòng `reward += 1`, vì nó biến reward thắng (1) thành 2 nên không bao giờ đếm được lần thắng.
+8. **Đánh giá (`evaluation_headless_v2.py`):**
+   - Code cũ dùng môi trường A2C_Subnet sinh mạng ngẫu nhiên mỗi episode, với FNR/FPR gán cứng.
+   - Mỗi episode bị chạy 2 lần nhưng vẫn chia cho 50, và lấy trung bình các giá trị cộng dồn. Đó là lý do DSP có thể lên tới 1.01.
+   - Giờ đánh giá dùng đúng môi trường và tham số lúc huấn luyện, và DSP = số lần thắng / số episode.
+9. **Driver (`driver_v2.py`):** sửa đường dẫn lưu file kết quả (thiếu dấu `/`). Thêm tham số dòng lệnh để chạy không cần nhập tay (xem bên dưới).
+
+### Đợt 2: sau lần huấn luyện đầy đủ đầu tiên
+
+Lần chạy đầu tiên sau đợt 1 cho DSP chỉ 0.36–0.52, *thấp hơn cả đặt honeypot ngẫu nhiên*, và tiến trình ngốn tới 24.7 GB RAM. Nguyên nhân và cách sửa:
+
+1. **Lớp đầu ra của Q-network dùng `softmax`.** Softmax ép Q-value về 0..1 và tổng bằng 1, nên không thể biểu diễn reward −1 khi thua. Đã đổi sang `linear` cho 5 agent DDQN và SARSA 3 input. Actor của A2C vẫn giữ softmax vì đó là phân phối xác suất của policy, dùng softmax là đúng.
+2. **Rò rỉ bộ nhớ.**
+   - Loss của DDQN đọc một list toàn cục `actionsAppend`, list này tăng 100 phần tử mỗi step mà không bao giờ được xóa.
+   - Gọi `model.predict()` / `model.fit()` ở mỗi step bị rò bộ nhớ trên TF 2.13 và chạy chậm.
+   - Cách sửa: dùng loss `mse`, và chuyển sang `predict_on_batch()` / `train_on_batch()`. RAM giờ ổn định khoảng 0.55 GB mỗi lần chạy, và tốc độ nhanh hơn khoảng 6 lần.
+3. **DDQN gần như không khám phá.** Epsilon bắt đầu ở 0.1 rồi giảm về ~0. Giờ epsilon bắt đầu ở 1.0, nhân 0.999 mỗi step, và không xuống dưới 0.05. Khi đánh giá vẫn dùng policy tham lam (epsilon = 0).
+4. **Môi trường (`NetworkHoneypotEnv_base_v4.py`), thay đổi cách chọn nút tấn công ban đầu** (phần "Initial attacker node" ở mục Phương pháp huấn luyện bên dưới):
+   - Trong `ntpg_inf.csv`, các node không có cạnh đi ra (node 1, 7, 8) được ghi dưới dạng cạnh tự trỏ (vd. `192.168.9.2 -> 192.168.9.2`).
+   - Cách chọn cũ (node 1, 2, 7 theo trọng số EPSS) đặt attacker vào node 1 hoặc 7 khoảng 80% số lần. Từ đó attacker chỉ "đi vào lại" chính node của nó mỗi step, nên chỉ cần đặt honeypot lên đó là thắng. Riêng điều này đã khiến policy ngẫu nhiên đạt DSP ~0.87.
+   - Giờ cạnh tự trỏ bị bỏ qua (ở node cụt, attacker đứng yên), và attacker bắt đầu ở một node ngẫu nhiên không phải node quan trọng mà có cạnh đi ra thật.
+   - Không cho đặt honeypot lên node quan trọng nữa, vì đó là một chiến thắng miễn phí. Số action trên `ntpg_inf` giảm từ 45 xuống 36.
+   - Môi trường adaptive trong `A2C_Subnet/` (model 8) không đổi.
+5. **Đánh giá truyền DSP qua file tạm `dsp_globalcounter.tmp`.** Khi chạy song song nhiều lần huấn luyện, các tiến trình ghi đè và xóa file của nhau: một lần chạy bị crash, và lần chạy khác có thể ghi nhận DSP của lần chạy kia. Giờ DSP được giữ trong bộ nhớ.
+
+**Lưu ý:** model đã lưu trước đợt 2 có 45 đầu ra nên không load được vào môi trường mới (36 action). Cần huấn luyện lại.
+
+## Cách chạy mới (không cần nhập tay)
+
+Mọi câu hỏi của `driver_v2.py` giờ có thể truyền bằng tham số; câu nào không truyền thì vẫn được hỏi như cũ. Tham số mới `--max-steps` dừng huấn luyện ngay sau lần đánh giá ở mốc đó. Ví dụ (đây là cấu hình đã dùng cho kết quả bên dưới):
+
+```bash
+python Development/TrainingCode/driver_v2.py --fnr 0.2 --fpr 0.14 --attack-rate 0.8 --ntpg ntpg_inf --model-file ddqn3v2 --model 2 --input-type 2 --training 1 --episodes 20000 --max-steps 30000 --decoys 2
+```
+
+File kết quả mới nằm trong `output_dsp_trainingtime/<tên model>/result_fnr..._<step>_honeypotAmount_2_<token>.txt`.
+
+## Kết quả: trước và sau khi sửa
+
+Cấu hình: `ntpg_inf`, 2 honeypot, attack rate 0.8, 4 mức FNR/FPR (0.05/0.02, 0.1/0.06, 0.15/0.1, 0.2/0.14), đánh giá 50 episode ở mỗi mốc step. "Trước" là các file cũ trong `output_dsp_trainingtime/`.
+
+![DSP trước và sau khi sửa](Documentation/results_2026-10-31/dsp_before_after.png)
+
+![DSP trong quá trình huấn luyện](Documentation/results_2026-10-31/dsp_training_curves.png)
+
+DSP ở mốc 30.000 step (trung bình 4 mức FNR/FPR, trong ngoặc là khoảng min–max):
+
+| Model | Trước | Sau |
+|---|---|---|
+| DDQN 1 input | 0.98 (0.95–1.00) | **0.74** (0.66–0.78) |
+| DDQN 3 input v2 | không có kết quả cũ | 0.43 (0.38–0.46) |
+| SARSA 1 input | 0.96 (0.82–1.01) | **0.70** (0.62–0.84) |
+| SARSA 3 input | 0.44 (0.33–0.59) | 0.41 (0.36–0.46) |
+| A2C 1 input | 0.83 (0.81–0.83) | 0.56 (0.46–0.64) |
+| A2C 3 input | 0.79 (0.76–0.85) | 0.58 (0.50–0.68) |
+
+Mốc so sánh trên môi trường mới (2000 episode mỗi mức FNR/FPR):
+
+| FNR / FPR | 0.05 / 0.02 | 0.1 / 0.06 | 0.15 / 0.1 | 0.2 / 0.14 |
+|---|---|---|---|---|
+| Đặt honeypot ngẫu nhiên mỗi step | 0.393 | 0.401 | 0.383 | 0.379 |
+| Heuristic: đặt vào các node kế tiếp khả dĩ nhất của cảnh báo gần nhất | 0.764 | 0.746 | 0.731 | 0.752 |
+
+### Cách đọc kết quả
+
+- **Số "trước" cao hơn nhưng không so sánh trực tiếp được.** Chúng đến từ model chưa được huấn luyện, chạy trên môi trường mà ~80% episode là thắng miễn phí, và được đo bằng phần đánh giá sai (có giá trị > 1). Đường "trước" gần như nằm ngang trên biểu đồ thứ hai, đúng như một model không học.
+- **Số "sau" là kết quả học thật:** đường DSP tăng dần theo số step. DDQN 1 input (0.74) và SARSA 1 input (0.70) gần bằng heuristic (~0.75). A2C (0.56–0.58) rõ ràng hơn ngẫu nhiên (~0.39).
+- **DDQN 3 input v2 và SARSA 3 input** chỉ ngang mức ngẫu nhiên sau 30.000 step. Các model này có thể cần nhiều step hơn hoặc cần chỉnh siêu tham số.
+- **Chưa thấy xu hướng rõ theo FNR/FPR.** Với 50 episode đánh giá, mỗi giá trị DSP sai số khoảng ±0.07, lớn hơn chênh lệch giữa các mức. Muốn so sánh theo FNR/FPR nên tăng số episode đánh giá (`eval_episodes` trong `evaluation_headless_v2.py`).
+
+---
+
 # PHƯƠNG PHÁP HUẤN LUYỆN
 
 Em thực hiện code này trên môi trường ảo với python 3.8.10, là mặc định của hệ điều hành Ubuntu 20.04 (Nếu ubuntu 22.04 sẽ lỗi và cần cài đặt python 3.8.10)

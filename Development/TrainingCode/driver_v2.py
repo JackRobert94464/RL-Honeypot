@@ -13,6 +13,27 @@ import os
 import gc
 import random
 import string
+import argparse
+
+# Every prompt can also be given on the command line, so training can run unattended (nohup/tmux).
+# Anything left out is still asked interactively. Example (DDQN 3-input v2, 2 honeypots):
+#   python Development/TrainingCode/driver_v2.py --fnr 0.2 --fpr 0.14 --attack-rate 0.8 --ntpg ntpg_inf #       --model-file ddqn3v2 --model 2 --input-type 2 --training 1 --episodes 20000 --decoys 2
+parser = argparse.ArgumentParser(description="Train and evaluate RL-Honeypot agents")
+parser.add_argument("--fnr", type=float)
+parser.add_argument("--fpr", type=float)
+parser.add_argument("--attack-rate", type=float)
+parser.add_argument("--ntpg", help="NTPG file name in Development/TPG-Data, without .csv (e.g. ntpg_inf)")
+parser.add_argument("--model-file", help="name used for the saved model files")
+parser.add_argument("--model", choices=[str(i) for i in range(1, 9)], help="model number from the menu")
+parser.add_argument("--input-type", choices=["1", "2", "3", "4"], help="3-input variant when --model 2")
+parser.add_argument("--training", choices=["1", "2"], help="1: fixed number of decoys, 2: decreasing number of decoys")
+parser.add_argument("--episodes", type=int)
+parser.add_argument("--decoys", type=int, help="number of honeypots when --training 1")
+parser.add_argument("--max-steps", type=int, help="stop single-decoy training once this many steps are done (e.g. 30000)")
+args = parser.parse_args()
+
+def ask(value, prompt, cast=str):
+    return cast(input(prompt)) if value is None else cast(value)
 
 # def __init__(self, gamma, epsilon, numberEpisodes, normal_nodes, total_permutations, fnr, fpr):
 
@@ -20,6 +41,9 @@ import string
 gamma = 0.99  # Discount factor for future rewards
 # Epsilon parameter for the epsilon-greedy approach
 epsilon = 0.1
+# FIX: DDQN starts fully random and decays to 5% (selectAction). Starting at 0.1 and decaying 0.999 per step
+# left almost no exploration after a few thousand steps. SARSA and A2C keep 0.1.
+ddqn_epsilon = 1.0
 
 # For SARSA
 max_steps_sarsa = 100
@@ -31,14 +55,14 @@ alpha_sarsa = 0.1
 # fpr = [float(input("Enter FPR value: "))]
 
 # FNR and FPR values as single input
-fnr = float(input("Enter FNR value: "))
-fpr = float(input("Enter FPR value: "))
+fnr = ask(args.fnr, "Enter FNR value: ", float)
+fpr = ask(args.fpr, "Enter FPR value: ", float)
 
 # Attack rate for attacker (To determine whether to take the node or not)
-attack_rate = float(input("Enter the attack rate for the attacker: "))
+attack_rate = ask(args.attack_rate, "Enter the attack rate for the attacker: ", float)
 
 # Load the TPG data
-filename_ntpg = input("Enter the name of the NTPG file to load: ")
+filename_ntpg = ask(args.ntpg, "Enter the name of the NTPG file to load: ")
 # filename_htpg = input("Enter the name of the HTPG file to load: ")
 
 # Set the environment variables
@@ -74,7 +98,7 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type,
     numberEpisodes = numberEpisodes
 
     # calculate the number of possible combinations
-    total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
+    total_permutations = len(env.action_space())  # FIX: the env leaves out honeypots on the critical node, so C(K, M) is too many
 
     # Initialize empty dictionaries to store the training time and DSP values
     training_time_dict = {}
@@ -83,7 +107,7 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type,
     # create an object
     if(model_type == 1):
         # DQN
-        agent=DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations, fnr, fpr)
+        agent=DoubleDeepQLearning(env,gamma,ddqn_epsilon,numberEpisodes,normal_nodes,total_permutations, fnr, fpr)
     if(model_type == 2):
         # SARSA
         agent=SarsaLearning(env, epsilon, numberEpisodes, max_steps_sarsa, alpha_sarsa, gamma, total_permutations, fnr, fpr)
@@ -134,13 +158,15 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type,
                 
             random_token = ''.join(random.choices(string.ascii_uppercase + string.ascii_lowercase + string.digits, k=8))
 
-            with open(output_folder + f"result_fnr{fnr}_fpr{fpr}_model_{model_name}_{currentStep}_honeypotAmount_{deception_nodes}_{random_token}.txt", "w") as file:
+            with open(os.path.join(output_folder, f"result_fnr{fnr}_fpr{fpr}_model_{model_name}_{currentStep}_honeypotAmount_{deception_nodes}_{random_token}.txt"), "w") as file:  # FIX: results were written next to the model folder, not inside it
                 file.write(f"Training Time Dict: {training_time_dict}\n")
                 file.write(f"DSP Dict: {dsp_dict}\n")
                 
             print("Training Time and DSP saved to file.")
             print(f"File name: result_fnr{fnr}_fpr{fpr}_model_{model_name}.txt")
-            
+
+        if args.max_steps and currentStep >= args.max_steps:
+            break
 
     #  summarize the model
     if(model_type == 1):
@@ -168,7 +194,7 @@ def MultiDecoyTraining(numberEpisodes, model_name, model_type, model_filename):
         numberEpisodes = numberEpisodes
 
         # calculate the number of possible combinations
-        total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
+        total_permutations = len(env.action_space())  # FIX: the env leaves out honeypots on the critical node, so C(K, M) is too many
 
         # Initialize empty dictionaries to store the training time and DSP values
         training_time_dict = {}
@@ -177,7 +203,7 @@ def MultiDecoyTraining(numberEpisodes, model_name, model_type, model_filename):
         # create an object
         if(model_type == 1):
             # DQN
-            agent=DoubleDeepQLearning(env,gamma,epsilon,numberEpisodes,normal_nodes,total_permutations, fnr, fpr)
+            agent=DoubleDeepQLearning(env,gamma,ddqn_epsilon,numberEpisodes,normal_nodes,total_permutations, fnr, fpr)
         if(model_type == 2):
             # SARSA
             agent=SarsaLearning(env, epsilon, numberEpisodes, max_steps_sarsa, alpha_sarsa, gamma, total_permutations, fnr, fpr)
@@ -227,7 +253,7 @@ def MultiDecoyTraining(numberEpisodes, model_name, model_type, model_filename):
                     
                 random_token = str(random.randint(1000, 9999))
 
-                with open(output_folder + f"result_fnr{fnr}_fpr{fpr}_model_{model_name}_{currentStep}_honeypotAmount_{deception_nodes}_{random_token}.txt", "w") as file:
+                with open(os.path.join(output_folder, f"result_fnr{fnr}_fpr{fpr}_model_{model_name}_{currentStep}_honeypotAmount_{deception_nodes}_{random_token}.txt"), "w") as file:  # FIX: results were written next to the model folder, not inside it
                     file.write(f"Training Time Dict: {training_time_dict}\n")
                     file.write(f"DSP Dict: {dsp_dict}\n")
                     
@@ -258,7 +284,7 @@ if __name__ == "__main__":
     model_type = 1 # Default to DQN
     
     # Ask the user for model name
-    model_filename = input("Enter the name of the model file: ")
+    model_filename = ask(args.model_file, "Enter the name of the model file: ")
     
     # Ask the user which model they want to use for training
     print("Select the model for training:")
@@ -270,7 +296,7 @@ if __name__ == "__main__":
     print("6: A2C Model")
     print("7: A2C Model 3 Input")
     print("8: A2C Model Adaptive Training")
-    model_choice = input("Enter the number of the model you want to train: ")
+    model_choice = ask(args.model, "Enter the number of the model you want to train: ")
     model_name = None
 
     # Based on the user's choice, import the appropriate environment and agent
@@ -291,7 +317,7 @@ if __name__ == "__main__":
         print("2: Three Input v2 - reduce to 1 conv1D and apply batch normailzation - 29/05/2024")
         print("3: Three Input v3 - Flatten the 2D matrices into 1D and process using Dense - 01/07/2024")
         print("4: Three Input LTSM - a LTSM for observation state will be used")
-        input_choice = input("Enter the number of the input type you want to use: ")
+        input_choice = ask(args.input_type, "Enter the number of the input type you want to use: ")
         
         if input_choice == '1':
             model_name = "DDQN_3_INPUT_v1"
@@ -364,19 +390,19 @@ if __name__ == "__main__":
     print("Which training method would you like to use?")
     print("1: Single Deception Node Training - Fixed number of Decoy Nodes")
     print("2: Multiple Deception Node Training - Decremental number of Decoy Nodes, Longer Training")
-    training_choice = input("Enter the number of the training method you want to use: ")
+    training_choice = ask(args.training, "Enter the number of the training method you want to use: ")
     
     # Based on the user's choice, call the appropriate training function
     if training_choice == '1':
         print("Enter the number of episodes you want to train for:")
-        numberEpisodes = int(input("Enter the number of episodes: "))
+        numberEpisodes = ask(args.episodes, "Enter the number of episodes: ", int)
         print("And how many decoy nodes will be available?")
-        deception_nodes = int(input("Enter the number of deception nodes: "))
+        deception_nodes = ask(args.decoys, "Enter the number of deception nodes: ", int)
         SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type, model_filename)
     elif training_choice == '2':
         print("Enter the number of episodes you want to train for each number of decoy nodes:")
         print("BEWARE: Try to keep this low as the training will take a long time if there's many counts of decoy nodes.")
-        numberEpisodes = int(input("Enter the number of episodes: "))
+        numberEpisodes = ask(args.episodes, "Enter the number of episodes: ", int)
         MultiDecoyTraining(numberEpisodes, model_name, model_type, model_filename)
     else:
         print("Invalid selection. Exiting.")

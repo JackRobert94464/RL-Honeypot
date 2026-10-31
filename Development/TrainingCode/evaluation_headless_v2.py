@@ -97,11 +97,8 @@ class Evaluation:
             
             # print(f"DSP Global Counter after episode {episode}: ", self.dsp_globalcounter)
             
-            # Write dsp_globalcounter to a temporary file
-            with open('dsp_globalcounter.tmp', 'w') as file:
-                for item in self.dsp_globalcounter:
-                    file.write(str(item) + '\n')
-                    # print(f"Writing DSP Global Counter: {item}")
+            # FIX: no longer written to 'dsp_globalcounter.tmp' in the working directory. Runs started from the same folder
+            # overwrote and deleted each other's file, which crashed runs and could give one run another run's DSP.
             
             self.eval_rewards.append(episode_reward)
             self.eval_steps.append(episode_steps)
@@ -153,18 +150,13 @@ class Evaluation:
         
     # Read dsp_globalcounter from the temporary file in retrieveDSPdict
     def retrieveDSPdict(self, currentStep):
-        dsp_globalcounter = []
-        with open('dsp_globalcounter.tmp', 'r') as file:
-            for line in file:
-                dsp_globalcounter.append(float(line.strip()))
+        dsp_globalcounter = self.dsp_globalcounter  # FIX: kept in memory (copied in evaluate()), not read from a shared temp file
                 
         # print(f"Retrieved DSP Global Counter: {dsp_globalcounter}")
         # FIX: the last running value is wins / episodes. Averaging the running values understated DSP, and with the
         # doubled evaluation it could exceed 1 (e.g. the 1.01 in the SARSA results).
         final_dsp = dsp_globalcounter[-1]
         
-        # Delete the temporary file
-        os.remove('dsp_globalcounter.tmp')
         
         return {currentStep: final_dsp}
 
@@ -179,6 +171,7 @@ class Evaluation:
         eval_env = evaluation.create_environment(ntpg, agent.env)
         # FIX: evaluate once. The episodes used to run twice into the same counters, while DSP divided by 50.
         evaluation.evaluate_episodes(eval_env, evalAgent, trained_model)
+        self.dsp_globalcounter = evaluation.dsp_globalcounter  # FIX: hand the results to the caller's instance for retrieveDSPdict()
         # evaluation.visualize_dsp()
         evaluation.save_visualization_data()
         # evaluation.visualize_steps(ntpg)

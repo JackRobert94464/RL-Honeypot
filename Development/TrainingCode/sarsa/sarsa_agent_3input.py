@@ -60,7 +60,7 @@ class SARSAQNetwork:
         x = tf.keras.layers.BatchNormalization()(x)
 
         # model output
-        output = tf.keras.layers.Dense(action_space_size, activation='softmax')(x)
+        output = tf.keras.layers.Dense(action_space_size, activation='linear')(x)  # FIX: Q-values need a linear output (softmax kept them in 0..1)
 
         # Create model
         self.model = keras.Model(inputs=[observable_input, epss_input, ntpg_input], outputs=output)
@@ -73,7 +73,7 @@ class SARSAQNetwork:
     def predict(self, observation, epss_input, ntpg_input):
         # Forward pass through the network to get Q-values
         # print("Raw prediction: ", self.model.predict(observation))
-        return self.model.predict([observation, epss_input, ntpg_input])
+        return self.model.predict_on_batch([observation, epss_input, ntpg_input])  # FIX: predict_on_batch/train_on_batch instead of predict/fit; calling predict/fit every step leaked memory (24 GB by step 19k) and was slow
         
 
 # a value ambiguous use a.any or a.all fix: if load a model, put it in square bracket because my model take a list of input.
@@ -139,7 +139,7 @@ class SarsaLearning:
         self._fpr = fpr
 
         self.stateDimension = env.K
-        self.actionDimension = factorial(self.env.K) / (factorial(self.env.K - env.M) * factorial(self.env.M))
+        self.actionDimension = len(self.env.action_space())  # FIX: count the env's real actions
 
         self.epssMatrix = misc.ntpg_to_epss_matrix(env.get_ntpg())
         self.connectionMatrix = misc.ntpg_to_connection_matrix(env.get_ntpg())
@@ -200,7 +200,7 @@ class SarsaLearning:
     # Function to infer the action from the saved model
     def selectActionEval(self, state, episode, trained_model):
         state = state.reshape(1, -1)
-        q_values = trained_model.predict([state, self.epss_input_reshaped, self.ntpg_input_reshaped])[0]
+        q_values = trained_model.predict_on_batch([state, self.epss_input_reshaped, self.ntpg_input_reshaped])[0]
         
         # Choose the action based on the epsilon-greedy policy
         if np.random.uniform(0, 1) < self.epsilon:
@@ -258,7 +258,7 @@ class SarsaLearning:
         target_vector[0][action_index] = target
         
         # Train the network with the state as input and target vector as desired output
-        self.mainNetwork.model.fit([state, self.epss_input_reshaped, self.ntpg_input_reshaped], target_vector, epochs=1, verbose=0)
+        self.mainNetwork.model.train_on_batch([state, self.epss_input_reshaped, self.ntpg_input_reshaped], target_vector)
 
 
     def trainingEpisodes(self):

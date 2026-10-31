@@ -40,7 +40,7 @@ class SARSAQNetwork:
     def predict(self, observation):
         # Forward pass through the network to get Q-values
         # print("Raw prediction: ", self.model.predict(observation))
-        return self.model.predict(observation)
+        return self.model.predict_on_batch(observation)  # FIX: predict_on_batch/train_on_batch instead of predict/fit; calling predict/fit every step leaked memory (24 GB by step 19k) and was slow
         
 
 
@@ -131,7 +131,7 @@ class SarsaLearning:
     # Function to infer the action from the saved model
     def selectActionEval(self, state, episode, trained_model):
         state = state.reshape(1, -1)
-        q_values = trained_model.predict(state)[0]
+        q_values = trained_model.predict_on_batch(state)[0]
         
         # Choose the action based on the epsilon-greedy policy
         if np.random.uniform(0, 1) < self.epsilon:
@@ -189,7 +189,7 @@ class SarsaLearning:
         target_vector[0][action_index] = target
         
         # Train the network with the state as input and target vector as desired output
-        self.mainNetwork.model.fit(state, target_vector, epochs=1, verbose=0)
+        self.mainNetwork.model.train_on_batch(state, target_vector)
 
 
     def trainingEpisodes(self):
