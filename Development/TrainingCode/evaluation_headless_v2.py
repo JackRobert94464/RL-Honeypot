@@ -10,8 +10,8 @@ import random
 # Import loss function
 from ddqn_loss_fn import ddqn_loss_fn
 
-# Import environment
-from A2C_Subnet.NetworkHoneypotEnv_AdaptiveTraining_AC import NetworkHoneypotEnv
+# FIX: the environment class is taken from the agent being evaluated (see create_environment). Importing the
+# A2C_Subnet adaptive env here evaluated every model on a new random NTPG each episode instead of the training network.
 
 
 import matplotlib.pyplot as plt
@@ -26,6 +26,7 @@ class Evaluation:
         self.dsp_globalcounter = []
         self.step_counter = 0
         self.episodeWon = 0
+        self.eval_wins = []
 
     def load_trained_model(self, model_path):
         trained_model = tf.keras.models.load_model(model_path, custom_objects={'loss': ddqn_loss_fn})
@@ -36,15 +37,21 @@ class Evaluation:
         # htpg = misc.create_dictionary_htpg(os.environ['HTPG_TRAINING'])
         return ntpg
 
-    def create_environment(self, ntpg):
-        deception_nodes = 2 # misc.get_deception_nodes()
+    def create_environment(self, ntpg, train_env):
+        # FIX: evaluate with the same env class, honeypot count, FNR/FPR, attack rate and critical node as training.
+        # These were hardcoded to 2 honeypots, FNR 0.25, FPR 0.2, attack rate 0.9 and a random critical node.
+        deception_nodes = train_env.M
         normal_nodes = misc.count_nodes(ntpg)
         first_parameter = misc.calculate_first_parameter(deception_nodes, normal_nodes)
         total_permutations = misc.calculate_permutation(normal_nodes, deception_nodes)
-        eval_env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, 0.25, 0.2, 0.9, random.choice(list(misc.create_dictionary_ntpg(os.environ['NTPG_TRAINING']).keys())))
+        eval_env = type(train_env)(first_parameter, deception_nodes, normal_nodes, ntpg, train_env.fnr, train_env.fpr, train_env.attack_rate, train_env._initial_nicr_nodes)
         return eval_env
 
     def evaluate_episodes(self, eval_env, agent, trained_model):
+        # FIX: evaluate the greedy policy. Exploration stays on during training only; selectActionEval skips its
+        # random warm-up branch for episode numbers >= 3, so the episode number passed in is offset by 3.
+        training_epsilon = agent.epsilon
+        agent.epsilon = 0
         for episode in range(self.eval_episodes):
             episode_reward = 0
             episode_steps = 0
@@ -54,7 +61,7 @@ class Evaluation:
             steps_entity = []
             eval_time_step = eval_env.reset()
             while not eval_time_step.is_last():
-                action = agent.selectActionEval(eval_time_step.observation, episode, trained_model)
+                action = agent.selectActionEval(eval_time_step.observation, episode + 3, trained_model)
                 # print("ACTION SELECTED:", action)
                 if action is None:
                     # print("No action selected. Skipping this step.")
@@ -70,7 +77,11 @@ class Evaluation:
                 # print("EPISODE STEPS:", episode_steps)
                 self.visualization_data = self.visualization_data._append({'episode': episode, 'steps': episode_steps, 'step_entities': steps_entity}, ignore_index=True)
                 steps_entity = []
-            if episode_reward > 0:
+            # FIX: a win is catching the attacker in a honeypot (final reward 1). 'episode_reward > 0' counted any catch
+            # after ~10 steps as a loss, because each step costs -0.1.
+            won = eval_time_step.reward == 1
+            self.eval_wins.append(won)
+            if won:
                 self.episodeWon += 1
                 print("Episode Won Counter: ", self.episodeWon)
                 # os.system('pause')
@@ -80,7 +91,7 @@ class Evaluation:
 
 
             
-            dsp = self.episodeWon / self.eval_episodes
+            dsp = self.episodeWon / (episode + 1)  # FIX: running DSP over the episodes played so far
 
             self.dsp_globalcounter.append(dsp)
             
@@ -94,6 +105,7 @@ class Evaluation:
             
             self.eval_rewards.append(episode_reward)
             self.eval_steps.append(episode_steps)
+        agent.epsilon = training_epsilon
 
     def visualize_dsp(self):
         ddqn_dsp_visualizer.ddqn_dsp_visual(self.step_globalcounter, self.dsp_globalcounter)
@@ -109,8 +121,8 @@ class Evaluation:
     def calculate_evaluation_results(self):
         avg_eval_reward = np.mean(self.eval_rewards)
         avg_eval_steps = np.mean(self.eval_steps)
-        num_successful_defense = sum(reward > 0 for reward in self.eval_rewards)
-        dsp = (num_successful_defense / self.eval_episodes)
+        num_successful_defense = sum(self.eval_wins)
+        dsp = (num_successful_defense / len(self.eval_wins))
         max_len = max(len(self.eval_rewards), len(self.eval_steps), self.eval_episodes)
         rewards = self.eval_rewards + [0] * (max_len - len(self.eval_rewards))
         steps = self.eval_steps + [0] * (max_len - len(self.eval_steps))
@@ -147,7 +159,9 @@ class Evaluation:
                 dsp_globalcounter.append(float(line.strip()))
                 
         # print(f"Retrieved DSP Global Counter: {dsp_globalcounter}")
-        final_dsp = sum(dsp_globalcounter) / len(dsp_globalcounter)
+        # FIX: the last running value is wins / episodes. Averaging the running values understated DSP, and with the
+        # doubled evaluation it could exceed 1 (e.g. the 1.01 in the SARSA results).
+        final_dsp = dsp_globalcounter[-1]
         
         # Delete the temporary file
         os.remove('dsp_globalcounter.tmp')
@@ -160,16 +174,10 @@ class Evaluation:
         if model_type == 1 or model_type == 2 or model_type == 3:
             trained_model = evaluation.load_trained_model(model_path)
             # print("Trained model:", trained_model.summary())
-        ntpg = evaluation.load_tpg_data()
-        eval_env = evaluation.create_environment(ntpg)
-        if model_type == 1 or model_type == 2:
-            evaluation.evaluate_episodes(eval_env, evalAgent, trained_model)
-        elif model_type == 3:
-            evaluation.evaluate_episodes(eval_env, evalAgent, trained_model)
-        
         # TODO: MAKE THE TPG DATA LOAD CUSTOM TOO
         ntpg = evaluation.load_tpg_data()
-        eval_env = evaluation.create_environment(ntpg)
+        eval_env = evaluation.create_environment(ntpg, agent.env)
+        # FIX: evaluate once. The episodes used to run twice into the same counters, while DSP divided by 50.
         evaluation.evaluate_episodes(eval_env, evalAgent, trained_model)
         # evaluation.visualize_dsp()
         evaluation.save_visualization_data()

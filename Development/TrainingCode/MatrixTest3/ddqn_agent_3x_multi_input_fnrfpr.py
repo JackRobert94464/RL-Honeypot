@@ -359,21 +359,21 @@ class DoubleDeepQLearning:
             rewardsEpisode.append(reward)
             if reward == 1:
                 self.episodeWon += 1
-            self.step_counter += 1
-            if self.step_counter in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000]:
-                break
-            self.clock_counter += time.time() - start_time
 
-            if terminalState:
-                break
-
-            if not terminalState:
-                continue
-
-            self.replayBuffer.append((currentState.observation, action, reward, nextStateObservation, terminalState))
+            # FIX: store and learn from every transition. The old 'if terminalState: break / if not terminalState: continue'
+            # left the loop before this point on every step, so the replay buffer stayed empty and the network never trained.
+            self.replayBuffer.append((np.array(currentState.observation), np.array(self.epssMatrix), np.array(self.connectionMatrix), action, reward, nextStateObservation, terminalState))
             self.trainNetwork()
             self.visitCounts += 1
             currentState = nextState
+
+            self.step_counter += 1
+            self.clock_counter += time.time() - start_time
+
+            if self.step_counter in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000]:
+                break
+            if terminalState:
+                break
 
         self.time_taken.append(self.clock_counter)
                
@@ -512,6 +512,12 @@ class DoubleDeepQLearning:
             return action_matrix
 
 
+    # FIX: Q-targets must be written at the action's index in action_space(), not at its node IDs
+    def action_to_index(self, action):
+        if not hasattr(self, '_action_index'):
+            self._action_index = {tuple(v): k for k, v in self.env.action_space().items()}
+        return self._action_index[tuple(int(x) for x in np.ravel(action))]
+
     def index_to_action(self, index):
         
         action_matrix = self.env.action_space()[index]
@@ -564,12 +570,13 @@ class DoubleDeepQLearning:
             outputNetwork = np.zeros(shape=(self.batchReplayBufferSize, int(self.totalpermutation)))
             
             for index, (currentState, epsMatrix, ntpgMatrix, action, reward, nextState, terminated) in enumerate(randomSampleBatch):
-                y = reward + self.gamma * np.max(QnextStateTargetNetwork[index])
+                # FIX: no bootstrapping past a terminal state
+                y = reward if terminated else reward + self.gamma * np.max(QnextStateTargetNetwork[index])
                 actionsAppend.append(action)
                 outputNetwork[index] = QcurrentStateMainNetwork[index]
-                outputNetwork[index, action] = y
+                outputNetwork[index, self.action_to_index(action)] = y  # FIX: was indexed by node IDs
             
-            self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size=self.batchReplayBufferSize, verbose=0, epochs=200)
+            self.mainNetwork.fit(inputNetwork, outputNetwork, batch_size=self.batchReplayBufferSize, verbose=0, epochs=1)  # FIX: was 200 epochs per step, which overfits each minibatch
             print("Main network trained!")
             
             self.counterUpdateTargetNetwork += 1

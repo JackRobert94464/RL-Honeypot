@@ -67,7 +67,9 @@ def SingleDecoyTraining(deception_nodes, numberEpisodes, model_name, model_type,
     first_parameter = misc.calculate_first_parameter(deception_nodes, normal_nodes)
 
     # Create the environment
-    env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, fnr, fpr, attack_rate, random.choice(list(ntpg.keys())))
+    # FIX: critical node left at the env default (node ID 6, the node the old reset() actually used). Passing a random
+    # NTPG key (an IP) here never matched a node ID, and reset() used to overwrite it anyway.
+    env = NetworkHoneypotEnv(first_parameter, deception_nodes, normal_nodes, ntpg, fnr, fpr, attack_rate)
 
     numberEpisodes = numberEpisodes
 

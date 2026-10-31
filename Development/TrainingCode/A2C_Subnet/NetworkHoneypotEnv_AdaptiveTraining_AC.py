@@ -10,21 +10,28 @@ import os
 import random
 import itertools
 
+# FIX: node IDs used by actions, nifr_nodes and nicr_nodes are 1-based: node ID k is list(ntpg.keys())[k-1].
+# FIX: the critical node used to be checked as self._state[5] (0-based), which is node ID 6.
+DEFAULT_NICR_NODES = [6]
+
 class NetworkHoneypotEnv(py_environment.PyEnvironment):
 
-    def __init__(self, N, M, K, ntpg, fnr, fpr, attack_rate, nicr_nodes):
+    def __init__(self, N, M, K, ntpg, fnr, fpr, attack_rate, nicr_nodes=None):
         self.N = N
         self.M = M
         self.K = K
-        self.nicr_nodes = nicr_nodes
+        if nicr_nodes is None:
+            nicr_nodes = DEFAULT_NICR_NODES
+        elif not isinstance(nicr_nodes, (list, tuple)):
+            nicr_nodes = [nicr_nodes]
+        self._initial_nicr_nodes = list(nicr_nodes)
+        self.nicr_nodes = list(self._initial_nicr_nodes)
         self.nifr_nodes = []
-        
-        # For node guessing
-        # my_list = list(range(1, K+1))
-        
-        # For subnet guessing (static placeholder, MUST CHANGE, implement subnet retrieval from NTPG)
-        my_list = list(range(1, 5))
-        
+
+        # Actions pick honeypot nodes; inference_v6_adaptive maps the chosen nodes to subnets afterwards.
+        # FIX: (picking subnet IDs 1-4 here while checking them as node IDs made every honeypot land on nodes 1-4.)
+        my_list = list(range(1, K+1))
+
         combinations = list(itertools.combinations(my_list, M))
         self._action_space = dict(enumerate(combinations))
         self._action_spec = array_spec.BoundedArraySpec(
@@ -33,49 +40,44 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
             shape=(1,K), dtype=np.int32, minimum=0, maximum=1, name='observation')
         self._reward_spec = array_spec.BoundedArraySpec(
             shape=(1,K), dtype=np.int32, minimum=-1, maximum=1, name='reward')
-        self._state = np.zeros(self.K, dtype=np.int32)
-        self._alerted_state = np.zeros(self.K, dtype=np.int32)  # New alerted state array
+        self._state = np.zeros(self.K, dtype=np.int32)  # True compromise state (hidden from the defender)
+        self._alerted_state = np.zeros(self.K, dtype=np.int32)  # FIX: what the IDS reports; this is now the observation (it used to return the true state, so FNR/FPR had no effect)
         self.current_step = 0
         self.maxSteps = 50
         self._ntpg = ntpg
         self._episode_ended = False
-        # self._current_attacker_node = list(ntpg.keys())[2]
-        # chua chay, co bao nhieu lo hong tren 3 node nay thi cong lai lay trung binh epss lam weight
-        print("NTPG:", self._ntpg.keys())
-        self._current_attacker_node = self.random_initial_attacker_node()
-        print("Initial attacker node: ", self._current_attacker_node)
-        # os.system('pause')
         self.fnr = fnr
         self.fpr = fpr
         self.attack_rate = attack_rate
-        
+        print("NTPG:", self._ntpg.keys())
+        self.__start_attacker()
+        print("Initial attacker node: ", self._current_attacker_node)
+
     def random_initial_attacker_node(self):
         # Randomly select an initial attacker node from the NTPG keys
         return random.choice(list(self._ntpg.keys()))
 
     def action_spec(self):
         return self._action_spec
-    
+
     def action_space(self):
         return self._action_space
-    
+
     def observation_spec(self):
         return self._observation_spec
-    
+
     def observation_space(self):
-        return self._state
-    
+        return self._alerted_state
+
     def get_ntpg(self):
         return self._ntpg
-    
+
     def get_htpg(self):
         return self._htpg
-    
+
     def get_alerted_state(self):
         return self._alerted_state
-    
-    import os
-    
+
     def generate_random_ntpg(self):
         # Generate a new NTPG with the same number of nodes (K)
         new_ntpg = {}
@@ -90,21 +92,36 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
         self._ntpg = new_ntpg
         # print("New NTPG: ", new_ntpg)
         # os.system('pause')
-        self._current_attacker_node = list(new_ntpg.keys())[2]
+
+    def __node_id(self, node):
+        return list(self._ntpg.keys()).index(node) + 1
+
+    def __start_attacker(self):
+        self._current_attacker_node = self.random_initial_attacker_node()
+        start_index = self.__node_id(self._current_attacker_node) - 1
+        self._state[start_index] = 1
+        # FIX: the initial foothold is only seen if the IDS does not miss it
+        if random.random() >= self.fnr:
+            self._alerted_state[start_index] = 1
+
+    def __observation(self):
+        return np.array([self._alerted_state], dtype=np.int32)
 
     def _reset(self):
         self.current_step = 0
-        self.nicr_nodes = [5]
+        self.nicr_nodes = list(self._initial_nicr_nodes)  # FIX: was hardcoded to [5], ignoring the constructor argument
         self.nifr_nodes = []
         self._state = np.zeros(self.K, dtype=np.int32)
+        self._alerted_state = np.zeros(self.K, dtype=np.int32)  # FIX: was never reset, so alerts piled up across episodes
         self._episode_ended = False
-        self._current_attacker_node = self.random_initial_attacker_node()  # Randomize initial attacker node
+        self.generate_random_ntpg()  # FIX: generate the new NTPG before placing the attacker on it
+        self.__start_attacker()
         print("Reset attacker node: ", self._current_attacker_node)
-        self.generate_random_ntpg()  # Generate a new NTPG for each episode
         # os.system('pause')
-        return ts.restart(np.array([self._state], dtype=np.int32))
+        return ts.restart(self.__observation())
 
     def __attacker_move_step_fnrfpr(self, fnr, fpr, attack_rate):
+        # Returns the node ID the attacker moved into this step, or None if it did not move
         non_attack_rate = 1 - attack_rate
 
         # FN, FP, TP, TN rates
@@ -121,95 +138,77 @@ class NetworkHoneypotEnv(py_environment.PyEnvironment):
         )[0]
 
         current_node = self._current_attacker_node
-        current_node_index = list(self._ntpg.keys()).index(current_node)
 
-        if self._ntpg.get(current_node):
+        if not self._ntpg.get(current_node):
+            return None
 
-            self._state[current_node_index] = 1
+        # Pick next node based on weighted random choice
+        pop = [route[0] for route in self._ntpg.get(current_node)]
+        wei = [(route[1] + route[2])/2 for route in self._ntpg.get(current_node)]
 
-            # Pick next node based on weighted random choice
-            pop = [route[0] for route in self._ntpg.get(current_node)]
-            wei = [(route[1] + route[2])/2 for route in self._ntpg.get(current_node)]
-            
-            # Adjust weights to reduce the chance of always falling into a honeypot
-            adjusted_weights = []
-            for node, weight in zip(pop, wei):
-                if self.is_honeypot(node):  # Assuming a function that checks if a node is a honeypot
-                    adjusted_weights.append(weight * 0.5)  # Reducing the weight for honeypots
-                else:
-                    adjusted_weights.append(weight)
-            
-            next_node = random.choices(
-                population=pop,
-                weights=adjusted_weights,
-                k=1
-            )[0]
+        # Adjust weights to reduce the chance of always falling into a honeypot
+        adjusted_weights = []
+        for node, weight in zip(pop, wei):
+            if self.is_honeypot(node):
+                adjusted_weights.append(weight * 0.5)  # Reducing the weight for honeypots
+            else:
+                adjusted_weights.append(weight)
+        if sum(adjusted_weights) <= 0:
+            adjusted_weights = None  # FIX: all-zero weights: fall back to a uniform choice
 
-            next_node_index = list(self._ntpg.keys()).index(next_node)
+        next_node = random.choices(
+            population=pop,
+            weights=adjusted_weights,
+            k=1
+        )[0]
 
-            # Update the true state
-            if state_type in ['TP', 'FN']:
-                self._state[next_node_index] = 1
-            # else:
-            #    self._state[next_node_index] = 0
+        next_node_index = self.__node_id(next_node) - 1
 
-            # Update the alerted state
-            # Set cho nay thanh next node 30 05 2024
-            if state_type in ['TP', 'FP']:
-                self._alerted_state[next_node_index] = 1
-            # else:
-            #    self._alerted_state[next_node_index] = 0
+        # Update the alerted state
+        # Set cho nay thanh next node 30 05 2024
+        if state_type in ['TP', 'FP']:
+            self._alerted_state[next_node_index] = 1
 
-            if state_type in ['TP', 'FN']:
-                self._current_attacker_node = next_node
+        # Update the true state
+        if state_type in ['TP', 'FN']:
+            self._state[next_node_index] = 1
+            self._current_attacker_node = next_node
+            return next_node_index + 1
 
+        return None
+
+    # FIX: compares node IDs; it used to compare NTPG keys (IPs) with node IDs, so the honeypot weighting never applied
     def is_honeypot(self, node):
-        # Placeholder function to check if a node is a honeypot
-        # You should implement the actual logic to check if a node is a honeypot
-        return node in self.nifr_nodes  # Assuming you have a list of honeypot nodes stored in self._honeypots
+        return self.__node_id(node) in self.nifr_nodes
 
-
-    def __is_nicr_attacked(self, nicr_nodes):
-        for i in nicr_nodes:
-            if i < len(self._state) and self._state[i] == 1:
-                self._episode_ended = True
-                return True
-        return False
-
-    def __is_nifr_attacked(self, nifr_nodes):
-        for i in nifr_nodes:
-            if i < len(self._state) and self._state[i] == 1:
-                self._episode_ended = True
-                return True
-        return False
-    
     def is_last(self):
         if self._episode_ended:
             return True
         return False
-    
+
     def __update_nifr_nodes(self, action):
-        self.nifr_nodes = list(action)
-    
+        self.nifr_nodes = [int(node_id) for node_id in np.ravel(action)]
+
     def _step(self, action):
 
         if self._episode_ended:
             return self.reset()
-        if self.current_step >= self.maxSteps:
-            reward = -1
-            self._episode_ended = True
-            return ts.termination(np.array([self._state], dtype=np.int32), reward=reward)
-        if self.__is_nicr_attacked(self.nicr_nodes):
-            reward = -1
-            self._episode_ended = True
-            return ts.termination(np.array([self._state], dtype=np.int32), reward=reward)
-        if self.__is_nifr_attacked(self.nifr_nodes):
-            reward = 1
-            self._episode_ended = True
-            return ts.termination(np.array([self._state], dtype=np.int32), reward=1)
-        
+
+        # FIX: deploy the honeypots first, then let the attacker move, so the reward belongs to this action
         self.__update_nifr_nodes(action)
-        self.__attacker_move_step_fnrfpr(self.fnr, self.fpr, self.attack_rate)
+        entered_node = self.__attacker_move_step_fnrfpr(self.fnr, self.fpr, self.attack_rate)
         self.current_step += 1
+
+        # FIX: only the node the attacker just entered counts (also fixes the off-by-one 0-based/1-based check); a honeypot placed on an already-compromised node is not a catch
+        if entered_node is not None and entered_node in self.nifr_nodes:
+            self._episode_ended = True
+            return ts.termination(self.__observation(), reward=1)
+        if entered_node is not None and entered_node in self.nicr_nodes:
+            self._episode_ended = True
+            return ts.termination(self.__observation(), reward=-1)
+        if self.current_step >= self.maxSteps:
+            self._episode_ended = True
+            return ts.termination(self.__observation(), reward=-1)
+
         reward = -0.1
-        return ts.transition(np.array([self._state], dtype=np.int32), reward=reward)
+        return ts.transition(self.__observation(), reward=reward)

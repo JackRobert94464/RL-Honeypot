@@ -244,7 +244,7 @@ class SarsaLearning:
                 
                 #Updating the respective vaLues
                 t += 1
-                reward += 1
+                # FIX: removed 'reward += 1'; it turned a win (1) into 2, so 'reward == 1' never counted wins
 
                 rewardsEpisode.append(reward)
 
@@ -309,7 +309,7 @@ class SarsaLearning:
             alerted_observation1 = alerted_observation2  # Update alerted state for next iteration
 
             t += 1
-            reward += 1
+            # FIX: removed 'reward += 1'; it turned a win (1) into 2, so 'reward == 1' never counted wins
 
             rewardsEpisode.append(reward)
 

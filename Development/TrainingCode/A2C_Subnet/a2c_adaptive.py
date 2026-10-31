@@ -27,7 +27,7 @@ class PPOAgent:
         self.nodecount = nodecount
         self.totalpermutation = totalpermutation
         self.stateDimension = env.K
-        self.actionDimension = factorial(env.K) / (factorial(env.K - env.M) * factorial(env.M))
+        self.actionDimension = len(env.action_space())  # FIX: was a float from '/', and Dense needs an int
         self.replayBufferSize = 300
         self.batchReplayBufferSize = 100
         self.updateTargetNetworkPeriod = 10
@@ -44,6 +44,8 @@ class PPOAgent:
         self.currentTrainingEpisode = 0
         self.actor_model = self.build_actor_model()
         self.critic_model = self.build_critic_model()
+        self.actor_optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4)
+        self.critic_optimizer = tf.keras.optimizers.Adam(learning_rate=1e-3)
         self._modelPath = None
         self.model_filename = model_filename
 
@@ -72,24 +74,8 @@ class PPOAgent:
         padded_matrix = np.zeros((max_size, max_size, 2), dtype=np.float32)
         padded_matrix[:epss_matrix.shape[0], :epss_matrix.shape[1], :] = merged_matrix
 
-        # Repeat and stack the observable state into 3D
-        observable_state = self.env.observation_space()  # np.array(observable_spec, dtype=np.float32)
-        print("observable_state: ", observable_state)
-        
-        # Normalize the observable state
-        observable_state = (observable_state - np.min(observable_state)) / (np.max(observable_state) - np.min(observable_state) + 1e-10)
-        
-        # Reshape observable state to match the dimensions of the padded matrix
-        observable_state_expanded = np.tile(observable_state[:, np.newaxis], (1, max_size))
-        observable_state_expanded = np.expand_dims(observable_state_expanded, axis=-1)
-
-        # Pad the observable state to match the required size
-        padded_observable_state = np.zeros((max_size, max_size, 1), dtype=np.float32)
-        padded_observable_state[:observable_state_expanded.shape[0], :observable_state_expanded.shape[1], :] = observable_state_expanded
-
-        # Stack observable state with the EPSS and NTPG matrices
-        self.merged_matrix_input = np.concatenate([padded_matrix, padded_observable_state], axis=-1)
-        self.merged_matrix_input = np.expand_dims(self.merged_matrix_input, axis=0)
+        self.padded_matrix = padded_matrix
+        self.merged_matrix_input = self.model_inputs(self.env.get_alerted_state())
 
     def getStepCount(self):
         return self.step_counter
@@ -156,6 +142,7 @@ class PPOAgent:
 
     def trainingSingleEpisodes(self):
         currentState = self.env.reset()
+        self.update_ntpg_matrices()  # FIX: the env draws a new NTPG on every reset, so rebuild the EPSS/NTPG planes
         rewardsEpisode = []
         while not self.env.is_last():
             start_time = time.time()
@@ -168,18 +155,17 @@ class PPOAgent:
             rewardsEpisode.append(reward)
             if reward == 1:
                 self.episodeWon += 1
-            self.step_counter += 1
-            if self.step_counter in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000]:
-                break
-            self.clock_counter += time.time() - start_time
-            if terminalState:
-                break
-            if not terminalState:
-                continue
-            self.replayBuffer.append((currentState.observation, action, reward, nextStateObservation, terminalState))
-            self.trainNetwork()
+            # FIX: learn from every transition. The old 'if terminalState: break / if not terminalState: continue'
+            # left the loop before this point on every step, so the networks never trained.
+            self.trainNetwork(currentState.observation, action, reward, nextStateObservation, terminalState)
             self.visitCounts += 1
             currentState = nextState
+            self.step_counter += 1
+            self.clock_counter += time.time() - start_time
+            if self.step_counter in [250, 500, 750, 1000, 2000, 5000, 10000, 20000, 30000]:
+                break
+            if terminalState:
+                break
         self.time_taken.append(self.clock_counter)
         
     def selectAction(self, state, episode):
@@ -196,7 +182,7 @@ class PPOAgent:
             return action
         else:
             # Ensure the input is a list containing all inputs to the model
-            inputs = self.merged_matrix_input
+            inputs = self.model_inputs(state)  # FIX: was the input frozen at __init__, ignoring the state
             
             # Get action probabilities from the actor model
             action_probs = self.actor_model.predict(inputs)[0]
@@ -220,7 +206,7 @@ class PPOAgent:
             return action
         else:
             # Ensure the input is a list containing all inputs to the model
-            inputs = self.merged_matrix_input
+            inputs = self.model_inputs(state)  # FIX: was the input frozen at __init__, ignoring the state
             
             # Get action probabilities from the model
             action_probs = model.predict(inputs)[0]
@@ -232,7 +218,7 @@ class PPOAgent:
         
     def selectActionInference(self, state, model):
         # Ensure the input is a list containing all inputs to the model
-        inputs = self.merged_matrix_input
+        inputs = self.model_inputs(state)  # FIX: was the input frozen at __init__, ignoring the state
         
         # Get action probabilities from the model
         action_probs = model.predict(inputs)[0]
@@ -249,34 +235,39 @@ class PPOAgent:
         action_matrix = action_space[valid_index]
         return action_matrix
 
-    def trainNetwork(self):
-        if len(self.replayBuffer) > self.batchReplayBufferSize:
-            randomSampleBatch = random.sample(self.replayBuffer, self.batchReplayBufferSize)
-            for index, (currentState, action, reward, nextState, terminated) in enumerate(randomSampleBatch):
-                advantage = self.calculate_advantage(currentState, reward, nextState)
-                action_probs_old = self.actor_model.predict(currentState, self.epss_input_reshaped, self.ntpg_input_reshaped)[0]
-                value_old = self.critic_model.predict(currentState, self.epss_input_reshaped, self.ntpg_input_reshaped)
-                actor_loss, critic_loss = self.compute_loss(currentState, action, advantage, action_probs_old, value_old)
-                self.actor_model.fit(currentState, action_probs_old, sample_weight=advantage, epochs=10, verbose=0)
-                self.critic_model.fit(currentState, reward, epochs=10, verbose=0)
-                
-    def calculate_advantage(self, state, reward, next_state):
-        state = state.reshape(1, -1)
-        value = self.critic_model.predict(state, self.epss_input_reshaped, self.ntpg_input_reshaped)
-        next_value = self.critic_model.predict(next_state, self.epss_input_reshaped, self.ntpg_input_reshaped)
-        td_error = reward + self.gamma * next_value - value
-        return td_error
+    def action_to_index(self, action):
+        if not hasattr(self, '_action_index'):
+            self._action_index = {tuple(v): k for k, v in self.env.action_space().items()}
+        return self._action_index[tuple(int(x) for x in np.ravel(action))]
 
-    def compute_loss(self, state, action, advantage, action_probs_old, value_old):
-        state = state.reshape(1, -1)
-        action_probs = self.actor_model.predict(state, self.epss_input_reshaped, self.ntpg_input_reshaped)
-        action_onehot = np.zeros_like(action_probs_old)
-        action_onehot[action] = 1
-        ratio = action_probs / (action_probs_old + 1e-5)
-        clipped_ratio = np.clip(ratio, 1 - self.epsilon, 1 + self.epsilon)
-        actor_loss = -np.minimum(ratio * advantage, clipped_ratio * advantage)
-        critic_loss = keras.losses.mean_squared_error(value_old, advantage)
-        return actor_loss, critic_loss
+    # FIX: build the observation plane from the observation passed in. It used to be computed once in __init__
+    # from the initial all-zero state, so the policy saw the same input on every step.
+    def model_inputs(self, observation):
+        max_size = self.padded_matrix.shape[0]
+        observable_state = np.array(observation, dtype=np.float32).reshape(-1)
+        observable_state = (observable_state - np.min(observable_state)) / (np.max(observable_state) - np.min(observable_state) + 1e-10)
+        observable_state_expanded = np.tile(observable_state[:, np.newaxis], (1, max_size))[..., np.newaxis]
+        padded_observable_state = np.zeros((max_size, max_size, 1), dtype=np.float32)
+        padded_observable_state[:observable_state_expanded.shape[0], :, :] = observable_state_expanded
+        return np.expand_dims(np.concatenate([self.padded_matrix, padded_observable_state], axis=-1), axis=0)
+    # FIX: one-step advantage actor-critic update on the transition just taken. The old version fitted the actor to its
+    # own previous probabilities and the critic to the raw reward (and indexed the action by node IDs), so it could not learn.
+    def trainNetwork(self, currentState, action, reward, nextState, terminated):
+        inputs = self.model_inputs(currentState)
+        next_value = 0.0 if terminated else float(self.critic_model(self.model_inputs(nextState), training=False)[0, 0])
+        target = float(reward) + self.gamma * next_value
+        action_index = self.action_to_index(action)
+        with tf.GradientTape() as actor_tape, tf.GradientTape() as critic_tape:
+            # training=False keeps BatchNormalization on its moving statistics; on a batch of one it would zero the activations
+            value = self.critic_model(inputs, training=False)[0, 0]
+            probs = self.actor_model(inputs, training=False)[0]
+            advantage = target - value
+            critic_loss = tf.square(advantage)
+            actor_loss = -tf.math.log(probs[action_index] + 1e-8) * tf.stop_gradient(advantage)
+        critic_grads = critic_tape.gradient(critic_loss, self.critic_model.trainable_variables)
+        actor_grads = actor_tape.gradient(actor_loss, self.actor_model.trainable_variables)
+        self.critic_optimizer.apply_gradients(zip(critic_grads, self.critic_model.trainable_variables))
+        self.actor_optimizer.apply_gradients(zip(actor_grads, self.actor_model.trainable_variables))
 
     def updateTrainingEpisode(self, episode):
         self.currentTrainingEpisode = episode
