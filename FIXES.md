@@ -1,9 +1,9 @@
 # Bug fixes: training, environment, evaluation (2026-10-31)
 
-Every change in the code is tagged with a `# FIX:` comment. To see them all:
+Every change in the code is tagged with a `# FIX:` comment. To see them all, run this from the repo folder (works in PowerShell, cmd and bash):
 
 ```bash
-grep -rn "# FIX" Development/TrainingCode
+git grep -n "# FIX:"
 ```
 
 Paths below are relative to `Development/TrainingCode/`.
